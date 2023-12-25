@@ -1,0 +1,30 @@
+---
+
+- name: Get install script for Picodata repo
+  ansible.builtin.get_url:
+    url: '{{ repo }}/tarantool-picodata/install.sh'
+    dest: './'
+    mode: '0755'
+    validate_certs: '{% if ansible_distribution == "CentOS" and ansible_distribution_major_version == "7" %}false{% else %}true {% endif %}'
+
+- name: Install Picodata repo
+  ansible.builtin.command:
+    cmd: 'sh -c ./install.sh'
+
+- name: Install Picodata soft for rpm and deb based distrs
+  ansible.builtin.package:
+    name:
+      - picodata
+  when: ansible_os_family != 'Altlinux'
+
+- name: Install Picodata soft for Altlinux based distrs
+  ansible.builtin.package:
+    name:
+      - picodata
+  when: ansible_os_family == 'Altlinux'
+
+- name: Clean temporary files
+  ansible.builtin.file:
+    path: ./install.sh
+    state: absent
+ 

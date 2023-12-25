@@ -1,0 +1,6 @@
+---
+# defaults file for picodata-ansible
+
+repo: 'https://download.picodata.io'
+install_packages: true
+
