@@ -1,38 +1,103 @@
-Role Name
+picodata-ansible
 =========
 
-A brief description of the role goes here.
+Роль для разворачивания кластера picodata
 
-Requirements
+Требования
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Наличие подготовленных серверов с поддерживаемыми ОС (список см. https://picodata.io/download/) с необходимым количеством ресурсов из минимального расчета на 1 инстанс (без учета ресурсов для ОС): 1 CPU, 256 Mb RAM, 1Gb HDD
 
-Role Variables
+Переменные роли
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+Переменные по умолчанию располагаются в файле defaults/main.yml, эти переменные можно переопределять в инвентарном файле
 
-Dependencies
+Помимо переменных по умолчанию используется словарь replicasets с указанием внутри 
+- имени репликасета (например router)
+- количество инстансов на каждом сервере (instances_per_server)
+- фактор репликации (replication_factor), по умолчанию 1 - пока эта переменная определяется на весь кластер и берется из первого инстанса
+
+Пример:
+```
+replicasets:
+  router:  # replicaset-id ???
+    instances_per_server: 1 # How many replicasets we want, by default equal 1
+    replication_factor: 2 # Number of instances in replicaset, default 1
+  storage: # replicaset-id ???
+    instances_per_server: 1 # How many replicasets we want, by default equal 1
+    replication_factor: 3 # Number of instances in replicaset, default 1
+```
+
+
+Зависимости
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+Пока нет
 
-Example Playbook
+Примеры
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Пример инвентарного файла для 2-х серверов, расположенных в 2 дата центрах DC1 и DC2
+```
+all:
+  vars:
+    ansible_user: vagrant      # пользователь для ssh-доступа к серверам           
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+    install_packages: false               # отключение необходимости установки пакета picodata
+    repo: 'https://download.picodata.io'  # репозиторий, откуда инсталлировать пакет picodata
 
-License
+    cluster_id: test               # имя кластера
+    audit: false                   # отключение айдита
+    log_level: info                # уровень отладки
+    data_dir: '/var/lib/picodata'  # каталог для хранения данных
+    run_dir: '/var/run/picodata'   # каталог для хранения sock-файлов
+    log_dir: '/var/log/picodata'   # каталог для логов и файлов аудита
+
+    purge: true   # при очистке кластера удалять в том числе все данные и логи с сервера
+
+    first_port: 3301     # начальный порт для первого инстанса (он же main_peer)
+
+    replicasets:                                                                        # описание репликасетов
+      router:                                                                           # имя репликасета
+        instances_per_server: 1                                                         # сколько инстансов запустить на каждом сервере
+        replication_factor: 2                                                           # количество инстансов в одном репликасете, по умолчанию 1
+                                                                                        # на данный момент для всех репликасетов используется 
+                                                                                        # определение только из первого
+      storage:                                                                        # имя репликасета
+        instances_per_server: 1                                                       # сколько инстансов запустить на каждом сервере
+        replication_factor: 1                                                         # количество инстансов в одном репликасете, по умолчанию 1
+                                                                                      # на данный момент для всех репликасетов используется 
+                                                                                      # определение только из первого, т.е. в данном случае 2, а не 1!
+
+DC1:                                # Датацентр (failure_domain)
+  hosts:                            # серверы в датацентре
+    server-1-1:                     # имя сервера в инвентарном файле
+      ansible_host: 192.168.19.21   # IP адрес или fqdn если не совпадает с предыдущей строкой
+
+DC2: # failure_domain              # Датацентр (failure_domain)
+  hosts:                           # серверы в датацентре
+    server-2-1:                    # имя сервера в инвентарном файле
+      ansible_host: 192.168.19.22  # IP адрес или fqdn если не совпадает с предыдущей строкой
+```
+
+
+
+Пример роли:
+```
+---
+- name: Deploy picodata cluster
+  hosts: all
+  become: true
+
+  tasks:
+
+  - name: Import picodata-ansible role
+    ansible.builtin.import_role:
+      name: picodata-ansible
+```
+
+Лицензия
 -------
 
 BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).

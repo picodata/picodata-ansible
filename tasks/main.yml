@@ -1,37 +1,12 @@
 ---
 # tasks file for picodata-ansible
 
-# start Example
+- name: Install picodata
+  ansible.builtin.include_tasks:
+    file: install.yml
+  when: not force_remove
 
-# with predefined vars
-# - name: Print topology
-#   ansible.builtin.debug:
-#     var: replicasets
-
-# - name: Print topology
-#   ansible.builtin.debug:
-#     msg: "Id {{ item.key }} count: {{ item.value.count }} factor: {{item.value.replication_factor | default('1')}} fd: ({{ item.value.failure_domain }})"
-#   loop: "{{ lookup('ansible.builtin.dict', replicasets, wantlist=True) }}"
-
-- name: Install picodata packages
-  ansible.builtin.import_tasks:
-    file: install_packages.yml
-  when: install_packages
-
-
-
-# block
-# - name: Add all hosts running this playbook to the done group
-#   ansible.builtin.add_host:
-#     name: '{{ item.key }}'
-#     groups: '{{ item.key }}'
-#   loop: "{{ lookup('ansible.builtin.dict', replicasets) }}"
-
-# # Items from loop can be used in when: statements
-# - name: set_fact when alice in key
-#   ansible.builtin.set_fact:
-#     alice_exists: true
-#   loop: "{{ lookup('ansible.builtin.dict', users) }}"
-#   when: "'alice' in item.key"
-
-# end Example
+- name: Remove picodata
+  ansible.builtin.include_tasks:
+    file: remove.yml
+  when: force_remove

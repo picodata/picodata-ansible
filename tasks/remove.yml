@@ -1,0 +1,29 @@
+---
+
+- name: Stop systemd services
+  ansible.builtin.shell:
+    cmd: 'find {{ systemd_dir }}/multi-user.target.wants -maxdepth 1 -type l -name "{{ cluster_id }}@*" -exec systemctl disable --now {} \;'
+
+- name: Find all systemd units files
+  ansible.builtin.find:
+    paths: '{{ systemd_dir }}'
+    patterns: '{{ cluster_id }}@*,{{ cluster_id }}.*'
+    recurse: yes
+    file_type: any
+  register: result
+
+- name: Remove systemd unit files
+  ansible.builtin.file:
+    name: '{{ item }}'
+    state: absent
+  loop: "{{ result | json_query('files[*].path') }}"
+
+- name: Remove dirs if set purge variable
+  ansible.builtin.file:
+    name: '{{ item }}'
+    state: absent
+  loop:
+    - '{{ data_dir }}'
+    - '{{ run_dir }}'
+    - '{{ log_dir }}'
+  when: purge

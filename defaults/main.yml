@@ -1,6 +1,22 @@
 ---
 # defaults file for picodata-ansible
 
-repo: 'https://download.picodata.io'
+repo: 'https://download.picodata.io' # value for nightly: https://download.binary.picodata.io
 install_packages: true
 
+cluster_id: null
+audit: false
+log_level: info
+data_dir: '/var/lib/picodata'
+run_dir: '/var/run/picodata'
+log_dir: '/var/log/picodata'
+
+first_port: 3301
+
+systemd_dir: /etc/systemd/system
+
+purge: false
+force_remove: false
+
+user: root
+group: root

@@ -1,0 +1,8 @@
+---
+
+- name: Setup systemd units for {{ replicaset.key }}
+  ansible.builtin.include_tasks:
+    file: systemd_setup.yml
+  loop: "{{ range(1, replicaset.value.instances_per_server + 1) | list }}"
+  loop_control:
+    loop_var: replicaset_id

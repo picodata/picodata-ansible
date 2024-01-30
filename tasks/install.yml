@@ -1,0 +1,76 @@
+- name: Set peer instance
+  ansible.builtin.set_fact:
+    main_peer: '{{ ansible_default_ipv4.address }}'
+  run_once: true
+  when: main_peer is undefined
+
+- name: Print topology
+  ansible.builtin.debug:
+    msg: "Id {{ item.key }} count: {{ item.value.instances_per_server }} factor: {{item.value.replication_factor | default('1')}}"
+  loop: "{{ lookup('ansible.builtin.dict', replicasets, wantlist=True) }}"
+  run_once: true
+
+- name: Debug
+  ansible.builtin.debug:
+    msg: 'main_peer is {{ main_peer }}'
+  run_once: true
+
+- name: Check picodata is installed
+  ansible.builtin.command:
+    cmd: 'picodata --version'
+  register: result
+  ignore_errors: true
+
+- name: Set flag for install picodata needed
+  ansible.builtin.set_fact:
+    install_packages: true
+  when: result.rc != 0
+
+- name: Install picodata packages
+  ansible.builtin.import_tasks:
+    file: install_packages.yml
+  when: install_packages
+
+- name: Create dirs
+  ansible.builtin.file:
+    name: '{{ item }}'
+    state: directory
+    owner: '{{ user }}'
+    group: '{{ group }}'
+  loop:
+    - '{{ run_dir }}'
+    - '{{ log_dir }}/{{ cluster_id }}'
+
+- name: Set failure domain
+  ansible.builtin.set_fact:
+    fd: 'DC={{ group_names }},HOST={{ inventory_hostname }}'
+
+- name: Generate template for units
+  ansible.builtin.template:
+    src: systemd-unit-temlpate.j2
+    dest: '{{ systemd_dir }}/{{ cluster_id }}@.service'
+    force: true
+
+- name: Setup systemd units
+  ansible.builtin.include_tasks:
+    file: systemd_setup.yml
+  loop: "{{ lookup('ansible.builtin.dict', replicasets, wantlist=True) }}"
+  loop_control:
+    loop_var: replicaset
+    extended: true
+
+# block
+# - name: Add all hosts running this playbook to the done group
+#   ansible.builtin.add_host:
+#     name: '{{ item.key }}'
+#     groups: '{{ item.key }}'
+#   loop: "{{ lookup('ansible.builtin.dict', replicasets) }}"
+
+# # Items from loop can be used in when: statements
+# - name: set_fact when alice in key
+#   ansible.builtin.set_fact:
+#     alice_exists: true
+#   loop: "{{ lookup('ansible.builtin.dict', users) }}"
+#   when: "'alice' in item.key"
+
+# end Example

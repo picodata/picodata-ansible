@@ -1,0 +1,39 @@
+[Unit]
+Description=Picodata cluster {{ cluster_id }}@%i
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/picodata run
+Restart=on-failure
+RestartSec=2
+User={{ user }}
+Group={{ group }}
+
+Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_id }}.%i.sock
+
+Environment=PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_id }}.%i
+Environment=PICODATA_INSTANCE_ID=%i
+Environment=PICODATA_PEER={{ main_peer }}:{{ first_port | default (3301) }}
+Environment=PICODATA_FAILURE_DOMAIN={{ fd }}
+Environment=PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_id }}/audit-%i.log
+Environment=PICODATA_LOG_LEVEL={{ log_level }}
+
+ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}.%i'
+
+# Unlimited cores size
+LimitCORE=infinity
+# Disable OOM killer
+OOMScoreAdjust=-1000
+# Increase fd limit for Vinyl
+LimitNOFILE=65535
+
+# Systemd waits until all xlogs are recovered
+TimeoutStartSec=86400s
+# Give a reasonable amount of time to close xlogs
+TimeoutStopSec=20s
+
+[Install]
+WantedBy=multi-user.target
+Alias={{ cluster_id }}.%i
+
