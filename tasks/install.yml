@@ -1,12 +1,12 @@
 - name: Set peer instance
   ansible.builtin.set_fact:
-    main_peer: '{{ ansible_default_ipv4.address }}'
+    main_peer: '{{ listen_ip }}'
   run_once: true
   when: main_peer is undefined
 
 - name: Print topology
   ansible.builtin.debug:
-    msg: "Id {{ item.key }} count: {{ item.value.instances_per_server }} factor: {{item.value.replication_factor | default('1')}}"
+    msg: "Id: {{ item.key }} Count: {{ item.value.instances_per_server }} Replication factor: {{item.value.replication_factor | default('1')}}"
   loop: "{{ lookup('ansible.builtin.dict', replicasets, wantlist=True) }}"
   run_once: true
 
