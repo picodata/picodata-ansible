@@ -17,8 +17,7 @@
     block: |
       [Service]
       Environment=PICODATA_LISTEN={{ ansible_default_ipv4.address }}:{{ first_port + (ansible_loop.index-1)*100 + item - 1 }}
-      Environment=PICODATA_INIT_REPLICATION_FACTOR={{ init_replication_factor }}
-      # Environment=PICODATA_REPLICASET_ID={{ replicaset.key }}
+      Environment=PICODATA_INSTANCE_TIER={{ replicaset.key }}
   loop: "{{ range(1, replicaset.value.instances_per_server + 1) | list }}"
 
 - name: Enable systemd services

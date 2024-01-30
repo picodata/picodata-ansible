@@ -1,0 +1,5 @@
+tier:
+{% for name, params in replicasets|items %}
+  {{ name }}:
+    replication_factor: {{ params.replication_factor | default(1) }}
+{% endfor %}

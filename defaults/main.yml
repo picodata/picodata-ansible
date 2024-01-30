@@ -7,6 +7,8 @@ install_packages: true
 cluster_id: null
 audit: false
 log_level: info
+
+conf_dir: '/etc/picodata'
 data_dir: '/var/lib/picodata'
 run_dir: '/var/run/picodata'
 log_dir: '/var/log/picodata'

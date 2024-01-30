@@ -23,6 +23,7 @@
     name: '{{ item }}'
     state: absent
   loop:
+    - '{{ conf_dir }}'
     - '{{ data_dir }}'
     - '{{ run_dir }}'
     - '{{ log_dir }}'

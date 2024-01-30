@@ -39,11 +39,18 @@
     group: '{{ group }}'
   loop:
     - '{{ run_dir }}'
+    - '{{ conf_dir }}/{{ cluster_id }}'
     - '{{ log_dir }}/{{ cluster_id }}'
 
 - name: Set failure domain
   ansible.builtin.set_fact:
     fd: 'DC={{ group_names }},HOST={{ inventory_hostname }}'
+
+- name: Generate tier file
+  ansible.builtin.template:
+    src: tiers.j2
+    dest: '{{ conf_dir }}/{{ cluster_id }}/tiers.conf'
+    force: true
 
 - name: Generate template for units
   ansible.builtin.template:
