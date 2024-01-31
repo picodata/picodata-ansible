@@ -1,0 +1,8 @@
+[Service]
+Environment=PICODATA_LISTEN={{ listen_ip }}:{{ first_bin_port + (ansible_loop.index-1)*100 + item - 1 }}
+Environment=PICODATA_INSTANCE_TIER={{ tier.key }}
+Environment=PICODATA_HTTP_LISTEN={{ listen_ip }}:{{ first_http_port + (ansible_loop.index-1)*100 + item - 1 }}
+
+{% if tier.value.memtx_memory is defined %}
+Environment=PICODATA_SCRIPT={{ conf_dir }}/{{ cluster_id }}/{{ tier.key }}.conf
+{% endif %}

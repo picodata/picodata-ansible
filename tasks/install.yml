@@ -7,7 +7,7 @@
 - name: Print topology
   ansible.builtin.debug:
     msg: "Id: {{ item.key }} Count: {{ item.value.instances_per_server }} Replication factor: {{item.value.replication_factor | default('1')}}"
-  loop: "{{ lookup('ansible.builtin.dict', replicasets, wantlist=True) }}"
+  loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
   run_once: true
 
 - name: Debug
@@ -48,36 +48,20 @@
 
 - name: Generate tier file
   ansible.builtin.template:
-    src: tiers.j2
+    src: tiers-conf.j2
     dest: '{{ conf_dir }}/{{ cluster_id }}/tiers.conf'
     force: true
 
 - name: Generate template for units
   ansible.builtin.template:
-    src: systemd-unit-temlpate.j2
+    src: systemd-unit-service.j2
     dest: '{{ systemd_dir }}/{{ cluster_id }}@.service'
     force: true
 
 - name: Setup systemd units
   ansible.builtin.include_tasks:
     file: systemd_setup.yml
-  loop: "{{ lookup('ansible.builtin.dict', replicasets, wantlist=True) }}"
+  loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
   loop_control:
-    loop_var: replicaset
+    loop_var: tier
     extended: true
-
-# block
-# - name: Add all hosts running this playbook to the done group
-#   ansible.builtin.add_host:
-#     name: '{{ item.key }}'
-#     groups: '{{ item.key }}'
-#   loop: "{{ lookup('ansible.builtin.dict', replicasets) }}"
-
-# # Items from loop can be used in when: statements
-# - name: set_fact when alice in key
-#   ansible.builtin.set_fact:
-#     alice_exists: true
-#   loop: "{{ lookup('ansible.builtin.dict', users) }}"
-#   when: "'alice' in item.key"
-
-# end Example

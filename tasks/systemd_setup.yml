@@ -1,51 +1,40 @@
 ---
 
-# - name: Debug {{ replicaset.key }}
+# - name: Debug {{ tier.key }}
 #   ansible.builtin.debug:
-#     msg: '{{ cluster_id }}@{{ replicaset.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}'
-#   loop: "{{ range(1, replicaset.value.instances_per_server + 1) | list }}"
+#     msg: '{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}'
+#   loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
 
 - name: Set init-replication-factor
   ansible.builtin.set_fact:
-    init_replication_factor: '{{ replicaset.value.replication_factor | default(1) }}'
+    init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
   run_once: true
 
-- name: Create script sile for instances in replicaset {{ replicaset.key }}
-  ansible.builtin.blockinfile:
-    path: '{{ conf_dir }}/{{ cluster_id }}/{{ replicaset.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.conf'
-    create: true
-    marker: '-- {mark} ANSIBLE MANAGED BLOCK'
-    block: |
-      box.cfg{ memtx_memory = {{ replicaset.value.memtx_memory | human_to_bytes }} }
-  loop: "{{ range(1, replicaset.value.instances_per_server + 1) | list }}"
-  when: replicaset.value.memtx_memory is defined
+- name: Create script file for instances in tier {{ tier.key }}
+  ansible.builtin.template:
+    src: instance-script.j2
+    dest: '{{ conf_dir }}/{{ cluster_id }}/{{ tier.key }}.conf'
+    force: true
+  when: tier.value.memtx_memory is defined
 
-- name: Create env file for instances in replicaset {{ replicaset.key }}
-  ansible.builtin.blockinfile:
-    path: '{{ systemd_dir }}/{{ cluster_id }}@{{ replicaset.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.service.d/env.conf'
-    create: true
-    block: |
-      [Service]
-      Environment=PICODATA_LISTEN={{ listen_ip }}:{{ first_bin_port + (ansible_loop.index-1)*100 + item - 1 }}
-      Environment=PICODATA_INSTANCE_TIER={{ replicaset.key }}
-      Environment=PICODATA_HTTP_LISTEN={{ listen_ip }}:{{ first_http_port + (ansible_loop.index-1)*100 + item - 1 }}
-  loop: "{{ range(1, replicaset.value.instances_per_server + 1) | list }}"
+- name: Create dirs for instances in tier {{ tier.key }}
+  ansible.builtin.file:
+    path: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.service.d'
+    state: directory
+  loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
 
-- name: Add additional variables if defined in replicaset {{ replicaset.key }}
-  ansible.builtin.blockinfile:
-    path: '{{ systemd_dir }}/{{ cluster_id }}@{{ replicaset.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.service.d/env.conf'
-    insertafter: "^\\[Service\\]$"
-    marker: '# {mark} ANSIBLE MANAGED ADDITIONAL BLOCK'
-    block: |
-      Environment=PICODATA_SCRIPT={{ conf_dir }}/{{ cluster_id }}/{{ replicaset.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.conf
-  loop: "{{ range(1, replicaset.value.instances_per_server + 1) | list }}"
-  when: replicaset.value.memtx_memory is defined
+- name: Create env file for instances in tier {{ tier.key }}
+  ansible.builtin.template:
+    src: systemd-unit-env.j2
+    dest: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.service.d/env.conf'
+    force: true
+  loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
 
-- name: Enable systemd services for replicaset {{ replicaset.key }}
+- name: Enable systemd services for tier {{ tier.key }}
   ansible.builtin.systemd_service:
-    name: '{{ cluster_id }}@{{ replicaset.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}'
+    name: '{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}'
     enabled: true
     state: started
     daemon_reload: true
     force: true
-  loop: "{{ range(1, replicaset.value.instances_per_server + 1) | list }}"
+  loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
