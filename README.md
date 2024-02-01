@@ -13,20 +13,21 @@ picodata-ansible
 
 Переменные по умолчанию располагаются в файле defaults/main.yml, эти переменные можно переопределять в инвентарном файле
 
-Помимо переменных по умолчанию используется словарь replicasets с указанием внутри 
-- имени репликасета (например router)
+Помимо переменных по умолчанию используется словарь tiers с указанием внутри 
+- имени тира (например router)
 - количество инстансов на каждом сервере (instances_per_server)
-- фактор репликации (replication_factor), по умолчанию 1 - пока эта переменная определяется на весь кластер и берется из первого инстанса
+- фактор репликации (replication_factor) для тира, по умолчанию 1
 
 Пример:
 ```
-replicasets:
-  router:  # replicaset-id ???
-    instances_per_server: 1 # How many replicasets we want, by default equal 1
-    replication_factor: 2 # Number of instances in replicaset, default 1
-  storage: # replicaset-id ???
-    instances_per_server: 1 # How many replicasets we want, by default equal 1
-    replication_factor: 3 # Number of instances in replicaset, default 1
+tiers:                                                                        # описание тиров
+  router:                                                                           # имя тира
+    instances_per_server: 1                                                         # сколько инстансов запустить на каждом сервере
+    replication_factor: 2                                                           # количество инстансов в одном репликасете, по умолчанию 1
+  storage:                                                                        # имя тира
+    instances_per_server: 1                                                       # сколько инстансов запустить на каждом сервере
+    replication_factor: 1                                                         # количество инстансов в одном репликасете, по умолчанию 1
+    memtx_memory: '256M'                                                          # размер памяти в human-формате, выделяемый инстансу в тире, по умолчанию 32M
 ```
 
 
@@ -50,6 +51,8 @@ all:
     cluster_id: test               # имя кластера
     audit: false                   # отключение айдита
     log_level: info                # уровень отладки
+
+    conf_dir: '/etc/picodata'      # каталог для хранения конфигурационных файлов
     data_dir: '/var/lib/picodata'  # каталог для хранения данных
     run_dir: '/var/run/picodata'   # каталог для хранения sock-файлов
     log_dir: '/var/log/picodata'   # каталог для логов и файлов аудита
@@ -61,14 +64,14 @@ all:
     first_bin_port: 13301     # начальный бинарный порт для первого инстанса (он же main_peer)
     first_http_port: 18001    # начальный http-порт для первого инстанса для веб-интерфейса
 
-    replicasets:                                                                        # описание репликасетов
-      router:                                                                           # имя репликасета
+    tiers:                                                                        # описание тиров
+      router:                                                                           # имя тира
         instances_per_server: 1                                                         # сколько инстансов запустить на каждом сервере
         replication_factor: 2                                                           # количество инстансов в одном репликасете, по умолчанию 1
-      storage:                                                                        # имя репликасета
+      storage:                                                                        # имя тира
         instances_per_server: 1                                                       # сколько инстансов запустить на каждом сервере
         replication_factor: 1                                                         # количество инстансов в одном репликасете, по умолчанию 1
-        memtx_memory: '256M'                                                          # размер памяти в human-формате, выделяемый инстансу в репликасете, по умолчанию 32M
+        memtx_memory: '256M'                                                          # размер памяти в human-формате, выделяемый инстансу в тире, по умолчанию 32M
 
 DC1:                                # Датацентр (failure_domain)
   hosts:                            # серверы в датацентре
@@ -80,8 +83,6 @@ DC2: # failure_domain              # Датацентр (failure_domain)
     server-2-1:                    # имя сервера в инвентарном файле
       ansible_host: 192.168.19.22  # IP адрес или fqdn если не совпадает с предыдущей строкой
 ```
-
-
 
 Пример роли:
 ```
