@@ -1,18 +1,7 @@
-- name: Set peer instance
-  ansible.builtin.set_fact:
-    main_peer: '{{ listen_ip }}'
-  run_once: true
-  when: main_peer is undefined
-
 - name: Print topology
   ansible.builtin.debug:
     msg: "Id: {{ item.key }} Count: {{ item.value.instances_per_server }} Replication factor: {{item.value.replication_factor | default('1')}}"
   loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
-  run_once: true
-
-- name: Debug
-  ansible.builtin.debug:
-    msg: 'main_peer is {{ main_peer }}'
   run_once: true
 
 - name: Check picodata is installed
@@ -45,6 +34,22 @@
 - name: Set failure domain
   ansible.builtin.set_fact:
     fd: 'DC={{ group_names }},HOST={{ inventory_hostname }}'
+
+- name: Set server failure domain
+  ansible.builtin.set_fact:
+    target_hosts: "none"
+  when: target_hosts is undefined
+
+- name: Set peer instance
+  ansible.builtin.set_fact:
+    main_peer: '{{ listen_ip }}'
+  run_once: true
+  when: main_peer is undefined
+
+- name: Debug
+  ansible.builtin.debug:
+    msg: 'main_peer is {{ main_peer }}'
+  run_once: true
 
 - name: Generate tier file
   ansible.builtin.template:

@@ -1,40 +1,39 @@
 ---
 
-# - name: Debug {{ tier.key }}
-#   ansible.builtin.debug:
-#     msg: '{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}'
-#   loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
+- block:
 
-- name: Set init-replication-factor
-  ansible.builtin.set_fact:
-    init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
-  run_once: true
+  - name: Set init-replication-factor
+    ansible.builtin.set_fact:
+      init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
+    run_once: true
 
-- name: Create script file for instances in tier {{ tier.key }}
-  ansible.builtin.template:
-    src: instance-script.j2
-    dest: '{{ conf_dir }}/{{ cluster_id }}/{{ tier.key }}.conf'
-    force: true
-  when: tier.value.memtx_memory is defined
+  - name: Create script file for instances in tier {{ tier.key }}
+    ansible.builtin.template:
+      src: instance-script.j2
+      dest: '{{ conf_dir }}/{{ cluster_id }}/{{ tier.key }}.conf'
+      force: true
+    when: tier.value.memtx_memory is defined
 
-- name: Create dirs for instances in tier {{ tier.key }}
-  ansible.builtin.file:
-    path: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.service.d'
-    state: directory
-  loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
+  - name: Create dirs for instances in tier {{ tier.key }}
+    ansible.builtin.file:
+      path: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.service.d'
+      state: directory
+    loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
 
-- name: Create env file for instances in tier {{ tier.key }}
-  ansible.builtin.template:
-    src: systemd-unit-env.j2
-    dest: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.service.d/env.conf'
-    force: true
-  loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
+  - name: Create env file for instances in tier {{ tier.key }}
+    ansible.builtin.template:
+      src: systemd-unit-env.j2
+      dest: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}.service.d/env.conf'
+      force: true
+    loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
 
-- name: Enable systemd services for tier {{ tier.key }}
-  ansible.builtin.systemd_service:
-    name: '{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}'
-    enabled: true
-    state: started
-    daemon_reload: true
-    force: true
-  loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
+  - name: Enable systemd services for tier {{ tier.key }}
+    ansible.builtin.systemd_service:
+      name: '{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + item }}'
+      enabled: true
+      state: started
+      daemon_reload: true
+      force: true
+    loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
+
+  when: target_hosts in tier.value.target_hosts | default(['none'])
