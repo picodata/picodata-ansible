@@ -63,6 +63,10 @@
     dest: '{{ systemd_dir }}/{{ cluster_id }}@.service'
     force: true
 
+- name: Init instance number on server
+  ansible.builtin.set_fact:
+    last_port_num: '{{ first_bin_port }}'
+
 - name: Setup systemd units
   ansible.builtin.include_tasks:
     file: systemd_setup.yml
