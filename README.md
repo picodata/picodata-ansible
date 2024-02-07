@@ -110,23 +110,23 @@ DC3:                               # Датацентр (failure_domain)
       name: picodata-ansible
 ```
 
-## Usage this role
+## Использование роли
 
-You need to install this role using ansible-galaxy:
+Вы можете инсталлировать роль через ansible-galaxy:
 
 
 ```bash
-ansible-galaxy install git+git@git.picodata.io:picodata/devops/infra/nginx.git
+ansible-galaxy install git+git@git.picodata.io:picodata/picodata/picodata-ansible.git
 ```
 
-or add it to requirements.yml:
+или добавить ее в файл requirements.yml:
 
 ```yml
-- src: git@git.picodata.io:picodata/devops/infra/nginx.git
+- src: git@git.picodata.io:picodata/picodata/picodata-ansible.git
   scm: git
 ```
 
-then run
+и затем выполнить команду
 ```bash
 ansible-galaxy install -fr requirements.yml
 ```
