@@ -2,7 +2,7 @@
 
 - block:
 
-  - name: Set init-replication-factor
+  - name: Set init-replication-factor for tier {{ tier.key }}
     ansible.builtin.set_fact:
       init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
     run_once: true
@@ -12,11 +12,15 @@
       src: instance-script.j2
       dest: '{{ conf_dir }}/{{ cluster_id }}/{{ tier.key }}.conf'
       force: true
-    when: tier.value.memtx_memory is defined
+    loop_control:
+      loop_var: tnt_param
+    when: tier.value.tnt_params is defined
 
-  - name: Create env file for instances in tier {{ tier.key }}
+  - name: Setup instances in tier {{ tier.key }}
     ansible.builtin.include_tasks:
-      file: systemd_units.yml
+      file: instances_setup.yml
     loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
+    loop_control:
+      loop_var: instance_id
 
   when: target_hosts in tier.value.target_hosts | default(['none'])

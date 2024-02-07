@@ -27,7 +27,8 @@ tiers:                                                                        # 
   storage:                                                                        # имя тира
     instances_per_server: 1                                                       # сколько инстансов запустить на каждом сервере
     replication_factor: 1                                                         # количество инстансов в одном репликасете, по умолчанию 1
-    memtx_memory: '256M'                                                          # размер памяти в human-формате, выделяемый инстансу в тире, по умолчанию 32M
+    tnt_params:                                                               # параметры для tarantool (box.cfg), выставляются на весь тир
+      memtx_memory: '256M'                                                    # размер памяти в human-формате, выделяемый инстансу в тире, по умолчанию 32M
 ```
 
 
@@ -74,7 +75,9 @@ all:
       storage:                                                                        # имя тира
         instances_per_server: 2                                                       # сколько инстансов запустить на каждом сервере
         replication_factor: 2                                                         # количество инстансов в одном репликасете, по умолчанию 1
-        memtx_memory: '256M'                                                          # размер памяти в human-формате, выделяемый инстансу в тире, по умолчанию 32M
+        tnt_params:                                                               # параметры для tarantool (box.cfg), выставляются на весь тир
+          memtx_memory: '256M'                                                    # размер памяти в human-формате, выделяемый инстансу в тире, по умолчанию 32M
+          checkpoint_interval: 7200                                               # интревал времени для генерации снэпшота в секундах
 
 DC1:                                # Датацентр (failure_domain)
   hosts:                            # серверы в датацентре
@@ -106,6 +109,28 @@ DC3:                               # Датацентр (failure_domain)
     ansible.builtin.import_role:
       name: picodata-ansible
 ```
+
+## Usage this role
+
+You need to install this role using ansible-galaxy:
+
+
+```bash
+ansible-galaxy install git+git@git.picodata.io:picodata/devops/infra/nginx.git
+```
+
+or add it to requirements.yml:
+
+```yml
+- src: git@git.picodata.io:picodata/devops/infra/nginx.git
+  scm: git
+```
+
+then run
+```bash
+ansible-galaxy install -fr requirements.yml
+```
+
 
 Лицензия
 -------

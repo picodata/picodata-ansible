@@ -1,1 +1,5 @@
-box.cfg{ memtx_memory = {{ tier.value.memtx_memory | human_to_bytes }} }
+{% for key, value in tier.value.tnt_params.items() %}
+box.cfg{ {{ key }} = {{ value | human_to_bytes if key in [ "memtx_memory", "sql_cache_size", "wal_queue_max_size", "wal_max_size"
+                                                           "vinyl_cache", "net_msg_max", "vinyl_max_tuple_size", "memtx_max_tuple_size",
+                                                           "vinyl_page_size", "readahead" ] else value }} }
+{% endfor %}

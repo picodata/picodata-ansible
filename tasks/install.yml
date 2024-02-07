@@ -65,11 +65,11 @@
 
 - name: Init instance number on server
   ansible.builtin.set_fact:
-    last_port_num: '{{ first_bin_port }}'
+    instance_num: 0
 
-- name: Setup systemd units
+- name: Tiers setup
   ansible.builtin.include_tasks:
-    file: systemd_setup.yml
+    file: tiers_setup.yml
   loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
   loop_control:
     loop_var: tier

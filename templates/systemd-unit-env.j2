@@ -1,9 +1,9 @@
 [Service]
-Environment=PICODATA_LISTEN=0.0.0.0:{{ last_port_num }}
-Environment=PICODATA_ADVERTISE={{ listen_ip }}:{{ last_port_num }}
+Environment=PICODATA_LISTEN=0.0.0.0:{{ first_bin_port + instance_num|int }}
+Environment=PICODATA_ADVERTISE={{ listen_ip }}:{{ first_bin_port + instance_num|int }}
 Environment=PICODATA_INSTANCE_TIER={{ tier.key }}
-Environment=PICODATA_HTTP_LISTEN=0.0.0.0:{{ last_port_num }}
+Environment=PICODATA_HTTP_LISTEN=0.0.0.0:{{ first_http_port + instance_num|int }}
 
-{% if tier.value.memtx_memory is defined %}
+{% if tier.value.tnt_params is defined %}
 Environment=PICODATA_SCRIPT={{ conf_dir }}/{{ cluster_id }}/{{ tier.key }}.conf
 {% endif %}

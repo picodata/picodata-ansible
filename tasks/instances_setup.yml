@@ -1,0 +1,26 @@
+- name: Create dirs for instances in tier {{ tier.key }}
+  ansible.builtin.file:
+    path: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d'
+    state: directory
+
+- name: Create env file for instances in tier {{ tier.key }}
+  ansible.builtin.template:
+    src: systemd-unit-env.j2
+    dest: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d/env.conf'
+    force: true
+
+- name: Enable systemd services for tier {{ tier.key }}
+  ansible.builtin.systemd_service:
+    name: '{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
+    enabled: true
+    state: started
+    daemon_reload: true
+    force: true
+
+- name: Calculate next port number on server
+  ansible.builtin.set_fact:
+    instance_num: '{{ instance_num|int + 1}}'
+
+- name: Print next port number on server
+  ansible.builtin.debug:
+    msg: 'instance_num is {{ instance_num }}'
