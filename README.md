@@ -120,13 +120,13 @@ DC3:                               # Датацентр (failure_domain)
 
 
 ```bash
-ansible-galaxy install git+git@git.picodata.io:picodata/picodata/picodata-ansible.git
+ansible-galaxy install git+https://git.picodata.io/picodata/picodata/picodata-ansible.git
 ```
 
 или добавить ее в файл requirements.yml:
 
 ```yml
-- src: git@git.picodata.io:picodata/picodata/picodata-ansible.git
+- src: https://git.picodata.io/picodata/picodata/picodata-ansible.git
   scm: git
 ```
 
