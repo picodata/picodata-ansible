@@ -27,7 +27,6 @@
     owner: '{{ user }}'
     group: '{{ group }}'
   loop:
-    - '{{ run_dir }}'
     - '{{ conf_dir }}/{{ cluster_id }}'
     - '{{ log_dir }}/{{ cluster_id }}'
 

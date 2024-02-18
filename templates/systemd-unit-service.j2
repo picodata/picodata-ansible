@@ -19,8 +19,13 @@ Environment=PICODATA_FAILURE_DOMAIN={{ fd }}
 Environment=PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_id }}/audit-%i.log
 Environment=PICODATA_LOG_LEVEL={{ log_level }}
 Environment=PICODATA_INIT_CFG={{ conf_dir }}/{{ cluster_id }}/tiers.conf
+{% if log_to == "file" %}
+Environment=PICODATA_LOG={{ log_dir }}/{{ cluster_id }}/%i.log
+{% endif %}
+
 
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}.%i'
+ExecStartPre=/bin/sh -c 'mkdir -p {{ run_dir }}'
 
 # Unlimited cores size
 LimitCORE=infinity

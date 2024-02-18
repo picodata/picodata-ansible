@@ -23,4 +23,4 @@
     loop_control:
       loop_var: instance_id
 
-  when: target_hosts in tier.value.target_hosts | default(['none'])
+  when: target_hosts in tier.value.target_hosts | default(['none']) or tier.value.target_hosts is undefined

@@ -56,6 +56,7 @@ all:
     cluster_id: test               # имя кластера
     audit: false                   # отключение айдита
     log_level: info                # уровень отладки
+    log_to: file                   # вывод логов в файлы, а не в journald
 
     conf_dir: '/etc/picodata'      # каталог для хранения конфигурационных файлов
     data_dir: '/var/lib/picodata'  # каталог для хранения данных
