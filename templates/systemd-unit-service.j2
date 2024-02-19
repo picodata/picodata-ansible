@@ -15,13 +15,13 @@ Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_id }}.%i.sock
 Environment=PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_id }}.%i
 Environment=PICODATA_INSTANCE_ID=%i
 Environment=PICODATA_PEER={{ main_peer }}:{{ first_bin_port }}
-Environment=PICODATA_FAILURE_DOMAIN={{ fd }}
 Environment=PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_id }}/audit-%i.log
 Environment=PICODATA_LOG_LEVEL={{ log_level }}
 Environment=PICODATA_INIT_CFG={{ conf_dir }}/{{ cluster_id }}/tiers.conf
 {% if log_to == "file" %}
 Environment=PICODATA_LOG={{ log_dir }}/{{ cluster_id }}/%i.log
 {% endif %}
+Environment=PICODATA_FAILURE_DOMAIN={% if fd_uniq_per_instance %}I=%i{% else %}{{ fd }}{% endif %}
 
 
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}.%i'

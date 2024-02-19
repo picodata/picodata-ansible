@@ -33,6 +33,12 @@
 - name: Set failure domain
   ansible.builtin.set_fact:
     fd: 'DC={{ group_names }},HOST={{ inventory_hostname }}'
+  when: not fd_uniq_per_instance
+
+- name: Debug failure domain
+  ansible.builtin.debug:
+    msg: 'fd is {{ fd }}'
+  when: not fd_uniq_per_instance
 
 - name: Set server failure domain
   ansible.builtin.set_fact:
@@ -45,7 +51,7 @@
   run_once: true
   when: main_peer is undefined
 
-- name: Debug
+- name: Debug main_peer
   ansible.builtin.debug:
     msg: 'main_peer is {{ main_peer }}'
   run_once: true
