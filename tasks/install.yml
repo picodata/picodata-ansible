@@ -42,8 +42,8 @@
 
 - name: Set server failure domain
   ansible.builtin.set_fact:
-    target_hosts: "none"
-  when: target_hosts is undefined
+    host_group: "none"
+  when: host_group is undefined
 
 - name: Set peer instance
   ansible.builtin.set_fact:
