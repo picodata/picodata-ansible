@@ -1,5 +1,6 @@
-tier:
-{% for name, params in tiers.items() %}
+cluster:
+  tiers:
+  {% for name, params in tiers.items() %}
   {{ name }}:
-    replication_factor: {{ params.replication_factor | default(1) }}
-{% endfor %}
+      replication_factor: {{ params.replication_factor | default(1) }}
+  {% endfor %}
