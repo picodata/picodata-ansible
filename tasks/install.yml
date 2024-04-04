@@ -68,6 +68,17 @@
     dest: '{{ systemd_dir }}/{{ cluster_id }}@.service'
     force: true
 
+- name: Generate service-password file
+  ansible.builtin.lineinfile:
+    path: '{{ conf_dir }}/{{ cluster_id }}/.service-password'
+    regexp: '.*'
+    line: '{{ service_password }}'
+    create: true
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    mode: '0400'    
+  when: service_password is defined
+
 - name: Init instance number on server
   ansible.builtin.set_fact:
     instance_num: 0
