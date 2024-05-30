@@ -47,7 +47,7 @@
 
 - name: Set peer instance
   ansible.builtin.set_fact:
-    main_peer: '{{ listen_ip }}'
+    main_peer: '{{ listen_address }}'
   run_once: true
   when: main_peer is undefined
 

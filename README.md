@@ -69,7 +69,7 @@ all:
 
     purge: true   # при очистке кластера удалять в том числе все данные и логи с сервера
 
-    listen_ip: '{{ ansible_eth1.ipv4.address }}'     # ip-адрес, который будет слушать инстанс, по умолчанию ansible_default_ipv4.address
+    listen_address: '{{ ansible_fqdn }}'     # адрес, который будет слушать инстанс, по умолчанию ansible_fqdn
 
     first_bin_port: 13301     # начальный бинарный порт для первого инстанса (он же main_peer)
     first_http_port: 18001    # начальный http-порт для первого инстанса для веб-интерфейса

@@ -17,7 +17,7 @@ log_to: 'syslog'
 first_bin_port: 13301
 first_http_port: 18001
 
-listen_ip: '{{ ansible_default_ipv4.address }}'
+listen_address: '{{ ansible_fqdn }}'
 
 systemd_dir: '/etc/systemd/system'
 
