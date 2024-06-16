@@ -15,6 +15,11 @@
     install_packages: true
   when: result.rc != 0
 
+- name: Set flag for install picodata needed
+  ansible.builtin.set_fact:
+    install_packages: true
+  when: result.rc != 0
+
 - name: Install picodata packages
   ansible.builtin.import_tasks:
     file: install_packages.yml
@@ -29,6 +34,14 @@
   loop:
     - '{{ conf_dir }}/{{ cluster_id }}'
     - '{{ log_dir }}/{{ cluster_id }}'
+    - '{{ data_dir }}'
+    - '{{ run_dir }}'
+
+- name: 'Configure rundir'
+  copy:
+    content: 'd {{ run_dir }} 0755 {{ user }} {{ group }}'
+    dest: '/etc/tmpfiles.d/picodata.conf'
+    mode: 0644
 
 - name: Set failure domain
   ansible.builtin.set_fact:

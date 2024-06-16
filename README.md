@@ -1,15 +1,13 @@
-picodata-ansible
-=========
+# picodata-ansible
 
 Роль для разворачивания кластера picodata
 
-Требования
-------------
+## Требования
+
 
 Наличие подготовленных серверов с поддерживаемыми ОС (список см. https://picodata.io/download/) с необходимым количеством ресурсов из минимального расчета на 1 инстанс (без учета ресурсов для ОС): 1 CPU, 256 Mb RAM, 1Gb HDD
 
-Переменные роли
---------------
+## Переменные роли
 
 Переменные по умолчанию располагаются в файле defaults/main.yml, эти переменные можно переопределять в инвентарном файле
 
@@ -19,10 +17,10 @@ picodata-ansible
 - фактор репликации (`replication_factor`) для тира, по умолчанию 1
 - параметров запуска box.cfg инстансов тира (`tnt_params`)
 
-Выполните роль с указанием переменной `force_remove` для удаления кластера.
+Выполните роль с указанием тэга `remove` для удаления кластера.
 Если дополнительно будет выставлена переменная `purge`, то кластер удалится вместе с данными.
 
-Пример:
+Пример указания переменных:
 ```
 tiers:                              # описание тиров
   router:                           # имя тира router
@@ -40,16 +38,39 @@ tiers:                              # описание тиров
 
 Полное описание всех переменных роли см. в [docs/variables.md](docs/variables.md)
 
-Зависимости
-------------
+## Зависимости
 
 Пока нет
 
-Примеры
+
+## Использование роли
+
+Вы можете инсталлировать роль через ansible-galaxy:
+
+
+```bash
+ansible-galaxy install git+https://git.picodata.io/picodata/picodata/picodata-ansible.git
+```
+
+или добавить ее в файл requirements.yml:
+
+```yml
+- src: https://git.picodata.io/picodata/picodata/picodata-ansible.git
+  scm: git
+```
+
+и затем выполнить команду
+```bash
+ansible-galaxy install -fr requirements.yml
+```
+
+## Примеры
 ----------------
 
-Пример инвентарного файла для 2-х серверов, расположенных в 2 дата центрах DC1 и DC2
-```
+### Инвентарный файл
+
+Пример инвентарного файла для 2-х серверов, расположенных в 2 дата центрах DC1 и DC2 `hosts.yml`
+```yml
 all:
   vars:
     ansible_user: vagrant      # пользователь для ssh-доступа к серверам           
@@ -96,8 +117,10 @@ DC3:                               # Датацентр (failure_domain)
       ansible_host: 192.168.19.23  # IP адрес или fqdn если не совпадает с предыдущей строкой
 ```
 
-Пример роли:
-```
+## Плэйбук
+
+Пример плэйбука `run.yml`:
+```yml
 ---
 - name: Deploy picodata cluster
   hosts: all
@@ -110,29 +133,37 @@ DC3:                               # Датацентр (failure_domain)
       name: picodata-ansible
 ```
 
-## Использование роли
+## Примеры команд запуска роли
 
-Вы можете инсталлировать роль через ansible-galaxy:
-
-
+Пример команды для установки кластера:
 ```bash
-ansible-galaxy install git+https://git.picodata.io/picodata/picodata/picodata-ansible.git
+ansible-playbook -i hosts.yml run.yml
 ```
 
-или добавить ее в файл requirements.yml:
+---
 
-```yml
-- src: https://git.picodata.io/picodata/picodata/picodata-ansible.git
-  scm: git
-```
-
-и затем выполнить команду
+Пример команды для удаления кластера:
 ```bash
-ansible-galaxy install -fr requirements.yml
+ansible-playbook -i hosts.yml run.yml -t remove
 ```
 
+---
 
-Лицензия
--------
+Пример команды для бэкапа кластера:
+```bash
+ansible-playbook -i hosts.yml run.yml -t backup
+```
+
+---
+
+Пример команды для восстановления кластера:
+```bash
+ansible-playbook -i hosts.yml run.yml -t restore
+```
+
+Полное описание всех тэгов роли см. в [docs/tags.md](docs/tags.md)
+
+
+## Лицензия
 
 BSD

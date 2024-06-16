@@ -2,11 +2,26 @@
 # tasks file for picodata-ansible
 
 - name: Install picodata
-  ansible.builtin.include_tasks:
+  ansible.builtin.import_tasks:
     file: install.yml
-  when: not force_remove
+  tags: [ install, restore_full ]
+
+- name: Install picodata packages
+  ansible.builtin.import_tasks:
+    file: install_packages.yml
+  tags: [ never, install_pkgs ]
 
 - name: Remove picodata
-  ansible.builtin.include_tasks:
+  ansible.builtin.import_tasks:
     file: remove.yml
-  when: force_remove
+  tags: [ never, remove ]
+
+- name: Backup picodata
+  ansible.builtin.import_tasks:
+    file: backup.yml
+  tags: [ never, backup ]
+
+- name: Restore picodata
+  ansible.builtin.import_tasks:
+    file: restore.yml
+  tags: [ never, restore, restore_full ]

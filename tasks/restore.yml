@@ -1,0 +1,54 @@
+- name: Copy utility files
+  ansible.builtin.copy:
+    src: '{{ item }}'
+    dest: '{{ ansible_user_dir }}'
+    mode: '0755'
+  loop:
+    - restore.sh
+
+- name: Get list of local backups
+  ansible.builtin.find:
+    paths: '{{ backup_fetch_dir }}'
+    depth: 1
+    file_type: directory
+    use_regex: yes
+    patterns: ['^[0-9]{14}$']    
+  register: restore_dirs
+  run_once: true
+  delegate_to: localhost
+  when: restore_dir is undefined
+
+- name: Set backup_dir
+  ansible.builtin.set_fact:
+    restore_dir: '{{ restore_dirs.files | map(attribute="path") | list | max | basename }}'
+    backup_fetch: true
+  when: restore_dir is undefined
+
+- name: Debug
+  debug:
+    msg: 'restore_dir: {{ restore_dir }}'
+
+- name: Create dir on remote hosts
+  ansible.builtin.file:
+    path: '{{ backup_dir }}/{{ restore_dir }}'
+    state: directory
+  when: backup_fetch
+
+- name: Unpack backup
+  ansible.builtin.unarchive:
+    src: '{{ backup_fetch_dir }}/{{ restore_dir }}/{{ inventory_hostname }}.tar'
+    dest: '{{ backup_dir }}/{{ restore_dir }}'
+    owner: '{{ user }}'
+    group: '{{ group }}'
+  when: backup_fetch
+
+- name: Restore data
+  ansible.builtin.command:
+    cmd: '{{ ansible_user_dir }}/restore.sh -n {{ cluster_id }} -d {{ data_dir }} -b {{ backup_dir }}/{{ restore_dir }}'
+
+- name: Remove utility files
+  ansible.builtin.file:
+    path: '{{ ansible_user_dir }}/{{ item }}'
+    state: absent
+  loop:
+    - restore.sh
