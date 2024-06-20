@@ -1,6 +1,6 @@
 cluster:
   cluster_id: {{ cluster_id }}
-  tiers:
+  tier:
   {% for name, params in tiers.items() %}
   {{ name }}:
       replication_factor: {{ params.replication_factor | default(1) }}
