@@ -19,6 +19,7 @@ backup_fetch: true
 
 first_bin_port: 13301
 first_http_port: 18001
+first_pg_port: 15001
 
 listen_address: '{{ ansible_fqdn }}'
 

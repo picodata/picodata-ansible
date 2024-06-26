@@ -4,4 +4,10 @@ cluster:
   {% for name, params in tiers.items() %}
   {{ name }}:
       replication_factor: {{ params.replication_factor | default(1) }}
+      can_vote: {{ params.can_vote | default(true) }}
   {% endfor %}
+
+{% if tier.value.config is defined %}
+instance:
+  {{ tier.value.config | to_nice_yaml(indent=2, sort_keys=false) | indent(width=2) }}
+{% endif %}

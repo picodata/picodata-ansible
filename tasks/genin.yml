@@ -1,0 +1,19 @@
+---
+# tasks for generate list of instances
+
+- name: Init start values
+  ansible.builtin.set_fact:
+    instance_num: 0
+    instances_on_host: []
+
+- name: Tiers loop
+  ansible.builtin.include_tasks:
+    file: genin_tiers.yml
+  loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
+  loop_control:
+    loop_var: tier
+    extended: true
+
+- name: Debug instances_on_host
+  ansible.builtin.debug:
+    var: instances_on_host

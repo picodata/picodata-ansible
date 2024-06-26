@@ -1,0 +1,10 @@
+---
+# subtasks for generate list of instances
+
+- name: Instances in tier {{ tier.key }} loop
+  ansible.builtin.include_tasks:
+    file: genin_instances.yml
+  loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
+  loop_control:
+    loop_var: instance_id
+  when: host_group in tier.value.host_groups | default(['none']) or tier.value.host_groups is undefined

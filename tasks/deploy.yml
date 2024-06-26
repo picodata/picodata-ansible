@@ -1,3 +1,6 @@
+---
+# tasks for deploy cluster
+
 - name: Print topology
   ansible.builtin.debug:
     msg: "Id: {{ item.key }} Count: {{ item.value.instances_per_server }} Replication factor: {{item.value.replication_factor | default('1')}}"
@@ -15,10 +18,10 @@
     install_packages: true
   when: result.rc != 0
 
-- name: Set flag for install picodata needed
+- name: Unset flag for install picodata if exists
   ansible.builtin.set_fact:
-    install_packages: true
-  when: result.rc != 0
+    install_packages: false
+  when: result.rc == 0
 
 - name: Install picodata packages
   ansible.builtin.import_tasks:
@@ -69,12 +72,6 @@
     msg: 'main_peer is {{ main_peer }}'
   run_once: true
 
-- name: Generate tier file
-  ansible.builtin.template:
-    src: tiers-conf.j2
-    dest: '{{ conf_dir }}/{{ cluster_id }}/tiers.conf'
-    force: true
-
 - name: Generate template for units
   ansible.builtin.template:
     src: systemd-unit-service.j2
@@ -103,3 +100,14 @@
   loop_control:
     loop_var: tier
     extended: true
+
+- name: Generate list of instances per server
+  ansible.builtin.import_tasks:
+    file: genin.yml
+  when: admin_password is defined
+
+- name: Set admin password
+  ansible.builtin.shell:
+    cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5" | picodata admin {{ run_dir }}/{{ cluster_id }}.{{ instances_on_host[0] }}.sock
+  when: admin_password is defined
+  run_once: true

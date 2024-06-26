@@ -1,22 +1,31 @@
 ---
+# tasks for remove cluster
 
-- name: Stop systemd services
-  ansible.builtin.shell:
-    cmd: 'find {{ systemd_dir }}/multi-user.target.wants -maxdepth 1 -type l -name "{{ cluster_id }}@*" -exec systemctl disable --now {} \;'
-
-- name: Find all systemd units files
-  ansible.builtin.find:
-    paths: '{{ systemd_dir }}'
-    patterns: '{{ cluster_id }}@*,{{ cluster_id }}.*'
-    recurse: yes
-    file_type: any
-  register: result
+- name: Generate list of instances per server
+  ansible.builtin.import_tasks:
+    file: genin.yml
 
 - name: Remove systemd unit files
+  ansible.builtin.service:
+    name: '{{ cluster_id }}@{{ instance }}.service'
+    enabled: false
+    state: stopped
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
+
+- name: Remove systemd env dirs
   ansible.builtin.file:
-    name: '{{ item }}'
+    name: '{{ systemd_dir }}/{{ cluster_id }}@{{ instance }}.service.d'
     state: absent
-  loop: "{{ result | json_query('files[*].path') }}"
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
+
+- name: Remove systemd template file
+  ansible.builtin.file:
+    name: '{{ systemd_dir }}/{{ cluster_id }}@.service'
+    state: absent
 
 - name: Remove dirs if set purge variable
   ansible.builtin.file:

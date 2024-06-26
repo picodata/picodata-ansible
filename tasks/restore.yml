@@ -1,3 +1,6 @@
+---
+# tasks for restore cluster
+
 - name: Copy utility files
   ansible.builtin.copy:
     src: '{{ item }}'

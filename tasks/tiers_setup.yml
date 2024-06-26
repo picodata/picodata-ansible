@@ -1,4 +1,5 @@
 ---
+# subtasks for deploy cluster
 
 - block:
 
@@ -7,14 +8,13 @@
       init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
     run_once: true
 
-  - name: Create script file for instances in tier {{ tier.key }}
+  - name: Create config file for tier {{ tier.key }}
     ansible.builtin.template:
-      src: instance-script.j2
+      src: tiers-conf.j2
       dest: '{{ conf_dir }}/{{ cluster_id }}/{{ tier.key }}.conf'
       force: true
-    loop_control:
-      loop_var: tnt_param
-    when: tier.value.tnt_params is defined
+      owner: '{{ user }}'
+      group: '{{ group }}'
 
   - name: Setup instances in tier {{ tier.key }}
     ansible.builtin.include_tasks:

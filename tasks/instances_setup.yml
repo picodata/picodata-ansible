@@ -1,3 +1,6 @@
+---
+# subtasks for deploy cluster
+
 - name: Create dirs for instances in tier {{ tier.key }}
   ansible.builtin.file:
     path: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d'
@@ -20,7 +23,3 @@
 - name: Calculate next port number on server
   ansible.builtin.set_fact:
     instance_num: '{{ instance_num|int + 1}}'
-
-- name: Print next port number on server
-  ansible.builtin.debug:
-    msg: 'instance_num is {{ instance_num }}'

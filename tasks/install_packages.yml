@@ -1,4 +1,5 @@
 ---
+# tasks for add picodata repo and install package picodata
 
 - name: Get install script for Picodata repo
   ansible.builtin.get_url:

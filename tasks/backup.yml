@@ -1,3 +1,6 @@
+---
+# tasks for backup
+
 - name: Copy utility files on remote hosts
   ansible.builtin.copy:
     src: '{{ item }}'
@@ -6,23 +9,18 @@
   loop:
     - backup.sh
 
-- name: Get list of socks files
-  ansible.builtin.find:
-    paths: '{{ run_dir }}'
-    depth: 1
-    patterns: '*.sock'
-    file_type: any
-  register: sock_files
+- name: Generate list of instances per server
+  ansible.builtin.import_tasks:
+    file: genin.yml
 
-- name: Set file name and current time
+- name: Set current time
   ansible.builtin.set_fact:
-    instances: '{{ sock_files.files | map(attribute="path") | list }}'
     DT: '{{ "%Y%m%d%H%M%S" | strftime }}'
 
 - name: Backup instances
   ansible.builtin.command:
-    cmd: '{{ ansible_user_dir }}/backup.sh -s {{ instance }} -d {{ backup_dir }}/{{ DT }}'
-  loop: '{{ instances }}'
+    cmd: '{{ ansible_user_dir }}/backup.sh -s {{ run_dir }}/{{ cluster_id }}.{{ instance }}.sock -d {{ backup_dir }}/{{ DT }}'
+  loop: '{{ instances_on_host }}'
   loop_control:
     loop_var: instance
 

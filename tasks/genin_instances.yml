@@ -1,0 +1,14 @@
+---
+# subtasks for generate list of instances
+
+- name: Set instance name from {{ tier.key }}
+  ansible.builtin.set_fact:
+    instance_current: '{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
+
+- name: Add instance name from {{ tier.key }} to list
+  ansible.builtin.set_fact:
+    instances_on_host: '{{ instances_on_host + [ instance_current ] }}'
+
+- name: Calculate next port number on server
+  ansible.builtin.set_fact:
+    instance_num: '{{ instance_num|int + 1}}'
