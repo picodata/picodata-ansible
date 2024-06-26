@@ -79,7 +79,6 @@ all:
   vars:
     ansible_user: vagrant      # пользователь для ssh-доступа к серверам           
 
-    install_packages: false               # отключение необходимости установки пакета picodata
     repo: 'https://download.picodata.io'  # репозиторий, откуда инсталлировать пакет picodata
 
     cluster_id: test               # имя кластера

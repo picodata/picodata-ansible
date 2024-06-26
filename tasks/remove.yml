@@ -1,6 +1,11 @@
 ---
 # tasks for remove cluster
 
+- name: Set server failure domain
+  ansible.builtin.set_fact:
+    host_group: "none"
+  when: host_group is undefined
+
 - name: Generate list of instances per server
   ansible.builtin.import_tasks:
     file: genin.yml
