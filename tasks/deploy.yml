@@ -37,8 +37,8 @@
   loop:
     - '{{ conf_dir }}/{{ cluster_id }}'
     - '{{ log_dir }}/{{ cluster_id }}'
-    - '{{ data_dir }}'
-    - '{{ run_dir }}'
+    - '{{ data_dir }}/{{ cluster_id }}'
+    - '{{ run_dir }}/{{ cluster_id }}'
 
 - name: 'Configure rundir'
   copy:
@@ -108,6 +108,6 @@
 
 - name: Set admin password
   ansible.builtin.shell:
-    cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5" | picodata admin {{ run_dir }}/{{ cluster_id }}.{{ instances_on_host[0] }}.sock
+    cmd: echo "alter user \"admin\" password '{{ admin_password }}'" | picodata admin {{ run_dir }}/{{ cluster_id }}/{{ instances_on_host[0] }}.sock
   when: admin_password is defined
   run_once: true

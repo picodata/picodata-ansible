@@ -37,8 +37,8 @@
     name: '{{ item }}'
     state: absent
   loop:
-    - '{{ conf_dir }}'
-    - '{{ data_dir }}'
-    - '{{ run_dir }}'
-    - '{{ log_dir }}'
+    - '{{ conf_dir }}/{{ cluster_id }}'
+    - '{{ data_dir }}/{{ cluster_id }}'
+    - '{{ run_dir }}/{{ cluster_id }}'
+    - '{{ log_dir }}/{{ cluster_id }}'
   when: purge

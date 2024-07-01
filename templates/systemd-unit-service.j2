@@ -10,8 +10,8 @@ RestartSec=2
 User={{ user }}
 Group={{ group }}
 
-Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_id }}.%i.sock
-Environment=PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_id }}.%i
+Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_id }}/%i.sock
+Environment=PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_id }}/%i
 Environment=PICODATA_INSTANCE_ID=%i
 Environment=PICODATA_PEER={{ main_peer }}:{{ first_bin_port }}
 Environment=PICODATA_LOG_LEVEL={{ log_level }}
