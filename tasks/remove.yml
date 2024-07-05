@@ -18,6 +18,7 @@
   loop: '{{ instances_on_host }}'
   loop_control:
     loop_var: instance
+  ignore_errors: True
 
 - name: Remove systemd env dirs
   ansible.builtin.file:
