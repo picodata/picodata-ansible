@@ -13,7 +13,7 @@
     force: true
 
 - name: Enable systemd services for tier {{ tier.key }}
-  ansible.builtin.systemd_service:
+  ansible.builtin.systemd:
     name: '{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
     enabled: true
     state: started
