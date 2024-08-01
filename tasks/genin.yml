@@ -6,6 +6,11 @@
     instance_num: 0
     instances_on_host: []
 
+- name: Set server failure domain
+  ansible.builtin.set_fact:
+    host_group: "none"
+  when: host_group is undefined
+
 - name: Tiers loop
   ansible.builtin.include_tasks:
     file: genin_tiers.yml
