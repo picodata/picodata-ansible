@@ -15,6 +15,8 @@ Environment=PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_id }}/%i
 Environment=PICODATA_INSTANCE_ID=%i
 Environment=PICODATA_PEER={{ main_peer }}:{{ first_bin_port }}
 Environment=PICODATA_LOG_LEVEL={{ log_level }}
+Environment=PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_id }}/plugins
+Environment=RUST_BACKTRACE=full
 {% if log_to == "file" %}
 Environment=PICODATA_LOG={{ log_dir }}/{{ cluster_id }}/%i.log
 {% endif %}
@@ -28,7 +30,7 @@ Environment=PICODATA_SERVICE_PASSWORD_FILE={{ conf_dir }}/{{ cluster_id }}/.serv
 Environment=PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_id }}/audit-%i.log
 {% endif %}
 
-ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}.%i'
+ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}/%i'
 ExecStartPre=/bin/sh -c 'mkdir -p {{ run_dir }}'
 
 # Unlimited cores size
