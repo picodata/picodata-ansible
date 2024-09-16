@@ -106,6 +106,14 @@
     file: genin.yml
   when: admin_password is defined
 
+- name: Wait creating admin-sock files for all instances
+  ansible.builtin.wait_for:
+    path: '{{ run_dir }}/{{ cluster_id }}/{{ item }}.sock'
+    state: present
+    msg: 'Timeout to find file {{ run_dir }}/{{ cluster_id }}/{{ item }}.sock'
+    timeout: 60
+  loop: '{{ instances_on_host }}'
+
 - name: Set admin password
   ansible.builtin.shell:
     cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5" | picodata admin {{ run_dir }}/{{ cluster_id }}/{{ instances_on_host[0] }}.sock
