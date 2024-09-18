@@ -1,27 +1,32 @@
 ---
 # tasks file for picodata-ansible
 
-- name: Deploy picodata
+- name: Deploy Picodata cluster
   ansible.builtin.import_tasks:
     file: deploy.yml
   tags: [ deploy, restore_full ]
 
-- name: Install picodata packages
+- name: Install Picodata packages
   ansible.builtin.import_tasks:
     file: install_packages.yml
   tags: [ never, install_pkgs ]
 
-- name: Remove picodata
+- name: Remove Picodata cluster
   ansible.builtin.import_tasks:
     file: remove.yml
   tags: [ never, remove ]
 
-- name: Backup picodata
+- name: Restart Picodata cluster
+  ansible.builtin.import_tasks:
+    file: restart.yml
+  tags: [ never, restart ]
+
+- name: Backup Picodata cluster
   ansible.builtin.import_tasks:
     file: backup.yml
   tags: [ never, backup ]
 
-- name: Restore picodata
+- name: Restore Picodata cluster
   ansible.builtin.import_tasks:
     file: restore.yml
   tags: [ never, restore, restore_full ]

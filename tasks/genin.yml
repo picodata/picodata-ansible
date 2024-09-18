@@ -19,6 +19,6 @@
     loop_var: tier
     extended: true
 
-- name: Debug instances_on_host
+- name: Print instances on hosts
   ansible.builtin.debug:
     var: instances_on_host

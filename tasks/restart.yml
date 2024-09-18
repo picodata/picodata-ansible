@@ -1,0 +1,21 @@
+---
+# tasks for restart cluster
+
+- name: Set server failure domain
+  ansible.builtin.set_fact:
+    host_group: "none"
+  when: host_group is undefined
+
+- name: Generate list of instances per server
+  ansible.builtin.import_tasks:
+    file: genin.yml
+
+- name: Restart systemd units
+  # serial: '{{ serial_restart | default(1000) }}'
+  ansible.builtin.service:
+    name: '{{ cluster_id }}@{{ instance }}.service'
+    state: restarted
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
+  ignore_errors: True
