@@ -119,3 +119,9 @@
     cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5" | picodata admin {{ run_dir }}/{{ cluster_id }}/{{ instances_on_host[0] }}.sock
   when: admin_password is defined
   run_once: true
+
+- name: Set properties for cluster
+  ansible.builtin.shell:
+    cmd: echo "alter system set \"{{ item.key }}\" = {{ item.value }}" | picodata admin {{ run_dir }}/{{ cluster_id }}/{{ instances_on_host[0] }}.sock
+  loop: "{{ lookup('ansible.builtin.dict', property | default({}), wantlist=True) }}"
+  run_once: true
