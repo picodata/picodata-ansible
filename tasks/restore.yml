@@ -31,10 +31,6 @@
   debug:
     msg: 'restore_dir: {{ restore_dir }}'
 
-- name: Debug
-  debug:
-    msg: 'backup_fetch: {{ backup_fetch }}'
-
 - name: Create dir on remote hosts
   ansible.builtin.file:
     path: '{{ backup_dir }}/{{ cluster_id }}/{{ restore_dir }}'
