@@ -19,7 +19,7 @@
 
 - name: Backup instances
   ansible.builtin.command:
-    cmd: '{{ ansible_user_dir }}/backup.sh -s {{ run_dir }}/{{ cluster_id }}.{{ instance }}.sock -d {{ backup_dir }}/{{ DT }}'
+    cmd: '{{ ansible_user_dir }}/backup.sh -s {{ run_dir }}/{{ cluster_id }}/{{ instance }}.sock -d {{ backup_dir }}/{{ DT }}'
   loop: '{{ instances_on_host }}'
   loop_control:
     loop_var: instance
@@ -33,7 +33,7 @@
 - name: Fetch backups from remote hosts
   ansible.builtin.fetch:
     src: '{{ backup_dir }}/{{ inventory_hostname }}.tar'
-    dest: '{{ backup_fetch_dir }}/{{ DT }}/{{ inventory_hostname }}.tar'
+    dest: '{{ backup_fetch_dir }}/{{ cluster_id }}/{{ DT }}/{{ inventory_hostname }}.tar'
     flat: true
   when: backup_fetch
 

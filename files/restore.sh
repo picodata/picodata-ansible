@@ -39,10 +39,13 @@ echo "Stop all instances of cluster $CLUSTER on hosts"
 systemctl stop $CLUSTER@*
 
 echo "Remove current data"
-rm -rf $DATA_DIR/*
+rm -rf $DATA_DIR/$CLUSTER/*
+
+echo "Make dest dir"
+mkdir -p $DATA_DIR/$CLUSTER/
 
 echo "Restore data from backup"
-cp -pr $BACKUP_DIR/* $DATA_DIR/
+cp -pr $BACKUP_DIR/* $DATA_DIR/$CLUSTER/
 
 echo "Start all instances of cluster $CLUSTER on hosts"
 systemctl start --all $CLUSTER@*

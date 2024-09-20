@@ -13,8 +13,8 @@ data_dir: '/var/lib/picodata'
 run_dir: '/var/run/picodata'
 log_dir: '/var/log/picodata'
 log_to: 'syslog'
-backup_dir: '{{ data_dir }}/backups'
-backup_fetch_dir: 'backups'
+backup_dir: '{{ data_dir }}/backup'
+backup_fetch_dir: 'backup'
 backup_fetch: true
 
 first_bin_port: 13301
