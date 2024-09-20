@@ -24,24 +24,25 @@
   loop_control:
     loop_var: instance
 
-- name: Pack backups for fetch
-  ansible.builtin.shell:
-    chdir: '{{ backup_dir }}/{{ DT }}'
-    cmd: 'tar -cf {{ backup_dir }}/{{ inventory_hostname }}.tar *'
-  when: backup_fetch
+- block:
+  - name: Pack backups for fetch
+    ansible.builtin.shell:
+      chdir: '{{ backup_dir }}/{{ DT }}'
+      cmd: 'tar -cf {{ backup_dir }}/{{ inventory_hostname }}.tar *'
 
-- name: Fetch backups from remote hosts
-  ansible.builtin.fetch:
-    src: '{{ backup_dir }}/{{ inventory_hostname }}.tar'
-    dest: '{{ backup_fetch_dir }}/{{ cluster_id }}/{{ DT }}/{{ inventory_hostname }}.tar'
-    flat: true
-  when: backup_fetch
+  - name: Fetch backups from remote hosts
+    ansible.builtin.fetch:
+      src: '{{ backup_dir }}/{{ inventory_hostname }}.tar'
+      dest: '{{ backup_fetch_dir }}/{{ cluster_id }}/{{ DT }}/{{ inventory_hostname }}.tar'
+      flat: true
 
-- name: Remove archive on remote hosts
-  ansible.builtin.file:
-    path: '{{ backup_dir }}/{{ inventory_hostname }}.tar'
-    state: absent
-  when: backup_fetch
+  - name: Remove archive on remote hosts
+    ansible.builtin.file:
+      path: '{{ backup_dir }}/{{ inventory_hostname }}.tar'
+      state: absent
+
+  when: backup_fetch == True
+# end block
 
 - name: Remove utility files on remote hosts
   ansible.builtin.file:

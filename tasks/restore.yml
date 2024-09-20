@@ -31,11 +31,15 @@
   debug:
     msg: 'restore_dir: {{ restore_dir }}'
 
+- name: Debug
+  debug:
+    msg: 'backup_fetch: {{ backup_fetch }}'
+
 - name: Create dir on remote hosts
   ansible.builtin.file:
     path: '{{ backup_dir }}/{{ cluster_id }}/{{ restore_dir }}'
     state: directory
-  when: backup_fetch
+  when: backup_fetch == True
 
 - name: Unpack backup
   ansible.builtin.unarchive:
@@ -43,7 +47,7 @@
     dest: '{{ backup_dir }}/{{ cluster_id }}/{{ restore_dir }}'
     owner: '{{ user }}'
     group: '{{ group }}'
-  when: backup_fetch
+  when: backup_fetch == True
 
 - name: Restore data
   ansible.builtin.command:
