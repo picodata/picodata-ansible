@@ -11,6 +11,7 @@
 | group | root | имя группы для файлов |
 | service_password | | пароль для сервисной учетной записи pico_service |
 | admin_password | | пароль для учетной записи admin, который должен удовлетворять [условиям](https://docs.picodata.io/picodata/24.4/tutorial/access_control/#allowed_passwords) |
+| init_system | systsemd | система управления сервисами и процессами (systemd, supervisord)  |
 
 ### Пути
 | Имя | Значение по умолчанию | Описание |
@@ -19,6 +20,7 @@
 | data_dir | /var/lib/picodata | размещение данных |
 | run_dir | /var/run/picodata | размещение socket-файлов |
 | systemd_dir | /etc/systemd/system | размещение systemd-файлов |
+| supervisord_dir | /etc/picodata/supervisord | размещение кофигурационных файлов для supervisord |
 
 ### Логирование и аудит
 | Имя | Значение по умолчанию | Описание |

@@ -10,28 +10,50 @@
   ansible.builtin.import_tasks:
     file: genin.yml
 
-- name: Remove systemd unit files
-  ansible.builtin.service:
-    name: '{{ cluster_id }}@{{ instance }}.service'
-    enabled: false
-    state: stopped
-  loop: '{{ instances_on_host }}'
-  loop_control:
-    loop_var: instance
-  ignore_errors: True
+- block:
+  - name: Remove systemd unit files
+    ansible.builtin.service:
+      name: '{{ cluster_id }}@{{ instance }}.service'
+      enabled: false
+      state: stopped
+    loop: '{{ instances_on_host }}'
+    loop_control:
+      loop_var: instance
+    ignore_errors: True
 
-- name: Remove systemd env dirs
-  ansible.builtin.file:
-    name: '{{ systemd_dir }}/{{ cluster_id }}@{{ instance }}.service.d'
-    state: absent
-  loop: '{{ instances_on_host }}'
-  loop_control:
-    loop_var: instance
+  - name: Remove systemd env dirs
+    ansible.builtin.file:
+      name: '{{ systemd_dir }}/{{ cluster_id }}@{{ instance }}.service.d'
+      state: absent
+    loop: '{{ instances_on_host }}'
+    loop_control:
+      loop_var: instance
 
-- name: Remove systemd template file
-  ansible.builtin.file:
-    name: '{{ systemd_dir }}/{{ cluster_id }}@.service'
-    state: absent
+  - name: Remove systemd template file
+    ansible.builtin.file:
+      name: '{{ systemd_dir }}/{{ cluster_id }}@.service'
+      state: absent
+
+  when: init_system == 'systemd'
+# end block
+
+- block:
+  - name: Disable systemd service for supervisord
+    ansible.builtin.service:
+      name: 'supervisord-{{ cluster_id }}.service'
+      enabled: false
+      state: stopped
+
+  - name: Remove supervisord configs
+    ansible.builtin.file:
+      name: '{{ supervisord_dir }}/{{ item }}'
+      state: absent
+    loop:
+      - '{{ cluster_id }}.conf'
+      - '{{ cluster_id }}'
+
+  when: init_system == 'supervisord'
+# end block
 
 - name: Remove dirs if set purge variable
   ansible.builtin.file:

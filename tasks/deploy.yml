@@ -35,6 +35,10 @@
     owner: '{{ user }}'
     group: '{{ group }}'
   loop:
+    - '{{ conf_dir }}'
+    - '{{ log_dir }}'
+    - '{{ data_dir }}'
+    - '{{ run_dir }}'
     - '{{ conf_dir }}/{{ cluster_id }}'
     - '{{ log_dir }}/{{ cluster_id }}'
     - '{{ data_dir }}/{{ cluster_id }}'
@@ -72,11 +76,40 @@
     msg: 'main_peer is {{ main_peer }}'
   run_once: true
 
-- name: Generate template for units
+- name: Generate template file for systemd
   ansible.builtin.template:
     src: systemd-unit-service.j2
     dest: '{{ systemd_dir }}/{{ cluster_id }}@.service'
     force: true
+  when: init_system == 'systemd'
+
+- block:
+  - name: Create dirs for supervisord
+    ansible.builtin.file:
+      name: '{{ item }}'
+      state: directory
+      owner: '{{ user }}'
+      group: '{{ group }}'
+    loop:
+      - '{{ supervisord_dir }}'
+      - '{{ supervisord_dir }}/{{ cluster_id }}'
+
+  - name: Generate service unit for supervisord
+    ansible.builtin.template:
+      src: supervisord-unit-service.j2
+      dest: '{{ systemd_dir }}/supervisord-{{ cluster_id }}.service'
+      force: true
+
+  - name: Generate cluster config file for supervisord
+    ansible.builtin.template:
+      owner: '{{ user }}'
+      group: '{{ group }}'
+      src: supervisord-conf.j2
+      dest: '{{ supervisord_dir }}/{{ cluster_id }}.conf'
+      force: true
+
+  when: init_system == 'supervisord'
+# end block
 
 - name: Generate service-password file
   ansible.builtin.lineinfile:
@@ -100,6 +133,25 @@
   loop_control:
     loop_var: tier
     extended: true
+
+- block:
+  - name: Enable systemd service for supervisord
+    ansible.builtin.systemd:
+      name: 'supervisord-{{ cluster_id }}.service'
+      enabled: true
+      state: started
+      daemon_reload: true
+      force: true
+    register: supervisord_service
+
+  - name: Reload systemd service for supervisord if this already started
+    ansible.builtin.systemd:
+      name: 'supervisord-{{ cluster_id }}.service'
+      state: reloaded
+    when: supervisord_service.changed == false
+
+  when: init_system == 'supervisord'
+# end block
 
 - name: Generate list of instances per server
   ansible.builtin.import_tasks:
@@ -125,3 +177,7 @@
     cmd: echo "alter system set \"{{ item.key }}\" = {{ item.value }}" | picodata admin {{ run_dir }}/{{ cluster_id }}/{{ instances_on_host[0] }}.sock
   loop: "{{ lookup('ansible.builtin.dict', property | default({}), wantlist=True) }}"
   run_once: true
+
+- name: Install plugins
+  ansible.builtin.include_tasks:
+    file: plugins.yml

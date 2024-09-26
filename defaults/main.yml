@@ -23,7 +23,14 @@ first_pg_port: 15001
 
 listen_address: '{{ ansible_fqdn }}'
 
+#Process Control System (systemd/supervisord)
+init_system: 'systemd'
+
+# for systemd
 systemd_dir: '/etc/systemd/system'
+
+# for supervisord
+supervisord_dir: '/etc/picodata/supervisord'
 
 purge: false
 
