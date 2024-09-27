@@ -1,0 +1,34 @@
+[Unit]
+Description=Supervisor process control system for UNIX
+Documentation=http://supervisord.org
+After=network.target
+
+[Service]
+#User={{ user }}
+#Group={{ group }}
+
+ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}'
+ExecStartPre=/bin/sh -c 'mkdir -p {{ run_dir }}'
+ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}/plugins'
+
+ExecStart=/usr/bin/supervisord -n -c {{ supervisord_dir }}/{{ cluster_id }}.conf
+ExecStop=/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf $OPTIONS shutdown
+ExecReload=/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf $OPTIONS reload
+KillMode=process
+Restart=on-failure
+RestartSec=50s
+
+# Unlimited cores size
+LimitCORE=infinity
+# Disable OOM killer
+OOMScoreAdjust=-1000
+# Increase fd limit for Vinyl
+LimitNOFILE=65535
+
+# Systemd waits until all xlogs are recovered
+TimeoutStartSec=86400s
+# Give a reasonable amount of time to close xlogs
+TimeoutStopSec=60s
+
+[Install]
+WantedBy=multi-user.target

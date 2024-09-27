@@ -1,0 +1,33 @@
+[program:{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}]
+command=/usr/bin/picodata run
+
+environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_id }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.sock,
+  PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_id }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }},
+  PICODATA_INSTANCE_ID={{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }},
+{% if log_to == "file" %}
+  PICODATA_LOG={{ log_dir }}/{{ cluster_id }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.log,
+{% endif %}
+  PICODATA_FAILURE_DOMAIN="{% if fd_uniq_per_instance %}I={{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}{% else %}{{ fd }}{% endif %}",
+{% if audit %}
+  PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_id }}/audit-{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.log,
+{% endif %}
+  PICODATA_LISTEN=0.0.0.0:{{ first_bin_port + instance_num|int }},
+  PICODATA_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance_num|int }},
+  PICODATA_HTTP_LISTEN=0.0.0.0:{{ first_http_port + instance_num|int }},
+  PICODATA_INSTANCE_TIER={{ tier.key }},
+  PICODATA_CONFIG_FILE={{ conf_dir }}/{{ cluster_id }}/{{ tier.key }}.conf,
+{% if tier.value.shredding is defined and tier.value.shredding %}
+  PICODATA_SHREDDING=true,
+{% endif %}
+{% if first_pg_port != 0 %}
+  PICODATA_PG_LISTEN=0.0.0.0:{{ first_pg_port + instance_num|int }},
+{% endif %}
+
+autostart=true
+autorestart=true
+startretries=3
+startsecs=10
+stopwaitsecs=10
+user={{ user }}
+redirect_stderr=true
+# stdout_logfile={{ log_dir }}/{{ cluster_id }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.log
