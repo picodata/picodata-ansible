@@ -177,7 +177,3 @@
     cmd: echo "alter system set \"{{ item.key }}\" = {{ item.value }}" | picodata admin {{ run_dir }}/{{ cluster_id }}/{{ instances_on_host[0] }}.sock
   loop: "{{ lookup('ansible.builtin.dict', property | default({}), wantlist=True) }}"
   run_once: true
-
-- name: Install plugins
-  ansible.builtin.include_tasks:
-    file: plugins.yml
