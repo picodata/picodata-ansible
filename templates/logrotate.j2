@@ -1,0 +1,16 @@
+{{ log_dir }}/{{ cluster_id }}/*.log {
+    daily
+    size 1M
+    missingok
+    rotate 10
+    compress
+    delaycompress
+    create 0640 {{ user }} {{ group }}
+    postrotate
+{% if init_system == 'supervisord' %}
+        /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf signal HUP all
+{% else %}
+        /usr/bin/systemctl kill -s HUP {{ cluster_id }}@*
+{% endif %}
+    endscript
+}

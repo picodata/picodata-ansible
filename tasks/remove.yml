@@ -65,3 +65,9 @@
     - '{{ run_dir }}/{{ cluster_id }}'
     - '{{ log_dir }}/{{ cluster_id }}'
   when: purge
+
+- name: Remove logrotate file
+  ansible.builtin.file:
+    name: '/etc/logrotate.d/picodata-{{ cluster_id }}'
+    state: absent
+  when: log_to == 'file'

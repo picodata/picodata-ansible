@@ -144,11 +144,9 @@
       force: true
     register: supervisord_service
 
-  - name: Reload systemd service for supervisord if this already started
-    ansible.builtin.systemd:
-      name: 'supervisord-{{ cluster_id }}.service'
-      state: reloaded
-    when: supervisord_service.changed == false
+  - name: Update cluster in supervisord
+    ansible.builtin.shell:
+      cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf update
 
   when: init_system == 'supervisord'
 # end block
@@ -177,3 +175,10 @@
     cmd: echo "alter system set \"{{ item.key }}\" = {{ item.value }}" | picodata admin {{ run_dir }}/{{ cluster_id }}/{{ instances_on_host[0] }}.sock
   loop: "{{ lookup('ansible.builtin.dict', property | default({}), wantlist=True) }}"
   run_once: true
+
+- name: Generate logrotate file
+  ansible.builtin.template:
+    src: logrotate.j2
+    dest: '/etc/logrotate.d/picodata-{{ cluster_id }}'
+    force: true
+  when: log_to == 'file'
