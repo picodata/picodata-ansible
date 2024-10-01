@@ -82,6 +82,8 @@ all:
     repo: 'https://download.picodata.io'  # репозиторий, откуда инсталлировать пакет picodata
 
     cluster_id: test               # имя кластера
+    admin_password: "123asdZXV"    # пароль пользователя admin
+
     audit: false                   # отключение айдита
     log_level: info                # уровень отладки
     log_to: file                   # вывод логов в файлы, а не в journald
@@ -110,7 +112,6 @@ all:
             checkpoint_count: 3            # максимальное количество снапшотов, хранящихся в директории data_dir
           iproto:
             max_concurrent_messages: 1024  # максимальное количество сообщений, которое Picodata обрабатывает параллельно
-
 
 DC1:                               # Датацентр (failure_domain)
   hosts:                           # серверы в датацентре
