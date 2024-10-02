@@ -4,11 +4,10 @@ Documentation=http://supervisord.org
 After=network.target
 
 [Service]
-#User={{ user }}
-#Group={{ group }}
+User={{ user }}
+Group={{ group }}
 
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}'
-ExecStartPre=/bin/sh -c 'mkdir -p {{ run_dir }}'
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}/plugins'
 
 ExecStart=/usr/bin/supervisord -n -c {{ supervisord_dir }}/{{ cluster_id }}.conf

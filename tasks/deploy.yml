@@ -34,6 +34,7 @@
     state: directory
     owner: '{{ user }}'
     group: '{{ group }}'
+    mode: 0750
   loop:
     - '{{ conf_dir }}'
     - '{{ log_dir }}'
@@ -46,7 +47,9 @@
 
 - name: 'Configure rundir'
   copy:
-    content: 'd {{ run_dir }} 0755 {{ user }} {{ group }}'
+    content: |
+      d {{ run_dir }} 0755 {{ user }} {{ group }}
+      d {{ run_dir }}/{{ cluster_id }} 0750 {{ user }} {{ group }}
     dest: '/etc/tmpfiles.d/picodata.conf'
     mode: 0644
 

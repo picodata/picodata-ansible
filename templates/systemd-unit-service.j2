@@ -31,7 +31,6 @@ Environment=PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_id }}/audit-%i.log
 {% endif %}
 
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}/%i'
-ExecStartPre=/bin/sh -c 'mkdir -p {{ run_dir }}'
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}/plugins'
 
 # Unlimited cores size
