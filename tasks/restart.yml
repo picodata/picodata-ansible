@@ -19,3 +19,10 @@
   loop_control:
     loop_var: instance
   ignore_errors: True
+  when: init_system == 'systemd'
+
+- name: Restart supervisord processes
+  # serial: '{{ serial_restart | default(1000) }}'
+  ansible.builtin.shell:
+    cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf restart all
+  when: init_system == 'supervisord'
