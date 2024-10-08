@@ -1,0 +1,26 @@
+CREATE PLUGIN IF NOT EXISTS {{ manifest.name }} {{ manifest.version }};
+{% for servicename in services %}
+{% for tier in plugin.value.tiers | default(["default"]) %}
+ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} ADD SERVICE {{ servicename }} TO TIER {{ tier }};
+{% endfor %}
+{% endfor %}
+{% if conf is defined %}
+{% for conf_service, conf_params in conf.items() %}
+
+ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} SET 
+{% for param, val in conf_params.items() %}
+{% if val is string %}{% set add = '"' %}{% else %}{% set add = '' %}{% endif %}
+{% if loop.last %}{% set eol = ';' %}{% else %}{% set eol = ',' %}{% endif %}
+  {{ conf_service }}.{{ param }} = '{{ add }}{{ val | replace("'", '"') }}{{ add }}'{{ eol }}
+{% endfor %}
+{% endfor %}
+
+{% endif %}
+{% if plugin.value.migration_context is defined %}
+{% for param, val in plugin.value.migration_context.items() %}
+ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} SET migration_context.{{ param }} = '{{ val }}';
+{% endfor %}
+
+{% endif %}
+ALTER PLUGIN {{ manifest.name }} MIGRATE TO {{ manifest.version }};
+ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} ENABLE;

@@ -35,3 +35,8 @@
   ansible.builtin.import_tasks:
     file: genin.yml
   tags: [ never, genin ]
+
+- name: Install plugins
+  ansible.builtin.import_tasks:
+    file: plugins.yml
+  tags: [ never, plugins ]

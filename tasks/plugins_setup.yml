@@ -1,0 +1,58 @@
+---
+# tasks for plugins
+
+- name: Unarchive package into plugins-dir
+  ansible.builtin.unarchive:
+    src: '{{ plugin.value.path }}'
+    dest: '{{ data_dir }}/{{ cluster_id }}/plugins'
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    list_files: true
+  register: archive
+
+- name: Find manifest file
+  ansible.builtin.set_fact:
+    manifest_file: "{{ archive.files[item] }}"
+  loop: "{{ lookup('ansible.utils.index_of', archive.files, 'regex', expression, wantlist=True) }}"
+  vars:
+    expression: '.*/manifest.yaml$'
+  run_once: true
+
+- name: Unarchive manifest file from package
+  ansible.builtin.unarchive:
+    src: '{{ plugin.value.path }}'
+    dest: '/tmp'
+    include: '{{ manifest_file }}'
+  delegate_to: localhost
+  run_once: true
+
+- name: Load manifest file
+  ansible.builtin.set_fact:
+    manifest: "{{ lookup('file', '/tmp/{{ manifest_file }}') | from_yaml }}"
+  run_once: true
+
+- name: Load config file
+  ansible.builtin.set_fact:
+    conf: "{{ lookup('file', '{{ plugin.value.config }}') | from_yaml }}"
+    plugin_dir: '{{ data_dir }}/{{ cluster_id }}/plugins'
+  run_once: true
+  when: plugin.value.config is defined
+
+- name: Get services from manifest
+  ansible.builtin.set_fact:
+    services: '{{ manifest.services | map(attribute="name") }}'
+  run_once: true
+
+- name: Generate install.sql file into plugin path
+  ansible.builtin.template:
+    src: config2sql.j2
+    dest: '{{ data_dir }}/{{ cluster_id }}/plugins/{{ manifest.name }}/{{ manifest.version }}/install.sql'
+    force: true
+    owner: '{{ user }}'
+    group: '{{ group }}'
+  run_once: true
+
+- name: Install plugin into cluster (run install.sql)
+  ansible.builtin.shell:
+    cmd: '{ echo "\set d ;"; cat {{ data_dir }}/{{ cluster_id }}/plugins/{{ manifest.name }}/{{ manifest.version }}/install.sql; } | picodata admin {{ run_dir }}/{{ cluster_id }}/{{ instances_on_host[0] }}.sock'
+  run_once: true

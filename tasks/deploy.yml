@@ -185,3 +185,8 @@
     dest: '/etc/logrotate.d/picodata-{{ cluster_id }}'
     force: true
   when: log_to == 'file'
+
+- name: Install plugins
+  ansible.builtin.import_tasks:
+    file: plugins.yml
+  when: plugins is defined

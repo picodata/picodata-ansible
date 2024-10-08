@@ -110,23 +110,48 @@ all:
             memory: 73400320               # количество памяти, предоставляемое непосредственно на хранение данных в байтах
             checkpoint_interval: 7200      # период активности службы создания снапшотов (checkpoint daemon) в секундах
             checkpoint_count: 3            # максимальное количество снапшотов, хранящихся в директории data_dir
+        host_groups:
+          - STORAGES
+
+      router:                     # имя тира default
+        instances_per_server: 1    # сколько инстансов запустить на каждом сервере
+        replication_factor: 1      # фактор репликации
+        config:
+          memtx:
+            memory: 70108864
           iproto:
             max_concurrent_messages: 1024  # максимальное количество сообщений, которое Picodata обрабатывает параллельно
+        host_groups:
+          - ROUTERS
+
+    plugins:
+      example:
+        path: '../plugins/weather_0.1.0-ubuntu-focal.tar.gz'
+        config: '../plugins/weather-config.yml'
+        tiers:
+          - router
+          - default
 
 DC1:                               # Датацентр (failure_domain)
   hosts:                           # серверы в датацентре
     server-1-1:                    # имя сервера в инвентарном файле
       ansible_host: 192.168.19.21  # IP адрес или fqdn если не совпадает с предыдущей строкой
+      host_group: 'STORAGES'
+    server-1-2:                    # имя сервера в инвентарном файле
+      ansible_host: 192.168.19.22  # IP адрес или fqdn если не совпадает с предыдущей строкой
+      host_group: 'ROUTERS'
 
 DC2:                               # Датацентр (failure_domain)
   hosts:                           # серверы в датацентре
     server-2-1:                    # имя сервера в инвентарном файле
-      ansible_host: 192.168.19.22  # IP адрес или fqdn если не совпадает с предыдущей строкой
+      ansible_host: 192.168.20.21  # IP адрес или fqdn если не совпадает с предыдущей строкой
+      host_group: 'STORAGES'
 
 DC3:                               # Датацентр (failure_domain)
   hosts:                           # серверы в датацентре
     server-3-1:                    # имя сервера в инвентарном файле
-      ansible_host: 192.168.19.23  # IP адрес или fqdn если не совпадает с предыдущей строкой
+      ansible_host: 192.168.21.21  # IP адрес или fqdn если не совпадает с предыдущей строкой
+      host_group: 'STORAGES'
 ```
 
 ## Плэйбук
