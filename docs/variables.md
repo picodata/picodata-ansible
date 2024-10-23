@@ -6,7 +6,7 @@
 | Имя | Значение по умолчанию | Описание |
 | ---      | ---      | ---      |
 | repo | 'https://download.picodata.io' | репозиторий для установки пакетов, значение для ночных сборок: https://download.binary.picodata.io |
-| cluster_id | demo | имя кластера |
+| cluster_name | demo | имя кластера |
 | user | root | имя пользователя для файлов |
 | group | root | имя группы для файлов |
 | service_password | | пароль для сервисной учетной записи pico_service |

@@ -1,14 +1,14 @@
 [unix_http_server]
-file={{ run_dir }}/supervisor-{{ cluster_id }}.sock           ; (the path to the socket file)
+file={{ run_dir }}/supervisor-{{ cluster_name }}.sock           ; (the path to the socket file)
 chmod=0770                                                    ; sockef file mode (default 0700)
 chown={{ user }}:{{ group }}                                  ; socket file uid:gid owner
 
 [supervisord]
-logfile={{ log_dir }}/{{ cluster_id }}/supervisord.log        ; (main log file;default $CWD/supervisord.log)
+logfile={{ log_dir }}/{{ cluster_name }}/supervisord.log        ; (main log file;default $CWD/supervisord.log)
 logfile_maxbytes=50MB                                         ; (max main logfile bytes b4 rotation;default 50MB)
 logfile_backups=10                                            ; (num of main logfile rotation backups;default 10)
 loglevel=info                                                 ; (log level;default info; others: debug,warn,trace)
-pidfile={{ run_dir }}/supervisord-{{ cluster_id }}.pid        ; (supervisord pidfile;default supervisord.pid)
+pidfile={{ run_dir }}/supervisord-{{ cluster_name }}.pid        ; (supervisord pidfile;default supervisord.pid)
 nodaemon=false                                                ; (start in foreground if true;default false)
 minfds=65535                                                  ; (min. avail startup file descriptors;default 1024)
 minprocs=200                                                  ; (min. avail process descriptors;default 200)
@@ -16,19 +16,19 @@ user={{ user }}
 
 environment=PICODATA_PEER={{ main_peer }}:{{ first_bin_port }},
   PICODATA_LOG_LEVEL={{ log_level }},
-  PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_id }}/plugins,
+  PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_name }}/plugins,
   RUST_BACKTRACE=full,
 {% if service_password is defined %}
-  PICODATA_SERVICE_PASSWORD_FILE={{ conf_dir }}/{{ cluster_id }}/.service-password,
+  PICODATA_SERVICE_PASSWORD_FILE={{ conf_dir }}/{{ cluster_name }}/.service-password,
 {% endif %}
 
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
 [supervisorctl]
-serverurl=unix://{{ run_dir }}/supervisor-{{ cluster_id }}.sock   ; use a unix:// URL  for a unix socket
+serverurl=unix://{{ run_dir }}/supervisor-{{ cluster_name }}.sock   ; use a unix:// URL  for a unix socket
 history_file=~/.sc_history                                        ; use readline history if available
 
 [include]
-files = {{ supervisord_dir }}/{{ cluster_id }}/*
+files = {{ supervisord_dir }}/{{ cluster_name }}/*
 

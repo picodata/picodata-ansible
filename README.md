@@ -81,7 +81,7 @@ all:
 
     repo: 'https://download.picodata.io'  # репозиторий, откуда инсталлировать пакет picodata
 
-    cluster_id: test               # имя кластера
+    cluster_name: test             # имя кластера
     admin_password: "123asdZXV"    # пароль пользователя admin
 
     audit: false                   # отключение айдита

@@ -4,7 +4,7 @@
 repo: 'https://download.picodata.io' # value for nightly: https://download.binary.picodata.io
 install_packages: true
 
-cluster_id: 'demo'
+cluster_name: 'demo'
 audit: false
 log_level: info
 

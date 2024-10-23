@@ -4,18 +4,18 @@
 - block:
   - name: Create dirs for instances in tier {{ tier.key }}
     ansible.builtin.file:
-      path: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d'
+      path: '{{ systemd_dir }}/{{ cluster_name }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d'
       state: directory
 
   - name: Create env file for instances in tier {{ tier.key }}
     ansible.builtin.template:
       src: systemd-unit-env.j2
-      dest: '{{ systemd_dir }}/{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d/env.conf'
+      dest: '{{ systemd_dir }}/{{ cluster_name }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d/env.conf'
       force: true
 
   - name: Enable systemd services for tier {{ tier.key }}
     ansible.builtin.systemd:
-      name: '{{ cluster_id }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
+      name: '{{ cluster_name }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
       enabled: true
       state: started
       daemon_reload: true
@@ -29,7 +29,7 @@
     owner: '{{ user }}'
     group: '{{ group }}'
     src: supervisord-apps.j2
-    dest: '{{ supervisord_dir }}/{{ cluster_id }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.conf'
+    dest: '{{ supervisord_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.conf'
     force: true
   when: init_system == 'supervisord'
 

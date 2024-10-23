@@ -7,12 +7,12 @@ After=network.target
 User={{ user }}
 Group={{ group }}
 
-ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}'
-ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_id }}/plugins'
+ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}'
+ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/plugins'
 
-ExecStart=/usr/bin/supervisord -n -c {{ supervisord_dir }}/{{ cluster_id }}.conf
-ExecStop=/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf $OPTIONS shutdown
-ExecReload=/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf $OPTIONS reload
+ExecStart=/usr/bin/supervisord -n -c {{ supervisord_dir }}/{{ cluster_name }}.conf
+ExecStop=/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf $OPTIONS shutdown
+ExecReload=/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf $OPTIONS reload
 KillMode=process
 Restart=on-failure
 RestartSec=50s

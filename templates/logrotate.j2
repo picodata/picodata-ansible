@@ -1,4 +1,4 @@
-{{ log_dir }}/{{ cluster_id }}/*.log {
+{{ log_dir }}/{{ cluster_name }}/*.log {
     daily
     size 1M
     missingok
@@ -8,9 +8,9 @@
     create 0640 {{ user }} {{ group }}
     postrotate
 {% if init_system == 'supervisord' %}
-        /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf signal HUP all
+        /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf signal HUP all
 {% else %}
-        /usr/bin/systemctl kill -s HUP {{ cluster_id }}@*
+        /usr/bin/systemctl kill -s HUP {{ cluster_name }}@*
 {% endif %}
     endscript
 }

@@ -13,7 +13,7 @@
 - name: Restart systemd units
   # serial: '{{ serial_restart | default(1000) }}'
   ansible.builtin.service:
-    name: '{{ cluster_id }}@{{ instance }}.service'
+    name: '{{ cluster_name }}@{{ instance }}.service'
     state: restarted
   loop: '{{ instances_on_host }}'
   loop_control:
@@ -24,5 +24,5 @@
 - name: Restart supervisord processes
   # serial: '{{ serial_restart | default(1000) }}'
   ansible.builtin.shell:
-    cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_id }}.conf restart all
+    cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf restart all
   when: init_system == 'supervisord'

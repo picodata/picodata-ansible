@@ -13,7 +13,7 @@
 - block:
   - name: Remove systemd unit files
     ansible.builtin.service:
-      name: '{{ cluster_id }}@{{ instance }}.service'
+      name: '{{ cluster_name }}@{{ instance }}.service'
       enabled: false
       state: stopped
     loop: '{{ instances_on_host }}'
@@ -23,7 +23,7 @@
 
   - name: Remove systemd env dirs
     ansible.builtin.file:
-      name: '{{ systemd_dir }}/{{ cluster_id }}@{{ instance }}.service.d'
+      name: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance }}.service.d'
       state: absent
     loop: '{{ instances_on_host }}'
     loop_control:
@@ -31,7 +31,7 @@
 
   - name: Remove systemd template file
     ansible.builtin.file:
-      name: '{{ systemd_dir }}/{{ cluster_id }}@.service'
+      name: '{{ systemd_dir }}/{{ cluster_name }}@.service'
       state: absent
 
   when: init_system == 'systemd'
@@ -40,7 +40,7 @@
 - block:
   - name: Disable systemd service for supervisord
     ansible.builtin.service:
-      name: 'supervisord-{{ cluster_id }}.service'
+      name: 'supervisord-{{ cluster_name }}.service'
       enabled: false
       state: stopped
 
@@ -49,8 +49,8 @@
       name: '{{ supervisord_dir }}/{{ item }}'
       state: absent
     loop:
-      - '{{ cluster_id }}.conf'
-      - '{{ cluster_id }}'
+      - '{{ cluster_name }}.conf'
+      - '{{ cluster_name }}'
 
   when: init_system == 'supervisord'
 # end block
@@ -60,14 +60,14 @@
     name: '{{ item }}'
     state: absent
   loop:
-    - '{{ conf_dir }}/{{ cluster_id }}'
-    - '{{ data_dir }}/{{ cluster_id }}'
-    - '{{ run_dir }}/{{ cluster_id }}'
-    - '{{ log_dir }}/{{ cluster_id }}'
+    - '{{ conf_dir }}/{{ cluster_name }}'
+    - '{{ data_dir }}/{{ cluster_name }}'
+    - '{{ run_dir }}/{{ cluster_name }}'
+    - '{{ log_dir }}/{{ cluster_name }}'
   when: purge
 
 - name: Remove logrotate file
   ansible.builtin.file:
-    name: '/etc/logrotate.d/picodata-{{ cluster_id }}'
+    name: '/etc/logrotate.d/picodata-{{ cluster_name }}'
     state: absent
   when: log_to == 'file'
