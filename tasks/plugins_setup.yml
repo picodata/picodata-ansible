@@ -19,6 +19,7 @@
   run_once: true
 
 - name: Unarchive manifest file from package
+  become: false
   ansible.builtin.unarchive:
     src: '{{ plugin.value.path }}'
     dest: '/tmp'
