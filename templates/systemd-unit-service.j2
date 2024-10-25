@@ -13,7 +13,7 @@ Group={{ group }}
 Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/%i.sock
 Environment=PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_name }}/%i
 Environment=PICODATA_INSTANCE_NAME=%i
-Environment=PICODATA_PEER={{ main_peer }}:{{ first_bin_port }}
+Environment=PICODATA_PEER={% for host in groups["all"] | difference([inventory_hostname]) %}{{ host }}:{{ first_bin_port }},{% endfor %}{{ inventory_hostname }}:{{ first_bin_port }}
 Environment=PICODATA_LOG_LEVEL={{ log_level }}
 Environment=PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_name }}/plugins
 Environment=RUST_BACKTRACE=full
