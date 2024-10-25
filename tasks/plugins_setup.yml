@@ -18,18 +18,35 @@
     expression: '.*/manifest.yaml$'
   run_once: true
 
-- name: Unarchive manifest file from package
+- name: Create temporary directory
+  become: false
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: build
+  delegate_to: localhost
+  run_once: true
+  register: tempdir
+
+- name: Unarchive manifest file from package to temporary directory
   become: false
   ansible.builtin.unarchive:
     src: '{{ plugin.value.path }}'
-    dest: '/tmp'
+    dest: '{{ tempdir.path }}/'
     include: '{{ manifest_file }}'
   delegate_to: localhost
   run_once: true
 
-- name: Load manifest file
+- name: Load manifest file from temporary directory
   ansible.builtin.set_fact:
-    manifest: "{{ lookup('file', '/tmp/{{ manifest_file }}') | from_yaml }}"
+    manifest: "{{ lookup('file', '{{ tempdir.path }}/{{ manifest_file }}') | from_yaml }}"
+  run_once: true
+
+- name: Remove temporary directory
+  become: false
+  ansible.builtin.file:
+    path: '{{ tempdir.path }}'
+    state: absent
+  delegate_to: localhost
   run_once: true
 
 - name: Load config file
