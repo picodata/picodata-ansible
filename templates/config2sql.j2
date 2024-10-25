@@ -9,9 +9,8 @@ ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} ADD SERVICE {{ servicena
 
 ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} SET 
 {% for param, val in conf_params.items() %}
-{% if val is string %}{% set add = '"' %}{% else %}{% set add = '' %}{% endif %}
 {% if loop.last %}{% set eol = ';' %}{% else %}{% set eol = ',' %}{% endif %}
-  {{ conf_service }}.{{ param }} = '{{ add }}{{ val | replace("'", '"') }}{{ add }}'{{ eol }}
+  {{ conf_service }}.{{ param }} = '{{ val | replace("'", '"') }}'{{ eol }}
 {% endfor %}
 {% endfor %}
 

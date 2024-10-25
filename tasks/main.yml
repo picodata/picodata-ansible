@@ -39,4 +39,4 @@
 - name: Install plugins
   ansible.builtin.import_tasks:
     file: plugins.yml
-  tags: [ never, plugins ]
+  tags: [ never, plugins, plugin ]
