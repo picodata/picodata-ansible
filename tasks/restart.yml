@@ -7,8 +7,9 @@
   when: host_group is undefined
 
 - name: Generate list of instances per server
-  ansible.builtin.import_tasks:
+  ansible.builtin.include_tasks:
     file: genin.yml
+  when: instances_on_host is undefined
 
 - name: Restart systemd units
   # serial: '{{ serial_restart | default(1000) }}'

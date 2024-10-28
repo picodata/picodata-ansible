@@ -1,6 +1,13 @@
 ---
 # tasks for deploy cluster
 
+- name: Check admin password is defined
+  ansible.builtin.fail:
+    msg: 'Error! Your need define admin password (admin_password variable)!'
+  when: admin_password is undefined
+  run_once: true
+  delegate_to: localhost
+
 - name: Print topology
   ansible.builtin.debug:
     msg: "Id: {{ item.key }} Count: {{ item.value.instances_per_server }} Replication factor: {{item.value.replication_factor | default('1')}}"
@@ -24,7 +31,7 @@
   when: result.rc == 0
 
 - name: Install picodata packages
-  ansible.builtin.import_tasks:
+  ansible.builtin.include_tasks:
     file: install_packages.yml
   when: install_packages
 
@@ -67,17 +74,6 @@
   ansible.builtin.set_fact:
     host_group: "none"
   when: host_group is undefined
-
-- name: Set peer instance
-  ansible.builtin.set_fact:
-    main_peer: '{{ listen_address }}'
-  run_once: true
-  when: main_peer is undefined
-
-- name: Debug main_peer
-  ansible.builtin.debug:
-    msg: 'main_peer is {{ main_peer }}'
-  run_once: true
 
 - name: Generate template file for systemd
   ansible.builtin.template:
@@ -155,9 +151,8 @@
 # end block
 
 - name: Generate list of instances per server
-  ansible.builtin.import_tasks:
+  ansible.builtin.include_tasks:
     file: genin.yml
-  when: admin_password is defined
 
 - name: Wait creating admin-sock files for all instances
   ansible.builtin.wait_for:
@@ -170,7 +165,6 @@
 - name: Set admin password
   ansible.builtin.shell:
     cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5;" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-  when: admin_password is defined
   run_once: true
 
 - name: Set properties for cluster
@@ -187,6 +181,6 @@
   when: log_to == 'file'
 
 - name: Install plugins
-  ansible.builtin.import_tasks:
+  ansible.builtin.include_tasks:
     file: plugins.yml
   when: plugins is defined
