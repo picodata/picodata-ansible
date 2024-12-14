@@ -13,6 +13,7 @@
     msg: "Id: {{ item.key }} Count: {{ item.value.instances_per_server }} Replication factor: {{item.value.replication_factor | default('1')}}"
   loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
   run_once: true
+  when: debug == true
 
 - name: Check picodata is installed
   ansible.builtin.command:

@@ -1,5 +1,9 @@
 ---
 # tasks for plugins
+- name: Debug
+  ansible.builtin.debug:
+    var: plugin
+  when: debug == true
 
 - name: Unarchive package into plugins-dir
   ansible.builtin.unarchive:

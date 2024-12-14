@@ -39,3 +39,5 @@ group: 'root'
 
 # change this for test only!
 fd_uniq_per_instance: false
+
+debug: false
