@@ -11,6 +11,7 @@
     file: genin.yml
 
 - block:
+
   - name: Remove systemd unit files
     ansible.builtin.service:
       name: '{{ cluster_name }}@{{ instance }}.service'
@@ -34,40 +35,56 @@
       name: '{{ systemd_dir }}/{{ cluster_name }}@.service'
       state: absent
 
+  become: true
   when: init_system == 'systemd'
 # end block
 
 - block:
-  - name: Disable systemd service for supervisord
-    ansible.builtin.service:
-      name: 'supervisord-{{ cluster_name }}.service'
-      enabled: false
-      state: stopped
-
   - name: Remove supervisord configs
     ansible.builtin.file:
-      name: '{{ supervisord_dir }}/{{ item }}'
+      name: '{{ supervisord_dir }}/{{ cluster_name }}'
       state: absent
-    loop:
-      - '{{ cluster_name }}.conf'
-      - '{{ cluster_name }}'
+    when: rootless == false
+
+  - name: Remove data from supervisord dir if set purge variable and rootless
+    ansible.builtin.shell:
+      cmd: 'rm -f {{ supervisord_dir }}/{{ cluster_name }}/*'
+    when: rootless == true
+
+  - name: Stop cluster in supervisord
+    ansible.builtin.command:
+      cmd: '/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf update'
+    ignore_errors: True
 
   when: init_system == 'supervisord'
 # end block
 
-- name: Remove dirs if set purge variable
-  ansible.builtin.file:
-    name: '{{ item }}'
-    state: absent
-  loop:
-    - '{{ conf_dir }}/{{ cluster_name }}'
-    - '{{ data_dir }}/{{ cluster_name }}'
-    - '{{ run_dir }}/{{ cluster_name }}'
-    - '{{ log_dir }}/{{ cluster_name }}'
-  when: purge
+- block:
+  - name: Remove dirs if set purge variable when rootless is unset
+    ansible.builtin.file:
+      name: '{{ item }}'
+      state: absent
+    loop:
+      - '{{ conf_dir }}/{{ cluster_name }}'
+      - '{{ data_dir }}/{{ cluster_name }}'
+      - '{{ run_dir }}/{{ cluster_name }}'
+      - '{{ log_dir }}/{{ cluster_name }}'
+    when: rootless == false
 
-- name: Remove logrotate file
-  ansible.builtin.file:
-    name: '/etc/logrotate.d/picodata-{{ cluster_name }}'
-    state: absent
-  when: log_to == 'file'
+  - name: Remove data from dirs if set purge variable and rootless
+    ansible.builtin.shell:
+      cmd: 'rm -rf {{ item }}/*'
+    loop:
+      - '{{ conf_dir }}/{{ cluster_name }}'
+      - '{{ data_dir }}/{{ cluster_name }}'
+      - '{{ run_dir }}/{{ cluster_name }}'
+      - '{{ log_dir }}/{{ cluster_name }}'
+    when: rootless == true
+
+  when: purge
+# end block
+
+- name: Remove tasks for become
+  ansible.builtin.include_tasks:
+    file: remove_become.yml
+  when: rootless == false

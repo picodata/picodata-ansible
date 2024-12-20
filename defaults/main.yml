@@ -12,6 +12,8 @@ conf_dir: '/etc/picodata'
 data_dir: '/var/lib/picodata'
 run_dir: '/var/run/picodata'
 log_dir: '/var/log/picodata'
+dir_mode: '0750'
+
 log_to: 'syslog'
 backup_dir: '{{ data_dir }}/backup'
 backup_fetch_dir: 'backup'
@@ -36,6 +38,9 @@ purge: false
 
 user: 'root'
 group: 'root'
+
+# for limited sudo rights. work only with init_system=supervisord!!!
+rootless: false
 
 # change this for test only!
 fd_uniq_per_instance: false

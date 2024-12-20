@@ -13,8 +13,6 @@
       src: tiers-conf.j2
       dest: '{{ conf_dir }}/{{ cluster_name }}/{{ tier.key }}.conf'
       force: true
-      owner: '{{ user }}'
-      group: '{{ group }}'
 
   - name: Setup instances in tier {{ tier.key }}
     ansible.builtin.include_tasks:

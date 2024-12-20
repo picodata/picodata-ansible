@@ -1,2 +1,6 @@
 ---
 # handlers file for picodata-ansible
+
+- name: Restart all instances
+  ansible.builtin.include_tasks:
+    file: restart.yml

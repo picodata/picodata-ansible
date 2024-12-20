@@ -1,6 +1,6 @@
 ---
 - hosts: all
-  become: true
+  become: false
 
   tasks:
     - name: Run current role

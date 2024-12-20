@@ -12,7 +12,7 @@
   when: instances_on_host is undefined
 
 - name: Restart systemd units
-  # serial: '{{ serial_restart | default(1000) }}'
+  throttle: '{{ serial_host_restart | default(100) }}'
   ansible.builtin.service:
     name: '{{ cluster_name }}@{{ instance }}.service'
     state: restarted
@@ -23,7 +23,7 @@
   when: init_system == 'systemd'
 
 - name: Restart supervisord processes
-  # serial: '{{ serial_restart | default(1000) }}'
+  throttle: '{{ serial_host_restart | default(100) }}'
   ansible.builtin.shell:
     cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf restart all
   when: init_system == 'supervisord'

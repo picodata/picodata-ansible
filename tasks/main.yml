@@ -40,3 +40,13 @@
   ansible.builtin.import_tasks:
     file: plugins.yml
   tags: [ never, plugins, plugin ]
+
+- name: Deploy Picodata cluster (for become with rootless)
+  ansible.builtin.import_tasks:
+    file: deploy_become.yml
+  tags: [ never, deploy_become ]
+
+- name: Remove root files after remove (for become with rootless)
+  ansible.builtin.import_tasks:
+    file: remove_become.yml
+  tags: [ never, remove_become ]

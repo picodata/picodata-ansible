@@ -6,6 +6,11 @@
     file: genin.yml
   when: instances_on_host is undefined
 
+- name: Create dir for plugins
+  ansible.builtin.file:
+    name: '{{ data_dir }}/{{ cluster_name }}/plugins'
+    state: directory
+
 - name: Plugins setup
   ansible.builtin.include_tasks:
     file: plugins_setup.yml
