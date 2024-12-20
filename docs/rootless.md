@@ -36,8 +36,10 @@
 
 Подготовка серверов кластера выполняется командой:
 ```bash
-ansible-playbook -i <inventory> run.yml -t deploy_become -e 'ansible_user=sysadm' -e 'ansible_password=<verysecret>'
+ansible-playbook -i <inventory> picodata.yml -t deploy_become -e 'ansible_user=sysadm' -e 'ansible_password=<verysecret>'
 ```
+
+> Здесь и далее в примерах плейбук `picodata.yml` взят из файла [README.md](../README.md)
 
 Переменные `ansible_user` и `ansible_password` можно вынести в переменные окружения, либо в ansible.cfg, в таком случае указывать их при запуске команды будет не нужно. 
 Как это сделать описано в документации Anibsle: https://docs.ansible.com/ansible/latest/reference_appendices/config.html
@@ -48,7 +50,7 @@ ansible-playbook -i <inventory> run.yml -t deploy_become -e 'ansible_user=sysadm
 
 Установка кластера выполняется командой:
 ```bash
-ansible-playbook -i <inventory> run.yml -e 'ansible_user=dbadm' -e 'ansible_password=<verysecret>'
+ansible-playbook -i <inventory> picodata.yml -e 'ansible_user=dbadm' -e 'ansible_password=<verysecret>'
 ```
 
 При этом задачи, требующие повышенных привилегий будут пропущены.
@@ -63,12 +65,12 @@ ansible-playbook -i <inventory> run.yml -e 'ansible_user=dbadm' -e 'ansible_pass
 
 Удаление кластера выполняется командой:
 ```bash
-ansible-playbook -i <inventory> run.yml -t remove'
+ansible-playbook -i <inventory> picodata.yml -t remove'
 ```
 
 Полное удаление кластера выполняется командой:
 ```bash
-ansible-playbook -i <inventory> run.yml -t remove -e purge=true'
+ansible-playbook -i <inventory> picodata.yml -t remove -e purge=true'
 ```
 
 При этом будут удалены файлы с данными, лог-журналы и конфигурационные файлы.
@@ -79,7 +81,7 @@ ansible-playbook -i <inventory> run.yml -t remove -e purge=true'
 
 Удаление кластера выполняется командой:
 ```bash
-ansible-playbook -i <inventory> run.yml -t remove_become -e 'ansible_user=sysadm' -e 'ansible_password=<verysecret>'
+ansible-playbook -i <inventory> picodata.yml -t remove_become -e 'ansible_user=sysadm' -e 'ansible_password=<verysecret>'
 ```
 
 При этом будет остановлена и удалена systemd-служба запуска supervisord, удалены все корневые каталоги, которые были созданы для кластера.

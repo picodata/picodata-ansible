@@ -21,13 +21,12 @@
       daemon_reload: true
       force: true
 
+  become: true
   when: init_system == 'systemd'
 # end block
 
 - name: Create supervisord conf-files for instances in tier {{ tier.key }}
   ansible.builtin.template:
-    # owner: '{{ user }}'
-    # group: '{{ group }}'
     src: supervisord-apps.j2
     dest: '{{ supervisord_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.conf'
     force: true

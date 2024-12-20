@@ -4,7 +4,6 @@
 
 ## Требования
 
-
 Наличие подготовленных серверов с поддерживаемыми ОС (список см. https://picodata.io/download/) с необходимым количеством ресурсов из минимального расчета на 1 инстанс (без учета ресурсов для ОС): 1 CPU, 64 Mb RAM, 512Mb HDD
 
 ## Переменные роли
@@ -154,9 +153,9 @@ DC3:                               # Датацентр (failure_domain)
       host_group: 'STORAGES'
 ```
 
-## Плэйбук
+## Плейбук
 
-Пример плэйбука `run.yml`:
+Пример плейбука `picodata.yml`:
 ```yml
 ---
 - name: Deploy picodata cluster
@@ -174,20 +173,20 @@ DC3:                               # Датацентр (failure_domain)
 
 Пример команды для установки кластера:
 ```bash
-ansible-playbook -i hosts.yml run.yml
+ansible-playbook -i hosts.yml picodata.yml
 ```
 
 ---
 
 Пример команды для удаления кластера:
 ```bash
-ansible-playbook -i hosts.yml run.yml -t remove
+ansible-playbook -i hosts.yml picodata.yml -t remove
 ```
 
 > Если при запуске будет выставлена переменная `purge`, то кластер удалится вместе с данными.
 
 ```bash
-ansible-playbook -i hosts.yml run.yml -t remove -e purge=true
+ansible-playbook -i hosts.yml picodata.yml -t remove -e purge=true
 ```
 
 
@@ -195,14 +194,14 @@ ansible-playbook -i hosts.yml run.yml -t remove -e purge=true
 
 Пример команды для бэкапа кластера:
 ```bash
-ansible-playbook -i hosts.yml run.yml -t backup
+ansible-playbook -i hosts.yml picodata.yml -t backup
 ```
 
 ---
 
 Пример команды для восстановления кластера:
 ```bash
-ansible-playbook -i hosts.yml run.yml -t restore
+ansible-playbook -i hosts.yml picodata.yml -t restore
 ```
 
 Полное описание всех тэгов роли см. в [docs/tags.md](docs/tags.md)
