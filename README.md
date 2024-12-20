@@ -160,7 +160,7 @@ DC3:                               # Датацентр (failure_domain)
 ---
 - name: Deploy picodata cluster
   hosts: all
-  become: true
+  become: false
 
   tasks:
 

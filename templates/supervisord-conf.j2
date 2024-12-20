@@ -15,12 +15,17 @@ minprocs=200                                                  ; (min. avail proc
 user={{ user }}
 
 environment=PICODATA_PEER='{% for host in groups["all"] | difference([inventory_hostname]) %}{{ host }}:{{ first_bin_port }},{% endfor %}{{ inventory_hostname }}:{{ first_bin_port }}',
-  PICODATA_LOG_LEVEL={{ log_level }},
   PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_name }}/plugins,
   RUST_BACKTRACE=full,
 {% if service_password is defined %}
   PICODATA_SERVICE_PASSWORD_FILE={{ conf_dir }}/{{ cluster_name }}/.service-password,
 {% endif %}
+{% if extra_vars is defined %}
+{% for param, val in extra_vars.items() %}
+  {{ param }}={{ val }},
+{% endfor %}
+{% endif %}
+  PICODATA_LOG_LEVEL={{ log_level }}
 
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface

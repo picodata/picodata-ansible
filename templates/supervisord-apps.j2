@@ -15,13 +15,18 @@ environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/{{ tier.key }}-
   PICODATA_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance_num|int }},
   PICODATA_HTTP_LISTEN=0.0.0.0:{{ first_http_port + instance_num|int }},
   PICODATA_INSTANCE_TIER={{ tier.key }},
-  PICODATA_CONFIG_FILE={{ conf_dir }}/{{ cluster_name }}/{{ tier.key }}.conf,
-{% if tier.value.shredding is defined and tier.value.shredding %}
+{% if tier.value.shredding is defined and tier.value.shredding == true %}
   PICODATA_SHREDDING=true,
 {% endif %}
 {% if first_pg_port != 0 %}
   PICODATA_PG_LISTEN=0.0.0.0:{{ first_pg_port + instance_num|int }},
 {% endif %}
+{% if tier.value.extra_vars is defined %}
+{% for param, val in tier.value.extra_vars.items() %}
+  {{ param }}={{ val }},
+{% endfor %}
+{% endif %}
+  PICODATA_CONFIG_FILE={{ conf_dir }}/{{ cluster_name }}/{{ tier.key }}.conf
 
 autostart=true
 autorestart=true

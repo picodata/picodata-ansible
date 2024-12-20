@@ -29,6 +29,11 @@ Environment=PICODATA_SERVICE_PASSWORD_FILE={{ conf_dir }}/{{ cluster_name }}/.se
 {% if audit %}
 Environment=PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_name }}/audit-%i.log
 {% endif %}
+{% if extra_vars is defined %}
+{% for param, val in extra_vars.items() %}
+Environment={{ param }}={{ val }}
+{% endfor %}
+{% endif %}
 
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/%i'
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/plugins'

@@ -4,11 +4,14 @@ Environment=PICODATA_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance
 Environment=PICODATA_HTTP_LISTEN=0.0.0.0:{{ first_http_port + instance_num|int }}
 Environment=PICODATA_INSTANCE_TIER={{ tier.key }}
 Environment=PICODATA_CONFIG_FILE={{ conf_dir }}/{{ cluster_name }}/{{ tier.key }}.conf
-
-{% if tier.value.shredding is defined and tier.value.shredding %}
+{% if tier.value.shredding is defined and tier.value.shredding == true %}
 Environment=PICODATA_SHREDDING=true
 {% endif %}
-
+{% if tier.value.extra_vars is defined %}
+{% for param, val in tier.value.extra_vars.items() %}
+Environment={{ param }}={{ val }}
+{% endfor %}
+{% endif %}
 {% if first_pg_port != 0 %}
 Environment=PICODATA_PG_LISTEN=0.0.0.0:{{ first_pg_port + instance_num|int }}
 {% endif %}
