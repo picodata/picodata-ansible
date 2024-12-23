@@ -2,47 +2,47 @@
 # tasks for restore cluster
 
 - name: Copy utility files
-  ansible.builtin.copy:
-    src: '{{ item }}'
-    dest: '{{ ansible_user_dir }}'
+  ansible.builtin.template:
+    src: restore.sh.j2
+    dest: '{{ ansible_user_dir }}/restore.sh'
     mode: '0755'
-  loop:
-    - restore.sh
+    force: true
 
-- name: Get list of local backups
-  ansible.builtin.find:
-    paths: '{{ backup_fetch_dir }}/{{ cluster_name }}'
-    depth: 1
-    file_type: directory
-    use_regex: yes
-    patterns: ['^[0-9]{14}$']    
-  register: restore_dirs
-  run_once: true
-  delegate_to: localhost
-  when: restore_dir is undefined
+- block:
+  - name: Get list of local backups
+    ansible.builtin.find:
+      paths: '{{ backup_fetch_dir }}/{{ cluster_name }}'
+      depth: 1
+      file_type: directory
+      use_regex: yes
+      patterns: ['^[0-9]{14}$']
+    register: restore_dirs
+    run_once: true
+    delegate_to: localhost
+    when: restore_dir is undefined
 
-- name: Set backup_dir
-  ansible.builtin.set_fact:
-    restore_dir: '{{ restore_dirs.files | map(attribute="path") | list | max | basename }}'
-    backup_fetch: true
-  when: restore_dir is undefined
+  - name: Set backup_dir
+    ansible.builtin.set_fact:
+      restore_dir: '{{ restore_dirs.files | map(attribute="path") | list | max | basename }}'
+      backup_fetch: true
+    when: restore_dir is undefined
 
-- name: Debug
-  debug:
-    msg: 'restore_dir: {{ restore_dir }}'
+  - name: Debug
+    debug:
+      msg: 'restore_dir: {{ restore_dir }}'
 
-- name: Create dir on remote hosts
-  ansible.builtin.file:
-    path: '{{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
-    state: directory
-  when: backup_fetch == True
+  - name: Create dir on remote hosts
+    ansible.builtin.file:
+      path: '{{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
+      state: directory
 
-- name: Unpack backup
-  ansible.builtin.unarchive:
-    src: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ restore_dir }}/{{ inventory_hostname }}.tar'
-    dest: '{{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
-    owner: '{{ user }}'
-    group: '{{ group }}'
+  - name: Unpack backup
+    ansible.builtin.unarchive:
+      src: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ restore_dir }}/{{ inventory_hostname }}.tar'
+      dest: '{{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
+      owner: '{{ user }}'
+      group: '{{ group }}'
+
   when: backup_fetch == True
 
 - name: Restore data
