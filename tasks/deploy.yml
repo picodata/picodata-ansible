@@ -29,7 +29,7 @@
 - name: Need to install Picodata package
   ansible.builtin.fail:
     msg: 'Error! Your need install Picodata package on every server in cluster!'
-  when: install_packages == true and rootless == false
+  when: install_packages == true and rootless == true
   run_once: true
   delegate_to: localhost
 
