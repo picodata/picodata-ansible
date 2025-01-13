@@ -12,6 +12,11 @@
       install_packages: true
     when: result.rc != 0
 
+  - name: Unset flag for install picodata if exists
+    ansible.builtin.set_fact:
+      install_packages: false
+    when: result.rc == 0
+
   when: skip_check_install is undefined
 # end block
   

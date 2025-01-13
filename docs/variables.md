@@ -12,6 +12,7 @@
 | service_password | | пароль для сервисной учетной записи pico_service |
 | admin_password | | пароль для учетной записи admin, который должен удовлетворять [условиям](https://docs.picodata.io/picodata/24.4/tutorial/access_control/#allowed_passwords) |
 | init_system | systsemd | система управления сервисами и процессами (systemd, supervisord)  |
+| install_packages | true | необходимость установки picodata из репозитория пакетов |
 
 ### Пути
 | Имя | Значение по умолчанию | Описание |
