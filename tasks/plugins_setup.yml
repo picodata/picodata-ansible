@@ -8,7 +8,7 @@
 - name: Unarchive package into plugins-dir
   ansible.builtin.unarchive:
     src: '{{ plugin.value.path }}'
-    dest: '{{ data_dir }}/{{ cluster_name }}/plugins'
+    dest: '{{ plugins_dir }}'
     owner: '{{ user }}'
     group: '{{ group }}'
     list_files: true
@@ -56,7 +56,6 @@
 - name: Load config file
   ansible.builtin.set_fact:
     conf: "{{ lookup('file', '{{ plugin.value.config }}') | from_yaml }}"
-    plugin_dir: '{{ data_dir }}/{{ cluster_name }}/plugins'
   run_once: true
   when: plugin.value.config is defined
 
@@ -68,7 +67,7 @@
 - name: Generate install.sql file into plugin path
   ansible.builtin.template:
     src: config2sql.j2
-    dest: '{{ plugin_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql'
+    dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql'
     force: true
     owner: '{{ user }}'
     group: '{{ group }}'
@@ -76,6 +75,6 @@
 
 - name: Install plugin into cluster (run install.sql)
   ansible.builtin.shell:
-    cmd: '{ echo "\set d ;"; cat {{ plugin_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock'
+    cmd: '{ echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock'
   run_once: true
   when: (plugin.value.do_not_run_plugin_install_sql | default(false)) == false
