@@ -22,4 +22,4 @@ ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} SET migration_context.{{
 
 {% endif %}
 ALTER PLUGIN {{ manifest.name }} MIGRATE TO {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.migration_timeout | default(300) }});
-ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} ENABLE;
+ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} ENABLE OPTION (TIMEOUT = 600);
