@@ -11,7 +11,7 @@ User={{ user }}
 Group={{ group }}
 
 Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/%i.sock
-Environment=PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_name }}/%i
+Environment=PICODATA_INSTANCE_DIR={{ data_dir }}/{{ cluster_name }}/%i
 Environment=PICODATA_INSTANCE_NAME=%i
 Environment=PICODATA_PEER={% for host in groups["all"] | difference([inventory_hostname]) %}{{ hostvars[host]['listen_address'] }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }}
 
@@ -20,7 +20,10 @@ Environment=PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_name }}/plugins
 Environment=RUST_BACKTRACE=full
 {% if log_to == "file" %}
 Environment=PICODATA_LOG={{ log_dir }}/{{ cluster_name }}/%i.log
+{% elif log_to == "pipe" and log_pipe_command is defined %}
+Environment=PICODATA_LOG="pipe:{{ log_pipe_command }}"
 {% endif %}
+
 Environment=PICODATA_FAILURE_DOMAIN={% if fd_uniq_per_instance %}I=%i{% else %}{{ fd }}{% endif %}
 
 {% if service_password is defined %}
@@ -28,8 +31,13 @@ Environment=PICODATA_SERVICE_PASSWORD_FILE={{ conf_dir }}/{{ cluster_name }}/.se
 {% endif %}
 
 {% if audit %}
+{% if audit_to == "file" %}
 Environment=PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_name }}/audit-%i.log
+{% elif audit_to == "pipe" and audit_pipe_command is defined %}
+Environment=PICODATA_AUDIT_LOG="pipe:{{ audit_pipe_command }}"
 {% endif %}
+{% endif %}
+
 {% if extra_vars is defined %}
 {% for param, val in extra_vars.items() %}
 Environment={{ param }}={{ val }}
@@ -39,17 +47,12 @@ Environment={{ param }}={{ val }}
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/%i'
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/plugins'
 
-# Unlimited cores size
-LimitCORE=infinity
 # Disable OOM killer
 OOMScoreAdjust=-1000
-# Increase fd limit for Vinyl
-LimitNOFILE=65535
 
-# Systemd waits until all xlogs are recovered
-TimeoutStartSec=86400s
-# Give a reasonable amount of time to close xlogs
-TimeoutStopSec=20s
+{% for param, val in systemd_params|dictsort %}
+{{ param }}={{ val }}
+{% endfor %}
 
 [Install]
 WantedBy=multi-user.target

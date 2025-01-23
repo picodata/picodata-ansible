@@ -12,6 +12,7 @@ conf_dir: '/etc/picodata'
 data_dir: '/var/lib/picodata'
 run_dir: '/var/run/picodata'
 log_dir: '/var/log/picodata'
+
 dir_mode: '0750'
 
 log_to: 'syslog'
@@ -46,3 +47,9 @@ rootless: false
 fd_uniq_per_instance: false
 
 debug: false
+
+systemd_params_default:
+  LimitNOFILE: 65535        # Increase fd limit for Vinyl
+  LimitCORE: infinity       # Unlimited coredump file size
+  TimeoutStartSec: 86400s   # Systemd waits until all xlogs are recovered
+  TimeoutStopSec: 20s       # Give a reasonable amount of time to close xlogs

@@ -62,6 +62,17 @@
     host_group: "none"
   when: host_group is undefined
 
+- name: Merge systemd params
+  ansible.builtin.set_fact:
+    systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params|default({})) }}'
+  run_once: true
+
+- name: Debug systemd_params1
+  ansible.builtin.debug:
+    var: systemd_params
+  run_once: true
+  when: debug == true
+
 - name: Generate template file for systemd
   become: true
   ansible.builtin.template:
@@ -113,6 +124,8 @@
 - name: Set admin password
   ansible.builtin.shell:
     cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5;" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+  retries: 3
+  delay: 5
   run_once: true
 
 - name: Set properties for cluster

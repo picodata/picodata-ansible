@@ -2,14 +2,20 @@
 command=/usr/bin/picodata run
 
 environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.sock,
-  PICODATA_DATA_DIR={{ data_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }},
+  PICODATA_INSTANCE_DIR={{ data_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }},
   PICODATA_INSTANCE_NAME={{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }},
 {% if log_to == "file" %}
   PICODATA_LOG={{ log_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.log,
+{% elif log_to == "pipe" and log_pipe_command is defined %}
+  PICODATA_LOG="pipe:{{ log_pipe_command }}",
 {% endif %}
   PICODATA_FAILURE_DOMAIN="{% if fd_uniq_per_instance %}I={{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}{% else %}{{ fd }}{% endif %}",
 {% if audit %}
+{% if audit_to == "file" %}
   PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_name }}/audit-{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.log,
+{% elif audit_to == "pipe" and audit_pipe_command is defined %}
+  PICODATA_AUDIT_LOG="pipe:{{ audit_pipe_command }}",
+{% endif %}
 {% endif %}
   PICODATA_LISTEN=0.0.0.0:{{ first_bin_port + instance_num|int }},
   PICODATA_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance_num|int }},
