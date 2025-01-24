@@ -50,3 +50,8 @@
   ansible.builtin.import_tasks:
     file: remove_become.yml
   tags: [ never, remove_become ]
+
+- name: Get picodata crashed dumpfiles
+  ansible.builtin.import_tasks:
+    file: crash_dump.yml
+  tags: [ never, crash_dump ]

@@ -1,0 +1,23 @@
+---
+  # tasks for crash dump
+
+  - name: List of directories to backup
+    ansible.builtin.debug:
+      msg: 'DIRS TO BACKUP: {{ data_dir }} {{ conf_dir }} {{ log_dir }} {{ systemd_dir }} {{ supervisord_dir }} and picodata binary'
+    run_once: true
+
+  - name: Create backup_dir
+    ansible.builtin.file:
+      path: '{{ backup_dir }}/{{ cluster_name }}'
+      state: directory
+
+  - name: Pack crashed dump for fetch
+    ansible.builtin.shell:
+      chdir: '{{ backup_dir }}'
+      cmd: 'tar --ignore-failed-read --exclude={{ backup_dir }} -czhf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump.tar.gz {{ data_dir }} {{ conf_dir }} {{ log_dir }} {{ systemd_dir }}/{{ cluster_name }}* {{ supervisord_dir }} /etc/os-release /usr/bin/picodata'
+
+  - name: Fetch crash dump from remote hosts
+    ansible.builtin.fetch:
+      src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump.tar.gz'
+      dest: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump.tar.gz'
+      flat: true
