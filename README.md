@@ -52,13 +52,13 @@ tiers:
 
 
 ```bash
-ansible-galaxy install git+https://git.picodata.io/picodata/picodata/picodata-ansible.git
+ansible-galaxy install git+https://git.picodata.io/core/picodata-ansible.git
 ```
 
 или добавить ее в файл requirements.yml:
 
 ```yml
-- src: https://git.picodata.io/picodata/picodata/picodata-ansible.git
+- src: https://git.picodata.io/core/picodata-ansible.git
   scm: git
 ```
 
