@@ -59,6 +59,12 @@
   when: init_system == 'supervisord'
 # end block
 
+- name: Send SIGKILL signals for all picodata processes on servers
+  ansible.builtin.shell:
+    cmd: 'sleep 10 && /usr/bin/pkill -9 picodata'
+  when: sigkill | default("false") == "true"
+  ignore_errors: True
+
 - block:
   - name: Remove dirs if set purge variable when rootless is unset
     ansible.builtin.file:
