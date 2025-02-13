@@ -13,7 +13,7 @@ Group={{ group }}
 Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/%i.sock
 Environment=PICODATA_INSTANCE_DIR={{ data_dir }}/{{ cluster_name }}/%i
 Environment=PICODATA_INSTANCE_NAME=%i
-Environment=PICODATA_PEER={% for host in groups["all"] | difference([inventory_hostname]) %}{{ hostvars[host]['listen_address'] }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }}
+Environment=PICODATA_PEER={% for host in groups["all"] | difference([inventory_hostname]) %}{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }}
 
 Environment=PICODATA_LOG_LEVEL={{ log_level }}
 Environment=PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_name }}/plugins

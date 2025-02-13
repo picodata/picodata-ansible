@@ -14,7 +14,7 @@ minfds=65535                                                  ; (min. avail star
 minprocs=200                                                  ; (min. avail process descriptors;default 200)
 user={{ user }}
 
-environment=PICODATA_PEER='{% for host in groups["all"] | difference([inventory_hostname]) %}{{ hostvars[host]['listen_address'] }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }}',
+environment=PICODATA_PEER='{% for host in groups["all"] | difference([inventory_hostname]) %}{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }}',
   PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_name }}/plugins,
   RUST_BACKTRACE=full,
 {% if service_password is defined %}
