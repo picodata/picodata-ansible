@@ -1,21 +1,44 @@
 ---
 # subtasks for deploy cluster
 
+- name: Set instance name in tier {{ tier.key }}
+  ansible.builtin.set_fact:
+    instance_name: '{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
+
+- name: Create dirs for instance in tier {{ tier.key }}
+  ansible.builtin.file:
+    name: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}'
+    state: directory
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    mode: '{{ dir_mode }}'
+
+- name: Generate service-password file in instance dir
+  ansible.builtin.lineinfile:
+    path: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}/.picodata-cookie'
+    regexp: '.*'
+    line: '{{ service_password }}'
+    create: true
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    mode: '0400'
+  when: service_password is defined
+
 - block:
   - name: Create dirs for instances in tier {{ tier.key }}
     ansible.builtin.file:
-      path: '{{ systemd_dir }}/{{ cluster_name }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d'
+      path: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance_name }}.service.d'
       state: directory
 
   - name: Create systemd-env file for instances in tier {{ tier.key }}
     ansible.builtin.template:
       src: systemd-unit-env.j2
-      dest: '{{ systemd_dir }}/{{ cluster_name }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.service.d/env.conf'
+      dest: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance_name }}.service.d/env.conf'
       force: true
 
   - name: Enable systemd services for tier {{ tier.key }}
     ansible.builtin.systemd:
-      name: '{{ cluster_name }}@{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
+      name: '{{ cluster_name }}@{{ instance_name }}'
       enabled: true
       state: started
       daemon_reload: true
