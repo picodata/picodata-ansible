@@ -14,6 +14,7 @@
 | init_system | systsemd | система управления сервисами и процессами (systemd, supervisord)  |
 | install_packages | true | необходимость установки picodata из репозитория пакетов |
 | systemd_params | | словарь с [настройками systemd служб](systemd.md) |
+| property | | словарь с [параметрами конфигурации кластера](https://docs.picodata.io/picodata/stable/reference/db_config/) |
 
 ### Пути
 | Имя | Значение по умолчанию | Описание |

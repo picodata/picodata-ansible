@@ -107,27 +107,29 @@ all:
         config:
           memtx:
             memory: 73400320               # количество памяти, предоставляемое непосредственно на хранение данных в байтах
-            checkpoint_interval: 7200      # период активности службы создания снапшотов (checkpoint daemon) в секундах
-            checkpoint_count: 3            # максимальное количество снапшотов, хранящихся в директории data_dir
         host_groups:
           - STORAGES
 
-      router:                     # имя тира default
+      router:                      # имя тира default
         instances_per_server: 1    # сколько инстансов запустить на каждом сервере
         replication_factor: 1      # фактор репликации
         config:
           memtx:
             memory: 70108864
-          iproto:
-            max_concurrent_messages: 1024  # максимальное количество сообщений, которое Picodata обрабатывает параллельно
         host_groups:
           - ROUTERS
 
+    property:                              # параметры конфигурации кластера https://docs.picodata.io/picodata/stable/reference/db_config/
+      governor_auto_offline_timeout: 30
+      iproto_net_msg_max: 1500
+      memtx_checkpoint_count: 1
+      memtx_checkpoint_interval: 7200
+
     plugins:
-      example:
-        path: '../plugins/weather_0.1.0-ubuntu-focal.tar.gz'
-        config: '../plugins/weather-config.yml'
-        tiers:
+      example:                                                  # имя плагина
+        path: '../plugins/weather_0.1.0-ubuntu-focal.tar.gz'    # путь до пакета плагина
+        config: '../plugins/weather-config.yml'                 # путь до файла с настройками плагина
+        tiers:                                                  # список тиров, в которые плагин установливается
           - router
           - default
 
