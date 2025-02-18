@@ -1,6 +1,6 @@
 [Service]
-Environment=PICODATA_LISTEN=0.0.0.0:{{ first_bin_port + instance_num|int }}
-Environment=PICODATA_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance_num|int }}
+Environment=PICODATA_IPROTO_LISTEN=0.0.0.0:{{ first_bin_port + instance_num|int }}
+Environment=PICODATA_IPROTO_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance_num|int }}
 Environment=PICODATA_HTTP_LISTEN=0.0.0.0:{{ first_http_port + instance_num|int }}
 Environment=PICODATA_INSTANCE_TIER={{ tier.key }}
 Environment=PICODATA_CONFIG_FILE={{ conf_dir }}/{{ cluster_name }}/{{ tier.key }}.conf

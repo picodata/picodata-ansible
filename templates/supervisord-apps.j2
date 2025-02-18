@@ -17,8 +17,8 @@ environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/{{ tier.key }}-
   PICODATA_AUDIT_LOG="pipe:{{ audit_pipe_command }}",
 {% endif %}
 {% endif %}
-  PICODATA_LISTEN=0.0.0.0:{{ first_bin_port + instance_num|int }},
-  PICODATA_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance_num|int }},
+  PICODATA_IPROTO_LISTEN=0.0.0.0:{{ first_bin_port + instance_num|int }},
+  PICODATA_IPROTO_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance_num|int }},
   PICODATA_HTTP_LISTEN=0.0.0.0:{{ first_http_port + instance_num|int }},
   PICODATA_INSTANCE_TIER={{ tier.key }},
 {% if tier.value.shredding is defined and tier.value.shredding == true %}
