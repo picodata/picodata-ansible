@@ -162,7 +162,7 @@ DC3:                               # Датацентр (failure_domain)
 ---
 - name: Deploy picodata cluster
   hosts: all
-  become: false
+  become: true     # false для rootless режима
 
   tasks:
 
