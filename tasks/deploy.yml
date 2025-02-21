@@ -72,7 +72,7 @@
     systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params|default({})) }}'
   run_once: true
 
-- name: Debug systemd_params1
+- name: Debug systemd_params
   ansible.builtin.debug:
     var: systemd_params
   run_once: true
@@ -85,6 +85,21 @@
     dest: '{{ systemd_dir }}/{{ cluster_name }}@.service'
     force: true
   when: init_system == 'systemd'
+
+- name: Clear sql-file for db_config
+  ansible.builtin.file:
+    state: absent
+    path: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
+
+- name: Generate sql-file for db_config
+  ansible.builtin.lineinfile:
+    create: true
+    path: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
+    line: 'alter system set "{{ item.key }}" = {{ item.value }} for all tiers;'
+  loop: "{{ lookup('ansible.builtin.dict', db_config | default({}), wantlist=True) }}"
+  run_once: true
+  notify:
+    - apply_db_config
 
 - name: Init instance number on server
   ansible.builtin.set_fact:
@@ -120,12 +135,6 @@
     cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5;" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   retries: 3
   delay: 5
-  run_once: true
-
-- name: Set properties for cluster
-  ansible.builtin.shell:
-    cmd: echo "alter system set \"{{ item.key }}\" = {{ item.value }};" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-  loop: "{{ lookup('ansible.builtin.dict', property | default({}), wantlist=True) }}"
   run_once: true
 
 - name: Install plugins

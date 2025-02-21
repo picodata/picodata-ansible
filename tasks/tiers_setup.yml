@@ -14,11 +14,21 @@
       dest: '{{ conf_dir }}/{{ cluster_name }}/{{ tier.key }}.conf'
       force: true
 
-  - name: Setup instances in tier {{ tier.key }}
+  - name: Setup instances for tier {{ tier.key }}
     ansible.builtin.include_tasks:
       file: instances_setup.yml
     loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
     loop_control:
       loop_var: instance_id
+
+  - name: Generate sql-file for db_config tier {{ tier.key }}
+    ansible.builtin.lineinfile:
+      create: true
+      path: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
+      line: 'alter system set "{{ item.key }}" = {{ item.value }} for tier {{ tier.key }};'
+    loop: "{{ lookup('ansible.builtin.dict', tier.value.db_config | default({}), wantlist=True) }}"
+    run_once: true
+    notify:
+      - apply_db_config
 
   when: host_group in tier.value.host_groups | default(['none']) or tier.value.host_groups is undefined

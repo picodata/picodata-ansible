@@ -118,10 +118,12 @@ all:
             memory: 70108864
         host_groups:
           - ROUTERS
+        db_config:                 # параметры конфигурации кластера https://docs.picodata.io/picodata/stable/reference/db_config/ для тира
+          iproto_net_msg_max: 1500
 
-    property:                              # параметры конфигурации кластера https://docs.picodata.io/picodata/stable/reference/db_config/
+    db_config:                 # параметры конфигурации кластера https://docs.picodata.io/picodata/stable/reference/db_config/
       governor_auto_offline_timeout: 30
-      iproto_net_msg_max: 1500
+      iproto_net_msg_max: 500
       memtx_checkpoint_count: 1
       memtx_checkpoint_interval: 7200
 

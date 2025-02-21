@@ -4,3 +4,15 @@
 - name: Restart all instances
   ansible.builtin.include_tasks:
     file: restart.yml
+
+- name: Apply db_config
+  ansible.builtin.shell:
+    cmd: cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+  run_once: true
+  listen: apply_db_config
+
+- name: Clear sql-file for db_config
+  ansible.builtin.file:
+    state: absent
+    path: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
+  listen: apply_db_config
