@@ -4,7 +4,7 @@
 - name: Copy utility files on remote hosts
   ansible.builtin.copy:
     src: '{{ item }}'
-    dest: '{{ ansible_user_dir }}'
+    dest: '{{ backup_dir }}'
     mode: '0755'
   loop:
     - backup.sh
@@ -30,7 +30,7 @@
 
 - name: Backup instances
   ansible.builtin.command:
-    cmd: '{{ ansible_user_dir }}/backup.sh -s {{ run_dir }}/{{ cluster_name }}/{{ instance }}.sock -d {{ backup_dir }}/{{ cluster_name }}/{{ DT }}'
+    cmd: '{{ backup_dir }}/backup.sh -s {{ run_dir }}/{{ cluster_name }}/{{ instance }}.sock -d {{ backup_dir }}/{{ cluster_name }}/{{ DT }}'
   loop: '{{ instances_on_host }}'
   loop_control:
     loop_var: instance
@@ -57,7 +57,7 @@
 
 - name: Remove utility files on remote hosts
   ansible.builtin.file:
-    path: '{{ ansible_user_dir }}/{{ item }}'
+    path: '{{ backup_dir }}/{{ item }}'
     state: absent
   loop:
     - backup.sh

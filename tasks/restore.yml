@@ -4,8 +4,10 @@
 - name: Copy utility files
   ansible.builtin.template:
     src: restore.sh.j2
-    dest: '{{ ansible_user_dir }}/restore.sh'
+    dest: '{{ backup_dir }}/restore.sh'
     mode: '0755'
+    owner: '{{ user }}'
+    group: '{{ group }}'
     force: true
 
 - block:
@@ -46,12 +48,15 @@
   when: backup_fetch == True
 
 - name: Restore data
+  become_user: '{{ systemd_user }}'
   ansible.builtin.command:
-    cmd: '{{ ansible_user_dir }}/restore.sh -n {{ cluster_name }} -d {{ data_dir }} -b {{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
+    cmd: '{{ backup_dir }}/restore.sh -n {{ cluster_name }} -d {{ data_dir }} -b {{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
+  environment:
+    XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
 
 - name: Remove utility files
   ansible.builtin.file:
-    path: '{{ ansible_user_dir }}/{{ item }}'
+    path: '{{ backup_dir }}/{{ item }}'
     state: absent
   loop:
     - restore.sh

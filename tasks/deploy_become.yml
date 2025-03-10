@@ -43,6 +43,15 @@
       - '{{ data_dir }}/{{ cluster_name }}'
       - '{{ data_dir }}/{{ cluster_name }}/plugins'
       - '{{ run_dir }}/{{ cluster_name }}'
+      - '{{ backup_dir }}'
+
+  - name: Create dirs for cluster for rootless
+    become_user: '{{ systemd_user }}'
+    ansible.builtin.file:
+      name: '{{ item }}'
+    loop:
+      - '{{ systemd_dir }}'
+    when: rootless == true and init_system == 'systemd'
 
   - name: 'Configure rundir'
     copy:
@@ -97,3 +106,10 @@
 
   become: true
 # end block
+
+- name: Systemd linger enabled
+  become: true
+  ansible.builtin.command:
+    cmd: 'loginctl enable-linger {{ user }}'
+    creates: '/var/lib/systemd/linger/{{ user }}'
+  when: rootless == true and init_system == 'systemd'

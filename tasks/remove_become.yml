@@ -3,7 +3,7 @@
 
   - block:
     - name: Disable systemd service for supervisord
-      ansible.builtin.service:
+      ansible.builtin.systemd:
         name: 'supervisord-{{ cluster_name }}.service'
         enabled: false
         state: stopped
@@ -34,6 +34,7 @@
       - '{{ run_dir }}'
       - '{{ systemd_dir }}/supervisord-{{ cluster_name }}.service'
       - '/etc/tmpfiles.d/picodata.conf'
+    ignore_errors: True
 
   become: true
 # end block

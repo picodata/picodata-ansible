@@ -7,8 +7,11 @@ Type=simple
 ExecStart=/usr/bin/picodata run
 Restart=on-failure
 RestartSec=2
+
+{% if rootless == false %}
 User={{ user }}
 Group={{ group }}
+{% endif %}
 
 Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/%i.sock
 Environment=PICODATA_INSTANCE_DIR={{ data_dir }}/{{ cluster_name }}/%i
@@ -55,5 +58,5 @@ OOMScoreAdjust=-1000
 {% endfor %}
 
 [Install]
-WantedBy=multi-user.target
+WantedBy={% if rootless == false %}multi-user.target{% else %}default.target{% endif %}
 

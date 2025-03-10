@@ -42,9 +42,13 @@
       enabled: true
       state: started
       daemon_reload: true
+      scope: '{{ systemd_scope }}'
       force: true
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
 
   become: true
+  become_user: '{{ systemd_user }}'
   when: init_system == 'systemd'
 # end block
 

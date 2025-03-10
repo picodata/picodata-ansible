@@ -12,14 +12,18 @@
   when: instances_on_host is undefined
 
 - name: Restart systemd units
+  become_user: '{{ systemd_user }}'
   throttle: '{{ serial_host_restart | default(100) }}'
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: '{{ cluster_name }}@{{ instance }}.service'
     state: restarted
+    scope: '{{ systemd_scope }}'
   loop: '{{ instances_on_host }}'
   loop_control:
     loop_var: instance
   ignore_errors: True
+  environment:
+    XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
   when: init_system == 'systemd'
 
 - name: Restart supervisord processes

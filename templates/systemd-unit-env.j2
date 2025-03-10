@@ -9,7 +9,7 @@ Environment=PICODATA_SHREDDING=true
 {% endif %}
 {% if tier.value.extra_vars is defined %}
 {% for param, val in tier.value.extra_vars.items() %}
-Environment={{ param }}={{ val }}
+Environment={{ param }}={{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instance_num|int) ) | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_num|int) ) }}
 {% endfor %}
 {% endif %}
 {% if first_pg_port != 0 %}

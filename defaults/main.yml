@@ -6,7 +6,7 @@ install_packages: true
 
 cluster_name: 'demo'
 audit: false
-log_level: info
+log_level: 'info'
 
 conf_dir: '/etc/picodata'
 data_dir: '/var/lib/picodata'
@@ -31,11 +31,13 @@ init_system: 'systemd'
 
 # for systemd
 systemd_dir: '/etc/systemd/system'
+systemd_scope: 'system'
+systemd_user: 'root'
 
 # for supervisord
 supervisord_dir: '/etc/picodata/supervisord'
 
-purge: false
+purge: true
 
 user: 'root'
 group: 'root'
@@ -49,7 +51,7 @@ fd_uniq_per_instance: false
 debug: false
 
 systemd_params_default:
-  LimitNOFILE: 65535        # Increase fd limit for Vinyl
-  LimitCORE: infinity       # Unlimited coredump file size
-  TimeoutStartSec: 86400s   # Systemd waits until all xlogs are recovered
-  TimeoutStopSec: 20s       # Give a reasonable amount of time to close xlogs
+  LimitNOFILE: '65535'        # Increase fd limit for Vinyl
+  LimitCORE: 'infinity'       # Unlimited coredump file size
+  TimeoutStartSec: '86400s'   # Systemd waits until all xlogs are recovered
+  TimeoutStopSec: '20s'       # Give a reasonable amount of time to close xlogs

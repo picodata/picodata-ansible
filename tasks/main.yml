@@ -1,6 +1,27 @@
 ---
 # tasks file for picodata-ansible
 
+- block:
+  - name: Set scope for systemd
+    ansible.builtin.set_fact:
+      systemd_scope: 'user'
+      systemd_user: '{{ user | default("root") }}'
+      systemd_dir: '~/.config/systemd/user/'
+    run_once: true
+    when: rootless == true
+
+  - name: Register uid of {{ systemd_user }}
+    command: 'id -u {{ systemd_user }}'
+    register: uid
+
+  - name: Debug uid
+    ansible.builtin.debug:
+      var: uid
+    run_once: true
+    when: debug == true
+
+  tags: [ always ]
+
 - name: Deploy Picodata cluster
   ansible.builtin.import_tasks:
     file: deploy.yml

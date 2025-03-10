@@ -30,6 +30,7 @@ tiers:
   default:                     # имя тира default
     instances_per_server: 2    # сколько инстансов запустить на каждом сервере
     replication_factor: 3      # фактор репликации
+    bucket_count: 16384        # количество бакетов в тире
     config:
       memtx:
         memory: 73400320               # количество памяти, предоставляемое непосредственно на хранение данных в байтах
@@ -79,6 +80,8 @@ all:
     cluster_name: test             # имя кластера
     admin_password: "123asdZXV"    # пароль пользователя admin
 
+    default_bucket_count: 16384    # количество бакетов в каждом тире (по умолчанию 30000)
+
     audit: false                   # отключение айдита
     log_level: info                # уровень отладки
     log_to: file                   # вывод логов в файлы, а не в journald
@@ -88,9 +91,7 @@ all:
     run_dir: '/var/run/picodata'   # каталог для хранения sock-файлов
     log_dir: '/var/log/picodata'   # каталог для логов и файлов аудита
 
-    purge: true   # при очистке кластера удалять в том числе все данные и логи с сервера
-
-    listen_address: '{{ ansible_fqdn }}'     # адрес, который будет слушать инстанс, по умолчанию ansible_fqdn
+    listen_address: '{{ ansible_fqdn }}'     # адрес, который будет слушать инстанс
 
     first_bin_port: 13301     # начальный бинарный порт для первого инстанса
     first_http_port: 18001    # начальный http-порт для первого инстанса для веб-интерфейса
@@ -182,13 +183,6 @@ ansible-playbook -i hosts.yml picodata.yml
 ```bash
 ansible-playbook -i hosts.yml picodata.yml -t remove
 ```
-
-> Если при запуске будет выставлена переменная `purge`, то кластер удалится вместе с данными.
-
-```bash
-ansible-playbook -i hosts.yml picodata.yml -t remove -e purge=true
-```
-
 
 ---
 

@@ -13,14 +13,17 @@
 - block:
 
   - name: Remove systemd unit files
-    ansible.builtin.service:
+    ansible.builtin.systemd:
       name: '{{ cluster_name }}@{{ instance }}.service'
       enabled: false
       state: stopped
+      scope: '{{ systemd_scope }}'
     loop: '{{ instances_on_host }}'
     loop_control:
       loop_var: instance
     ignore_errors: True
+    environment:
+      XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
   - name: Remove systemd env dirs
     ansible.builtin.file:
@@ -36,6 +39,7 @@
       state: absent
 
   become: true
+  become_user: '{{ systemd_user }}'
   when: init_system == 'systemd'
 # end block
 

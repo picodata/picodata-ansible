@@ -50,7 +50,7 @@
 - name: Deploy tasks for become
   ansible.builtin.include_tasks:
     file: deploy_become.yml
-  when: rootless == false
+  when: rootless == false or (rootless == true and init_system == 'systemd')
 
 - name: Set failure domain
   ansible.builtin.set_fact:
@@ -80,6 +80,7 @@
 
 - name: Generate template file for systemd
   become: true
+  become_user: '{{ systemd_user }}'
   ansible.builtin.template:
     src: systemd-unit-service.j2
     dest: '{{ systemd_dir }}/{{ cluster_name }}@.service'
