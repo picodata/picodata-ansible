@@ -1,80 +1,84 @@
 ---
 # tasks for plugins
-- name: Debug
-  ansible.builtin.debug:
-    var: plugin
-  when: debug == true
+- block:
 
-- name: Unarchive package into plugins-dir
-  ansible.builtin.unarchive:
-    src: '{{ plugin.value.path }}'
-    dest: '{{ plugins_dir }}'
-    owner: '{{ user }}'
-    group: '{{ group }}'
-    list_files: true
-  register: archive
+  - name: Debug
+    ansible.builtin.debug:
+      var: plugin
+    when: debug == true
 
-- name: Find manifest file
-  ansible.builtin.set_fact:
-    manifest_file: "{{ archive.files[item] }}"
-  loop: "{{ lookup('ansible.utils.index_of', archive.files, 'regex', expression, wantlist=True) }}"
-  vars:
-    expression: '.*/manifest.yaml$'
+  - name: Unarchive package into plugins-dir
+    ansible.builtin.unarchive:
+      src: '{{ plugin.value.path }}'
+      dest: '{{ plugins_dir }}'
+      owner: '{{ user }}'
+      group: '{{ group }}'
+      list_files: true
+    run_once: false
+    register: archive
+
+  - name: Find manifest file
+    ansible.builtin.set_fact:
+      manifest_file: "{{ archive.files[item] }}"
+    loop: "{{ lookup('ansible.utils.index_of', archive.files, 'regex', expression, wantlist=True) }}"
+    vars:
+      expression: '.*/manifest.yaml$'
+
+  - name: Create temporary directory
+    become: false
+    ansible.builtin.tempfile:
+      state: directory
+      suffix: build
+    delegate_to: localhost
+    register: tempdir
+
+  - name: Unarchive manifest file from package to temporary directory
+    become: false
+    ansible.builtin.unarchive:
+      src: '{{ plugin.value.path }}'
+      dest: '{{ tempdir.path }}/'
+      include: '{{ manifest_file }}'
+    delegate_to: localhost
+
+  - name: Load manifest file from temporary directory
+    ansible.builtin.set_fact:
+      manifest: "{{ lookup('file', '{{ tempdir.path }}/{{ manifest_file }}') | from_yaml }}"
+
+  - name: Remove temporary directory
+    become: false
+    ansible.builtin.file:
+      path: '{{ tempdir.path }}'
+      state: absent
+    delegate_to: localhost
+
+  - name: Load config file
+    ansible.builtin.set_fact:
+      conf: "{{ lookup('file', '{{ plugin.value.config }}') | from_yaml }}"
+    when: plugin.value.config is defined
+
+  - name: Get services from manifest
+    ansible.builtin.set_fact:
+      services: '{{ manifest.services | map(attribute="name") }}'
+
+  - name: Checking for plugin has been installed
+    ansible.builtin.shell:
+      cmd: "echo \"select enabled from _pico_plugin where name='{{ manifest.name }}' and version='{{ manifest.version }}'\" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock | grep true | wc -l"
+    register: plugin_status
+
+  - block:
+    - name: Generate install.sql file into plugin path
+      ansible.builtin.template:
+        src: config2sql.j2
+        dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql'
+        force: true
+        owner: '{{ user }}'
+        group: '{{ group }}'
+
+    - name: Install plugin into cluster (run install.sql)
+      ansible.builtin.shell:
+        cmd: '{ echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock'
+      when: (plugin.value.do_not_run_plugin_install_sql | default(false)) == false
+
+    when: plugin_status.stdout == "0"
+
   run_once: true
-
-- name: Create temporary directory
-  become: false
-  ansible.builtin.tempfile:
-    state: directory
-    suffix: build
-  delegate_to: localhost
-  run_once: true
-  register: tempdir
-
-- name: Unarchive manifest file from package to temporary directory
-  become: false
-  ansible.builtin.unarchive:
-    src: '{{ plugin.value.path }}'
-    dest: '{{ tempdir.path }}/'
-    include: '{{ manifest_file }}'
-  delegate_to: localhost
-  run_once: true
-
-- name: Load manifest file from temporary directory
-  ansible.builtin.set_fact:
-    manifest: "{{ lookup('file', '{{ tempdir.path }}/{{ manifest_file }}') | from_yaml }}"
-  run_once: true
-
-- name: Remove temporary directory
-  become: false
-  ansible.builtin.file:
-    path: '{{ tempdir.path }}'
-    state: absent
-  delegate_to: localhost
-  run_once: true
-
-- name: Load config file
-  ansible.builtin.set_fact:
-    conf: "{{ lookup('file', '{{ plugin.value.config }}') | from_yaml }}"
-  run_once: true
-  when: plugin.value.config is defined
-
-- name: Get services from manifest
-  ansible.builtin.set_fact:
-    services: '{{ manifest.services | map(attribute="name") }}'
-  run_once: true
-
-- name: Generate install.sql file into plugin path
-  ansible.builtin.template:
-    src: config2sql.j2
-    dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql'
-    force: true
-    owner: '{{ user }}'
-    group: '{{ group }}'
-  run_once: true
-
-- name: Install plugin into cluster (run install.sql)
-  ansible.builtin.shell:
-    cmd: '{ echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock'
-  run_once: true
-  when: (plugin.value.do_not_run_plugin_install_sql | default(false)) == false
