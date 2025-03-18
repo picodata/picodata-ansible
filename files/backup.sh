@@ -42,6 +42,7 @@ SNAPOWNER=$(stat -c %U:%G $SNAP)
 mkdir -p $BACKUP_DIR/$SNAP_DIR
 chown $SNAPOWNER $BACKUP_DIR/$SNAP_DIR
 
-cp -p $SNAP $BACKUP_DIR/$SNAP_DIR/
+cp -p $SNAP $(dirname $SNAP)/.picodata-cookie $BACKUP_DIR/$SNAP_DIR/
+cp -pr $(dirname $SNAP)/../plugins $BACKUP_DIR/
 
 echo -e "\lua\n box.backup.stop();" | picodata admin $SOCK &>/dev/null
