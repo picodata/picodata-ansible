@@ -5,6 +5,13 @@
   ansible.builtin.include_tasks:
     file: restart.yml
 
+- name: Wait for PG-port and continue with play
+  ansible.builtin.wait_for:
+    port: '{{ first_pg_port }}'
+    delay: 10
+  run_once: true
+  listen: apply_db_config
+
 - name: Apply db_config
   ansible.builtin.shell:
     cmd: cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
