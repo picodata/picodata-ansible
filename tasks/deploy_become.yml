@@ -84,6 +84,7 @@
         src: supervisord-conf.j2
         dest: '{{ supervisord_dir }}/{{ cluster_name }}.conf'
         force: true
+      tags: make-supervisord-conf
 
     - name: Enable systemd service for supervisord
       ansible.builtin.systemd:
