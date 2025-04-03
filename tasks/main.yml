@@ -8,7 +8,7 @@
       systemd_user: '{{ user | default("root") }}'
       systemd_dir: '~/.config/systemd/user/'
     run_once: true
-    when: rootless == true
+    when: rootless == true and init_system == 'systemd'
 
   - name: Register uid of {{ systemd_user }}
     command: 'id -u {{ systemd_user }}'
