@@ -79,6 +79,7 @@
       - '{{ data_dir }}/{{ cluster_name }}'
       - '{{ run_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
+      - '{{ share_dir }}/{{ cluster_name }}'
     when: rootless == false
 
   - name: Remove data from dirs if set purge variable and rootless
@@ -89,6 +90,7 @@
       - '{{ data_dir }}/{{ cluster_name }}'
       - '{{ run_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
+      - '{{ share_dir }}/{{ cluster_name }}'
     when: rootless == true
 
   when: purge

@@ -6,10 +6,14 @@ install_packages: true
 
 cluster_name: 'demo'
 audit: false
+audit_to: 'syslog'
+
 log_level: 'info'
+log_format: 'plain'
 
 conf_dir: '/etc/picodata'
 data_dir: '/var/lib/picodata'
+share_dir: '/usr/share/picodata'
 run_dir: '/var/run/picodata'
 log_dir: '/var/log/picodata'
 
@@ -23,6 +27,8 @@ backup_fetch: true
 first_bin_port: 13301
 first_http_port: 18001
 first_pg_port: 15001
+
+pg_ssl: false
 
 listen_address: '{{ ansible_fqdn }}'
 
@@ -38,6 +44,7 @@ systemd_user: 'root'
 supervisord_dir: '/etc/picodata/supervisord'
 
 purge: true
+shredding: false
 
 user: 'root'
 group: 'root'
@@ -55,3 +62,5 @@ systemd_params_default:
   LimitCORE: 'infinity'       # Unlimited coredump file size
   TimeoutStartSec: '86400s'   # Systemd waits until all xlogs are recovered
   TimeoutStopSec: '20s'       # Give a reasonable amount of time to close xlogs
+
+pg_port_delay: 5

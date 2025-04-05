@@ -1,6 +1,12 @@
 ---
 # subtasks for deploy cluster
 
+- name: Print instance_id and instance_num in tier {{ tier.key }}
+  ansible.builtin.debug:
+    msg: 'instance_id = {{ instance_id }}   instance_num = {{ instance_num }}'
+  run_once: true
+  when: debug == true
+
 - name: Set instance name in tier {{ tier.key }}
   ansible.builtin.set_fact:
     instance_name: '{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
@@ -23,6 +29,14 @@
     group: '{{ group }}'
     mode: '0400'
   when: service_password is defined
+
+- name: Create config file for instance {{ instance_name }}
+  ansible.builtin.template:
+    src: instance-conf.j2
+    dest: '{{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf'
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    force: true
 
 - block:
   - name: Create dirs for instances in tier {{ tier.key }}
@@ -55,7 +69,7 @@
 - name: Create supervisord conf-files for instances in tier {{ tier.key }}
   ansible.builtin.template:
     src: supervisord-apps.j2
-    dest: '{{ supervisord_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.conf'
+    dest: '{{ supervisord_dir }}/{{ cluster_name }}/{{ instance_name }}.conf'
     force: true
   when: init_system == 'supervisord'
 

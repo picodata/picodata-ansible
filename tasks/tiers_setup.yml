@@ -8,12 +8,6 @@
       init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
     run_once: true
 
-  - name: Create config file for tier {{ tier.key }}
-    ansible.builtin.template:
-      src: tiers-conf.j2
-      dest: '{{ conf_dir }}/{{ cluster_name }}/{{ tier.key }}.conf'
-      force: true
-
   - name: Setup instances for tier {{ tier.key }}
     ansible.builtin.include_tasks:
       file: instances_setup.yml

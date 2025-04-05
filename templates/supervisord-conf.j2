@@ -14,18 +14,10 @@ minfds=65535                                                  ; (min. avail star
 minprocs=200                                                  ; (min. avail process descriptors;default 200)
 user={{ user }}
 
-environment=PICODATA_PEER='{% for host in groups["all"] | difference([inventory_hostname]) %}{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }}',
-  PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_name }}/plugins,
-  RUST_BACKTRACE=full,
-{% if service_password is defined %}
-  PICODATA_SERVICE_PASSWORD_FILE={{ conf_dir }}/{{ cluster_name }}/.service-password,
-{% endif %}
 {% if extra_vars is defined %}
-{% for param, val in extra_vars.items() %}
-  {{ param }}={{ val }},
-{% endfor %}
+environment={% for param, val in extra_vars.items() %}{% if loop.last %}{% set eol = '' %}{% else %}{% set eol = ',' %}{% endif %}{{ param }}={{ val }}{{ eol }}{% endfor %}
 {% endif %}
-  PICODATA_LOG_LEVEL={{ log_level }}
+
 
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface

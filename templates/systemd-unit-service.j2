@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/picodata run
+ExecStart=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/%i.conf
 Restart=on-failure
 RestartSec=2
 
@@ -13,34 +13,7 @@ User={{ user }}
 Group={{ group }}
 {% endif %}
 
-Environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/%i.sock
-Environment=PICODATA_INSTANCE_DIR={{ data_dir }}/{{ cluster_name }}/%i
-Environment=PICODATA_INSTANCE_NAME=%i
-Environment=PICODATA_PEER={% for host in groups["all"] | difference([inventory_hostname]) %}{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }}
-
-Environment=PICODATA_LOG_LEVEL={{ log_level }}
-Environment=PICODATA_PLUGIN_DIR={{ data_dir }}/{{ cluster_name }}/plugins
 Environment=RUST_BACKTRACE=full
-{% if log_to == "file" %}
-Environment=PICODATA_LOG={{ log_dir }}/{{ cluster_name }}/%i.log
-{% elif log_to == "pipe" and log_pipe_command is defined %}
-Environment=PICODATA_LOG="pipe:{{ log_pipe_command }}"
-{% endif %}
-
-Environment=PICODATA_FAILURE_DOMAIN={% if fd_uniq_per_instance %}I=%i{% else %}{{ fd }}{% endif %}
-
-{% if service_password is defined %}
-Environment=PICODATA_SERVICE_PASSWORD_FILE={{ conf_dir }}/{{ cluster_name }}/.service-password
-{% endif %}
-
-{% if audit %}
-{% if audit_to == "file" %}
-Environment=PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_name }}/audit-%i.log
-{% elif audit_to == "pipe" and audit_pipe_command is defined %}
-Environment=PICODATA_AUDIT_LOG="pipe:{{ audit_pipe_command }}"
-{% endif %}
-{% endif %}
-
 {% if extra_vars is defined %}
 {% for param, val in extra_vars.items() %}
 Environment={{ param }}={{ val }}
@@ -48,7 +21,7 @@ Environment={{ param }}={{ val }}
 {% endif %}
 
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/%i'
-ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/plugins'
+ExecStartPre=/bin/sh -c 'mkdir -p {{ share_dir }}/{{ cluster_name }}'
 
 # Disable OOM killer
 OOMScoreAdjust=-1000

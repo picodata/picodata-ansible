@@ -38,12 +38,24 @@
       - '{{ log_dir }}'
       - '{{ data_dir }}'
       - '{{ run_dir }}'
+      - '{{ share_dir }}'
+      - '{{ backup_dir }}'
+
+  - name: Create dirs with cluster-name
+    become_user: '{{ systemd_user }}'
+    ansible.builtin.file:
+      name: '{{ item }}'
+      state: directory
+      owner: '{{ user }}'
+      group: '{{ group }}'
+      mode: '{{ dir_mode }}'
+    loop:
       - '{{ conf_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
       - '{{ data_dir }}/{{ cluster_name }}'
-      - '{{ data_dir }}/{{ cluster_name }}/plugins'
+      - '{{ share_dir }}/{{ cluster_name }}'
       - '{{ run_dir }}/{{ cluster_name }}'
-      - '{{ backup_dir }}'
+    tags: make-supervisord-conf
 
   - name: Create dirs for cluster for rootless
     become_user: '{{ systemd_user }}'
@@ -72,6 +84,7 @@
       loop:
         - '{{ supervisord_dir }}'
         - '{{ supervisord_dir }}/{{ cluster_name }}'
+      tags: make-supervisord-conf
 
     - name: Generate service unit for supervisord
       ansible.builtin.template:

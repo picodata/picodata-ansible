@@ -8,7 +8,7 @@
 
 - name: Set dir for plugins
   ansible.builtin.set_fact:
-    plugins_dir: '{{ data_dir }}/{{ cluster_name }}/plugins'
+    plugins_dir: '{{ share_dir }}/{{ cluster_name }}'
   run_once: true
 
 - name: Create dir for plugins

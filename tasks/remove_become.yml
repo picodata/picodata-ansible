@@ -32,6 +32,7 @@
       - '{{ log_dir }}'
       - '{{ data_dir }}'
       - '{{ run_dir }}'
+      - '{{ share_dir }}'
       - '{{ systemd_dir }}/supervisord-{{ cluster_name }}.service'
       - '/etc/tmpfiles.d/picodata.conf'
     ignore_errors: True

@@ -1,38 +1,5 @@
-[program:{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}]
-command=/usr/bin/picodata run
-
-environment=PICODATA_ADMIN_SOCK={{ run_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.sock,
-  PICODATA_INSTANCE_DIR={{ data_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }},
-  PICODATA_INSTANCE_NAME={{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }},
-{% if log_to == "file" %}
-  PICODATA_LOG={{ log_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.log,
-{% elif log_to == "pipe" and log_pipe_command is defined %}
-  PICODATA_LOG="pipe:{{ log_pipe_command }}",
-{% endif %}
-  PICODATA_FAILURE_DOMAIN="{% if fd_uniq_per_instance %}I={{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}{% else %}{{ fd }}{% endif %}",
-{% if audit %}
-{% if audit_to == "file" %}
-  PICODATA_AUDIT_LOG={{ log_dir }}/{{ cluster_name }}/audit-{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.log,
-{% elif audit_to == "pipe" and audit_pipe_command is defined %}
-  PICODATA_AUDIT_LOG="pipe:{{ audit_pipe_command }}",
-{% endif %}
-{% endif %}
-  PICODATA_IPROTO_LISTEN=0.0.0.0:{{ first_bin_port + instance_num|int }},
-  PICODATA_IPROTO_ADVERTISE={{ listen_address }}:{{ first_bin_port + instance_num|int }},
-  PICODATA_HTTP_LISTEN=0.0.0.0:{{ first_http_port + instance_num|int }},
-  PICODATA_INSTANCE_TIER={{ tier.key }},
-{% if tier.value.shredding is defined and tier.value.shredding == true %}
-  PICODATA_SHREDDING=true,
-{% endif %}
-{% if first_pg_port != 0 %}
-  PICODATA_PG_LISTEN=0.0.0.0:{{ first_pg_port + instance_num|int }},
-{% endif %}
-{% if tier.value.extra_vars is defined %}
-{% for param, val in tier.value.extra_vars.items() %}
-  {{ param }}={{ val }},
-{% endfor %}
-{% endif %}
-  PICODATA_CONFIG_FILE={{ conf_dir }}/{{ cluster_name }}/{{ tier.key }}.conf
+[program:{{ instance_name }}]
+command=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf
 
 autostart=true
 autorestart=true
@@ -41,4 +8,7 @@ startsecs=10
 stopwaitsecs=10
 user={{ user }}
 redirect_stderr=true
-# stdout_logfile={{ log_dir }}/{{ cluster_name }}/{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}.log
+
+{% if tier.value.extra_vars is defined %}
+environment={% for param, val in tier.value.extra_vars.items() %}{% if loop.last %}{% set eol = '' %}{% else %}{% set eol = ',' %}{% endif %}{{ param }}={{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instance_num|int) ) | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_num|int) ) }}{{ eol }}{% endfor %}
+{% endif %}
