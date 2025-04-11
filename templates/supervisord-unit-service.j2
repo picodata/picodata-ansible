@@ -4,8 +4,12 @@ Documentation=http://supervisord.org
 After=network.target
 
 [Service]
+{% if rootless == false %}
 User={{ user }}
 Group={{ group }}
+{% endif %}
+
+ExecStartPre=/bin/sh -c 'mkdir -p {{ log_dir }}/{{ cluster_name }}'
 
 ExecStart=/usr/bin/supervisord -n -c {{ supervisord_dir }}/{{ cluster_name }}.conf
 ExecStop=/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf $OPTIONS shutdown
@@ -27,4 +31,4 @@ TimeoutStartSec=86400s
 TimeoutStopSec=60s
 
 [Install]
-WantedBy=multi-user.target
+WantedBy={% if rootless == false %}multi-user.target{% else %}default.target{% endif %}

@@ -19,7 +19,7 @@
 
   when: skip_check_install is undefined
 # end block
-  
+
 - name: Install picodata packages
   ansible.builtin.include_tasks:
     file: install_packages.yml
@@ -40,9 +40,13 @@
       - '{{ run_dir }}'
       - '{{ share_dir }}'
       - '{{ backup_dir }}'
+      - '{{ conf_dir }}/{{ cluster_name }}'
+      - '{{ log_dir }}/{{ cluster_name }}'
+      - '{{ data_dir }}/{{ cluster_name }}'
+      - '{{ share_dir }}/{{ cluster_name }}'
+      - '{{ run_dir }}/{{ cluster_name }}'
 
-  - name: Create dirs with cluster-name
-    become_user: '{{ systemd_user }}'
+  - name: Create dirs for supervisord
     ansible.builtin.file:
       name: '{{ item }}'
       state: directory
@@ -50,20 +54,9 @@
       group: '{{ group }}'
       mode: '{{ dir_mode }}'
     loop:
-      - '{{ conf_dir }}/{{ cluster_name }}'
-      - '{{ log_dir }}/{{ cluster_name }}'
-      - '{{ data_dir }}/{{ cluster_name }}'
-      - '{{ share_dir }}/{{ cluster_name }}'
-      - '{{ run_dir }}/{{ cluster_name }}'
-    tags: make-supervisord-conf
-
-  - name: Create dirs for cluster for rootless
-    become_user: '{{ systemd_user }}'
-    ansible.builtin.file:
-      name: '{{ item }}'
-    loop:
-      - '{{ systemd_dir }}'
-    when: rootless == true and init_system == 'systemd'
+      - '{{ supervisord_dir }}'
+      - '{{ supervisord_dir }}/{{ cluster_name }}'
+    when: init_system == 'supervisord'
 
   - name: 'Configure rundir'
     copy:
@@ -74,18 +67,6 @@
       mode: 0644
 
   - block:
-    - name: Create dirs for supervisord
-      ansible.builtin.file:
-        name: '{{ item }}'
-        state: directory
-        owner: '{{ user }}'
-        group: '{{ group }}'
-        mode: '{{ dir_mode }}'
-      loop:
-        - '{{ supervisord_dir }}'
-        - '{{ supervisord_dir }}/{{ cluster_name }}'
-      tags: make-supervisord-conf
-
     - name: Generate service unit for supervisord
       ansible.builtin.template:
         src: supervisord-unit-service.j2
@@ -97,7 +78,6 @@
         src: supervisord-conf.j2
         dest: '{{ supervisord_dir }}/{{ cluster_name }}.conf'
         force: true
-      tags: make-supervisord-conf
 
     - name: Enable systemd service for supervisord
       ansible.builtin.systemd:
@@ -106,9 +86,15 @@
         state: started
         daemon_reload: true
         force: true
+        scope: '{{ systemd_scope }}'
       register: supervisord_service
 
-    when: init_system == 'supervisord'
+    - name: Check restart if needed
+      ansible.builtin.set_fact:
+        need_restart: false
+      when: supervisord_service.changed == true
+
+    when: init_system == 'supervisord' and systemd_scope == 'system'
   # end block
 
   - name: Generate logrotate file
@@ -118,12 +104,11 @@
       force: true
     when: log_to == 'file'
 
-  become: true
-# end block
+  - name: Systemd linger enabled
+    ansible.builtin.command:
+      cmd: 'loginctl enable-linger {{ user }}'
+      creates: '/var/lib/systemd/linger/{{ user }}'
+    when: rootless == true and systemd_scope == 'user'
 
-- name: Systemd linger enabled
-  become: true
-  ansible.builtin.command:
-    cmd: 'loginctl enable-linger {{ user }}'
-    creates: '/var/lib/systemd/linger/{{ user }}'
-  when: rootless == true and init_system == 'systemd'
+    become: true
+# end block

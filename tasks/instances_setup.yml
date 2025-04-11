@@ -30,13 +30,18 @@
     mode: '0400'
   when: service_password is defined
 
-- name: Create config file for instance {{ instance_name }}
+- name: Create config file for instances in tier {{ tier.key }}
   ansible.builtin.template:
     src: instance-conf.j2
     dest: '{{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf'
     owner: '{{ user }}'
     group: '{{ group }}'
-    force: true
+  notify:
+    - restart
+
+- name: Save target for prometheus in tier {{ tier.key }}
+  ansible.builtin.set_fact:
+    targets: '{{ targets | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int) + "/metrics"] ) }}'
 
 - block:
   - name: Create dirs for instances in tier {{ tier.key }}
@@ -49,8 +54,10 @@
       src: systemd-unit-env.j2
       dest: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance_name }}.service.d/env.conf'
       force: true
+    notify:
+      - restart
 
-  - name: Enable systemd services for tier {{ tier.key }}
+  - name: Enable systemd services for {{ instance_name }} in tier {{ tier.key }}
     ansible.builtin.systemd:
       name: '{{ cluster_name }}@{{ instance_name }}'
       enabled: true
@@ -60,6 +67,12 @@
       force: true
     environment:
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    register: result
+
+  - name: Check restart if needed
+    ansible.builtin.set_fact:
+      need_restart: false
+    when: result.changed == true
 
   become: true
   become_user: '{{ systemd_user }}'
@@ -72,6 +85,8 @@
     dest: '{{ supervisord_dir }}/{{ cluster_name }}/{{ instance_name }}.conf'
     force: true
   when: init_system == 'supervisord'
+  notify:
+    - restart
 
 - name: Calculate next port number on server
   ansible.builtin.set_fact:

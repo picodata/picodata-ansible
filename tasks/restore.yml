@@ -1,6 +1,7 @@
 ---
 # tasks for restore cluster
 
+
 - name: Copy utility files
   ansible.builtin.template:
     src: restore.sh.j2
@@ -12,6 +13,7 @@
 
 - block:
   - name: Get list of local backups
+    become: false
     ansible.builtin.find:
       paths: '{{ backup_fetch_dir }}/{{ cluster_name }}'
       depth: 1

@@ -5,7 +5,7 @@
   - name: Set scope for systemd
     ansible.builtin.set_fact:
       systemd_scope: 'user'
-      systemd_user: '{{ user | default("root") }}'
+      systemd_user: '{{ user }}'
       systemd_dir: '~/.config/systemd/user/'
     run_once: true
     when: rootless == true and init_system == 'systemd'

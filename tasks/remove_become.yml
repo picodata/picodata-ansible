@@ -14,7 +14,7 @@
         name: '{{ supervisord_dir }}/{{ cluster_name }}.conf'
         state: absent
 
-    when: init_system == 'supervisord'
+    when: init_system == 'supervisord' and systemd_scope == 'system'
   # end block
 
   - name: Remove logrotate file

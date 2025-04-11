@@ -20,7 +20,7 @@ instance:
   instance_dir: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}'
   name: '{{ instance_name }}'
   tier: '{{ tier.key }}'
-  peer: [ {% for host in groups["all"] | difference([inventory_hostname]) %}{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }} ]
+  peer: [ {% for host in groups["all"] | difference([inventory_hostname ]) | sort %}{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }} ]
   failure_domain: { {% if fd_uniq_per_instance %}'I': '{{ instance_name }}'{% else %}{{ fd }}{% endif %} }
 
   iproto_listen: '0.0.0.0:{{ first_bin_port + instance_num|int }}'

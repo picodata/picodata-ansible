@@ -60,6 +60,26 @@
       cmd: '/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf update'
     ignore_errors: True
 
+  - name: Disable systemd service for supervisord
+    ansible.builtin.systemd:
+      name: 'supervisord-{{ cluster_name }}.service'
+      enabled: false
+      state: stopped
+      scope: '{{ systemd_scope }}'
+    ignore_errors: True
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    when: systemd_scope == 'user'
+
+  - name: Remove supervisord configs
+    ansible.builtin.file:
+      name: '{{ supervisord_dir }}/{{ cluster_name }}.conf'
+      state: absent
+    when: systemd_scope == 'user'
+
+  when: init_system == 'supervisord'
+
+
   when: init_system == 'supervisord'
 # end block
 
