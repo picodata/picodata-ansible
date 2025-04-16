@@ -1,0 +1,11 @@
+prometheus:
+{% for host in groups["all"] | sort %}{{ hostvars[host].list_target | sort | to_nice_yaml() }}{% endfor %}
+
+http: 
+{% for host in groups["all"] | sort %}{{ hostvars[host].list_http | sort | to_nice_yaml() }}{% endfor %}
+
+pg:
+{% for host in groups["all"] | sort %}{{ hostvars[host].list_pg | sort | to_nice_yaml() }}{% endfor %}
+
+bin: 
+{% for host in groups["all"] | sort %}{{ hostvars[host].list_bin | sort | to_nice_yaml() }}{% endfor %}

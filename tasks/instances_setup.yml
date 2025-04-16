@@ -41,7 +41,10 @@
 
 - name: Save target for prometheus in tier {{ tier.key }}
   ansible.builtin.set_fact:
-    targets: '{{ targets | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int) + "/metrics"] ) }}'
+    list_target: '{{ list_target | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int) + "/metrics"] ) }}'
+    list_http: '{{ list_http | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int)] ) }}'
+    list_pg: '{{ list_pg | union( [listen_address + ":" + "{0:d}".format(first_pg_port+instance_num|int)] ) }}'
+    list_bin: '{{ list_bin | union( [listen_address + ":" + "{0:d}".format(first_bin_port+instance_num|int)] ) }}'
 
 - block:
   - name: Create dirs for instances in tier {{ tier.key }}

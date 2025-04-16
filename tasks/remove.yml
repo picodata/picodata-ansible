@@ -116,6 +116,13 @@
   when: purge
 # end block
 
+- name: Remove report file
+  ansible.builtin.file:
+    name: 'report.yml'
+    state: absent
+  delegate_to: localhost
+  run_once: true
+
 - name: Remove tasks for become
   ansible.builtin.include_tasks:
     file: remove_become.yml

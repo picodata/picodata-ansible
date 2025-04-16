@@ -24,7 +24,10 @@
   ansible.builtin.set_fact:
     instance_num: 0
     need_restart: true
-    targets: []
+    list_target: []
+    list_http: []
+    list_pg: []
+    list_bin: []
 
 - name: Check picodata is installed
   ansible.builtin.command:
@@ -211,15 +214,10 @@
     file: plugins.yml
   when: plugins is defined
 
-- name: Debug targets for Prometheus
-  ansible.builtin.debug:
-    msg: '{{ targets }}'
-  when: debug == true
-
-- name: Save targets for Prometheus
-  ansible.builtin.copy:
-    content: '{% for host in groups["all"] %}{{ hostvars[host].targets | to_nice_yaml() }}{% endfor %}'
-    dest: 'prometheus.yml'
+- name: Save report about endpoint of all instances
+  ansible.builtin.template:
+    src: report.j2
+    dest: 'report.yml'
   delegate_to: localhost
   run_once: true
   notify:
