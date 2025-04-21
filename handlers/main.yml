@@ -28,8 +28,7 @@
 
 - name: Message about targets for Prometheus
   ansible.builtin.debug:
-    msg: 'Infrormation about of instances is saved to file report.yml on this host (ansible controller)'
+    msg: 'Infrormation about of instances is saved to file {{ report_dir }}/report.yml on this host (ansible controller)'
   delegate_to: localhost
   run_once: true
   listen: messages
-

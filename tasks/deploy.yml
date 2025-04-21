@@ -8,13 +8,6 @@
   run_once: true
   delegate_to: localhost
 
-- name: Print topology
-  ansible.builtin.debug:
-    msg: "Id: {{ item.key }} Count: {{ item.value.instances_per_server }} Replication factor: {{item.value.replication_factor | default('1')}}"
-  loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
-  run_once: true
-  when: debug == true
-
 - name: Set listen address for every host
   ansible.builtin.set_fact:
     listen_address: "{{ listen_address }}"
@@ -135,11 +128,6 @@
     msg: 'fd is {{ fd }}'
   when: not fd_uniq_per_instance
 
-- name: Set server failure domain
-  ansible.builtin.set_fact:
-    host_group: "none"
-  when: host_group is undefined
-
 - name: Merge systemd params
   ansible.builtin.set_fact:
     systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params|default({})) }}'
@@ -176,6 +164,12 @@
   run_once: true
   notify:
     - apply_db_config
+
+- name: Debug all host group
+  debug:
+    msg: "tiers_host_groups: {{ all_host_groups }}"
+  run_once: true
+  when: debug == true
 
 - name: Tiers setup
   ansible.builtin.include_tasks:
@@ -215,9 +209,10 @@
   when: plugins is defined
 
 - name: Save report about endpoint of all instances
+  become: false
   ansible.builtin.template:
     src: report.j2
-    dest: 'report.yml'
+    dest: '{{ report_dir }}/report.yml'
   delegate_to: localhost
   run_once: true
   notify:

@@ -25,6 +25,7 @@
 | conf_dir | /etc/picodata | размещение настроечных файлов |
 | data_dir | /var/lib/picodata | размещение данных |
 | run_dir | /var/run/picodata | размещение socket-файлов |
+| report_dir | ../ | размещение файла с отчетом об установленных инстансах |
 | share_dir | /usr/share/picodata | размещение служебных данных (плагинов) |
 | systemd_dir | /etc/systemd/system | размещение systemd-файлов |
 | supervisord_dir | /etc/picodata/supervisord | размещение кофигурационных файлов для supervisord |
@@ -75,7 +76,8 @@
 ## Переменные для тиров (tiers)
 | Имя | Значение по умолчанию | Описание |
 | ---      | ---      | ---      |
-| instances_per_server | 1 | количество инстансов тира на каждом сервере |
+| replicaset_count | 1 | количество репликасетов в тире |
+| instances_per_server | 1 | количество инстансов тира на каждом сервере - если указано, то преобладает над `replicaset_count`, если не указано, то рассчитается автоматически |
 | replication_factor | 1 | фактор репликации |
 | can_vote | true | возможность инстансов участвовать в голосовании на выборах raft-лидера |
 | config | | словарь для настройки инстансов тира, например указание размера инстанса. Подробнее в [документации параметр instance](https://docs.picodata.io/picodata/24.4/reference/config/)
@@ -88,7 +90,7 @@
 ```yaml
 tiers:
   default:
-    instances_per_server: 3
+    replicaset_count: 2
     replication_factor: 3
     bucket_count: 16384
     extra_vars:

@@ -65,3 +65,5 @@ systemd_params_default:
   TimeoutStopSec: '20s'       # Give a reasonable amount of time to close xlogs
 
 pg_port_delay: 5
+
+report_dir: '..'

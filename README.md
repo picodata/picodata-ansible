@@ -12,14 +12,14 @@
 
 Помимо переменных по умолчанию используется словарь tiers с указанием внутри 
 - имени тира (например `router`)
-- количество инстансов на каждом сервере (`instances_per_server`)
+- количество репликасетов (`replicaset_count`) или количество инстансов на каждом сервере (`instances_per_server`)
 - фактора репликации (`replication_factor`) для тира, по умолчанию 1
 
 Пример словаря tiers:
 ```
 tiers:
   default:                     # имя тира default
-    instances_per_server: 2    # сколько инстансов запустить на каждом сервере
+    replicaset_count: 2        # количество репликасетов
     replication_factor: 3      # фактор репликации
     bucket_count: 16384        # количество бакетов в тире
     config:
@@ -91,7 +91,7 @@ all:
 
     tiers:                         # описание тиров
       arbiter:                     # имя тира
-        instances_per_server: 1    # сколько инстансов запустить на каждом сервере
+        replicaset_count: 1        # количество репликасетов
         replication_factor: 1      # фактор репликации
         config:
           memtx:
@@ -100,7 +100,7 @@ all:
           - ARBITERS               # целевая группа серверов для установки инстанса
 
       default:                     # имя тира
-        instances_per_server: 2    # сколько инстансов запустить на каждом сервере
+        replicaset_count: 3        # количество репликасетов
         replication_factor: 3      # фактор репликации
         bucket_count: 16384        # количество бакетов в тире
         config:
@@ -147,17 +147,20 @@ DC3:                                # Датацентр (failure_domain)
 
 ### Формулы для расчета количества инстансов/репликасетов
 
+> В инвентарном файле для тиров можно указывать, как количество репликасетов, так и количество инстансов на каждом сервере, при этом в первом случае значение `instances_per_server` будет рассчитано автоматически. Если при расчете будет получено дробное значение, то роль остановится с ошибкой.
+
+> Если указано оба параметра, то приоритет у `instances_per_server`
 
 #### Количество репликасетов в кластере
 ```
-REPLICASET_COUNT = instances_per_server * SERVER_COUNT / replication_factor
+replicaset_count = instances_per_server * SERVER_COUNT / replication_factor
 ```
 
 > Если при расчете вы получаете дробное число, значит некорректно подобрано количество серверов или фактор репликации, это необходимо исправить
 
 #### Необходимое количество инстансов на одном сервере
 ```
-instances_per_server = REPLICASET_COUNT * replication_factor / SERVER_COUNT
+instances_per_server = replicaset_count * replication_factor / SERVER_COUNT
 ```
 
 > Если при расчете вы получаете дробное число, значит некорректно подобрано количество серверов или фактор репликации, это необходимо исправить
@@ -185,6 +188,8 @@ instances_per_server = REPLICASET_COUNT * replication_factor / SERVER_COUNT
 ```bash
 ansible-playbook -i hosts.yml picodata.yml
 ```
+
+> При успешном окончании выполнения плейбука будет создан yaml-файл `report.yml` с перечислением всех инстансов и портов кластера
 
 ---
 

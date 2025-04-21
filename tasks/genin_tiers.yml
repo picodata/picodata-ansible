@@ -1,10 +1,42 @@
 ---
 # subtasks for generate list of instances
 
+# subtasks for deploy cluster
+- block:
+  - name: Init count of host groups for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+      tier_server_cnt: 0
+
+  - name: Set count of host groups for servers if host_groups is defined for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+      tier_server_cnt: '{{ tier_server_cnt | int  + all_host_groups | select("equalto", item) | length | int }}'
+    loop: '{{ tier.value.host_groups }}'
+    run_once: true
+    when: tier.value.host_groups is defined
+
+  - name: Set all host groups for servers if host_groups is undefined for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+      tier_server_cnt: '{{ all_host_groups | length  }}'
+    run_once: true
+    when: tier.value.host_groups is undefined
+
+  - name: Calculate instances_per_server for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+      instances_per_server: '{{ tier.value.replicaset_count | default(1) | int * tier.value.replication_factor | default(1) | int / tier_server_cnt | int }}'
+    run_once: true
+
+  when: tier.value.instances_per_server is undefined
+# end block
+
+- name: Init count of host groups for tier {{ tier.key }}
+  ansible.builtin.set_fact:
+    instances_per_server: '{{ tier.value.instances_per_server }}'
+  when: tier.value.instances_per_server is defined
+
 - name: Instances in tier {{ tier.key }} loop
   ansible.builtin.include_tasks:
     file: genin_instances.yml
-  loop: "{{ range(1, tier.value.instances_per_server + 1) | list }}"
+  loop: "{{ range(1, instances_per_server | int + 1) | list }}"
   loop_control:
     loop_var: instance_id
   when: host_group in tier.value.host_groups | default(['none']) or tier.value.host_groups is undefined
