@@ -45,7 +45,7 @@
       state: absent
     when: rootless == false
 
-  - name: Remove data from supervisord dir if set purge variable and rootless
+  - name: Remove configs from supervisord dir if set purge variable and rootless
     ansible.builtin.shell:
       cmd: 'rm -f {{ supervisord_dir }}/{{ cluster_name }}/*'
     when: rootless == true

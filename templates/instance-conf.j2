@@ -28,7 +28,7 @@ instance:
   http_listen: '0.0.0.0:{{ first_http_port + instance_num|int }}'
   admin_socket: '{{ run_dir }}/{{ cluster_name }}/{{ instance_name }}.sock'
   pg:
-    listen: '0.0.0.0:{{ first_pg_port + instance_num|int }}'
+    listen: '{{ pg_address }}:{{ first_pg_port + instance_num|int }}'
     ssl: {{ pg_ssl }}
 
   share_dir: '{{ share_dir }}/{{ cluster_name }}'

@@ -32,6 +32,7 @@ first_pg_port: 15001
 pg_ssl: false
 
 listen_address: '{{ ansible_fqdn }}'
+pg_address: '{{ ansible_fqdn }}'
 
 #Process Control System (systemd/supervisord)
 init_system: 'systemd'

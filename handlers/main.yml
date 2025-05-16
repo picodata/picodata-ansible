@@ -9,6 +9,7 @@
 
 - name: Wait for PG-port and continue with play
   ansible.builtin.wait_for:
+    host: '{{ pg_address }}'
     port: '{{ first_pg_port }}'
     delay: '{{ pg_port_delay }}'
   run_once: true
