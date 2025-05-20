@@ -112,6 +112,7 @@
 # end block
 
 - name: Remove report file
+  become: false
   ansible.builtin.file:
     name: '{{ report_dir }}/report.yml'
     state: absent
