@@ -33,6 +33,12 @@ dbadm ALL = (picodata) NOPASSWD: SHELL
 
 В инвентарном файле:
 - определить каталоги: `conf_dir`, `data_dir`, `run_dir`, `log_dir`, `share_dir`
+- выставить переменные:
+```
+user: picodata
+group: picodata
+rootless: true
+```
 
 ## Система управления процессами systemd (приоритетный вариант)
 
