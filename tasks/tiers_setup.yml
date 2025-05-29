@@ -1,6 +1,11 @@
 ---
 # subtasks for deploy cluster
 
+- name: Debug host_group for tier {{ tier.key }}
+  debug:
+    msg: "host_group = {{ host_group }}    tier.value.host_groups = {{ tier.value.host_groups | default(['none']) }}"
+  when: debug == true
+
 - block:
   - name: Init count of host groups for tier {{ tier.key }}
     ansible.builtin.set_fact:
@@ -43,7 +48,6 @@
     delegate_to: localhost
     when: debug == true
 
-  run_once: true
   when: tier.value.instances_per_server is undefined
 # end block
 
@@ -51,13 +55,16 @@
   - name: Init count of host groups for tier {{ tier.key }}
     ansible.builtin.set_fact:
       instances_per_server: '{{ tier.value.instances_per_server }}'
-    run_once: true
     when: tier.value.instances_per_server is defined
+
+  - name: Debug instances_per_server for tier {{ tier.key }}
+    debug:
+      msg: 'instances_per_server: {{ instances_per_server }}       tier.value.instances_per_server: {{ tier.value.instances_per_server }}'
+    when: debug == true
 
   - name: Set init-replication-factor for tier {{ tier.key }}
     ansible.builtin.set_fact:
       init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
-    run_once: true
 
   - name: Setup instances for tier {{ tier.key }}
     ansible.builtin.include_tasks:

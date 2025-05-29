@@ -1,15 +1,15 @@
 ---
 # subtasks for deploy cluster
 
-- name: Print instance_id and instance_num in tier {{ tier.key }}
-  ansible.builtin.debug:
-    msg: 'instance_id = {{ instance_id }}   instance_num = {{ instance_num }}'
-  run_once: true
-  when: debug == true
-
 - name: Set instance name in tier {{ tier.key }}
   ansible.builtin.set_fact:
     instance_name: '{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
+
+- name: Print instance_id and instance_num in tier {{ tier.key }}
+  ansible.builtin.debug:
+    msg: 'instance_id = {{ instance_id }}   instance_num = {{ instance_num }}   instance_name = {{ instance_name }}'
+  run_once: true
+  when: debug == true
 
 - name: Create dirs for instance in tier {{ tier.key }}
   ansible.builtin.file:
@@ -91,6 +91,6 @@
   notify:
     - restart
 
-- name: Calculate next port number on server
+- name: Calculate next port number on server for all tiers
   ansible.builtin.set_fact:
     instance_num: '{{ instance_num|int + 1}}'
