@@ -11,9 +11,6 @@ cluster:
 {% if params.bucket_count is defined %}
       bucket_count: {{ params.bucket_count }}
 {% endif %}
-{% if params.can_vote is defined %}
-      can_vote: {{ params.can_vote }}
-{% endif %}
 {% endfor %}
 
 instance:
