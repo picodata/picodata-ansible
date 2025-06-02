@@ -120,8 +120,10 @@ all:
       example:                                                  # плагин
         path: '../plugins/weather_0.1.0-ubuntu-focal.tar.gz'    # путь до пакета плагина
         config: '../plugins/weather-config.yml'                 # путь до файла с настройками плагина
-        tiers:                                                  # список тиров, в которые плагин установливается
-          - default
+        services:
+          weather_service:
+            tiers:                                                  # список тиров, в которые установливается служба плагина (см. документацию к плагину)
+              - default                                             # по умолчанию - default
 
 DC1:                                # Датацентр (failure_domain)
   hosts:                            # серверы в датацентре
