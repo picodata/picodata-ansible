@@ -1,11 +1,11 @@
-CREATE PLUGIN IF NOT EXISTS {{ manifest.name }} {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
+CREATE PLUGIN IF NOT EXISTS "{{ manifest.name }}" {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 
 {% if plugin.value.migration_context is defined %}
 {% for param, val in plugin.value.migration_context.items() %}
-ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} SET migration_context.{{ param }} = '{{ val }}' OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
+ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET migration_context."{{ param }}" = '{{ val }}' OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 {% endfor %}
 
-ALTER PLUGIN {{ manifest.name }} MIGRATE TO {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.migration_timeout | default(300) }});
+ALTER PLUGIN "{{ manifest.name }}" MIGRATE TO {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.migration_timeout | default(300) }});
 
 {% endif %}
 {% for servicename in services %}
@@ -16,20 +16,20 @@ ALTER PLUGIN {{ manifest.name }} MIGRATE TO {{ manifest.version }} OPTION (TIMEO
 {% endfor %}
 {% endif %}
 {% for service_tier in ns.service_tiers %}
-ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} ADD SERVICE {{ servicename }} TO TIER {{ service_tier }} OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
+ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ADD SERVICE "{{ servicename }}" TO TIER "{{ service_tier }}" OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 {% endfor %}
 {% endfor %}
 
 {% if (plugin.value.do_not_enable_plugin | default(false)) != true %}
-ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} ENABLE OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
+ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ENABLE OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 {% endif %}
 
 {% if conf is defined %}
 {% for conf_service, conf_params in conf.items() %}
-ALTER PLUGIN {{ manifest.name }} {{ manifest.version }} SET 
+ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET 
 {% for param, val in conf_params.items() %}
 {% if loop.last %}{% set eol = '' %}{% else %}{% set eol = ',' %}{% endif %}
-  {{ conf_service }}.{{ param }} = '{{ val | replace("'", '"') }}'{{ eol }}
+  {{ conf_service }}."{{ param }}" = '{{ val | replace("'", '"') }}'{{ eol }}
 {% endfor %}
 {% endfor %}
 OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
