@@ -31,7 +31,7 @@ ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET
 {% if loop.last %}{% set eol = '' %}{% else %}{% set eol = ',' %}{% endif %}
   {{ conf_service }}."{{ param }}" = '{{ val | replace("'", '"') }}'{{ eol }}
 {% endfor %}
-{% endfor %}
 OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 
+{% endfor %}
 {% endif %}
