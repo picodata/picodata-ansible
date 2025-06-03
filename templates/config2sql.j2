@@ -4,10 +4,10 @@ CREATE PLUGIN IF NOT EXISTS "{{ manifest.name }}" {{ manifest.version }} OPTION 
 {% for param, val in plugin.value.migration_context.items() %}
 ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET migration_context."{{ param }}" = '{{ val }}' OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 {% endfor %}
+{% endif %}
 
 ALTER PLUGIN "{{ manifest.name }}" MIGRATE TO {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.migration_timeout | default(300) }});
 
-{% endif %}
 {% for servicename in services %}
 {% set ns = namespace(service_tiers=['default']) %}
 {% if plugin.value.services is defined %}
@@ -26,7 +26,7 @@ ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ENABLE OPTION (TIMEOUT
 
 {% if conf is defined %}
 {% for conf_service, conf_params in conf.items() %}
-ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET 
+ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET
 {% for param, val in conf_params.items() %}
 {% if loop.last %}{% set eol = '' %}{% else %}{% set eol = ',' %}{% endif %}
   {{ conf_service }}."{{ param }}" = '{{ val | replace("'", '"') }}'{{ eol }}
