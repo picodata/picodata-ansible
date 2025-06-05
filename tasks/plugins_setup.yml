@@ -2,12 +2,12 @@
 # tasks for plugins
 - block:
 
-  - name: Debug
+  - name: Debug {{ plugin.key }}
     ansible.builtin.debug:
       var: plugin
     when: debug == true
 
-  - name: Unarchive package into plugins-dir
+  - name: Unarchive package into plugins-dir {{ plugin.key }}
     ansible.builtin.unarchive:
       src: '{{ plugin.value.path }}'
       dest: '{{ plugins_dir }}'
@@ -17,14 +17,14 @@
     run_once: false
     register: archive
 
-  - name: Find manifest file
+  - name: Find manifest file {{ plugin.key }}
     ansible.builtin.set_fact:
       manifest_file: "{{ archive.files[item] }}"
     loop: "{{ lookup('ansible.utils.index_of', archive.files, 'regex', expression, wantlist=True) }}"
     vars:
       expression: '.*/manifest.yaml$'
 
-  - name: Create temporary directory
+  - name: Create temporary directory {{ plugin.key }}
     become: false
     ansible.builtin.tempfile:
       state: directory
@@ -32,7 +32,7 @@
     delegate_to: localhost
     register: tempdir
 
-  - name: Unarchive manifest file from package to temporary directory
+  - name: Unarchive manifest file from package to temporary directory {{ plugin.key }}
     become: false
     ansible.builtin.unarchive:
       src: '{{ plugin.value.path }}'
@@ -40,33 +40,38 @@
       include: '{{ manifest_file }}'
     delegate_to: localhost
 
-  - name: Load manifest file from temporary directory
+  - name: Load manifest file from temporary directory {{ plugin.key }}
     ansible.builtin.set_fact:
       manifest: "{{ lookup('file', '{{ tempdir.path }}/{{ manifest_file }}') | from_yaml }}"
 
-  - name: Remove temporary directory
+  - name: Remove temporary directory {{ plugin.key }}
     become: false
     ansible.builtin.file:
       path: '{{ tempdir.path }}'
       state: absent
     delegate_to: localhost
 
-  - name: Load config file
+  - name: Set empty value for conf variable if no config {{ plugin.key }}
+    ansible.builtin.set_fact:
+      conf: ""
+    when: plugin.value.config is undefined
+
+  - name: Load config file {{ plugin.key }}
     ansible.builtin.set_fact:
       conf: "{{ lookup('file', '{{ plugin.value.config }}') | from_yaml }}"
     when: plugin.value.config is defined
 
-  - name: Get services from manifest
+  - name: Get services from manifest {{ plugin.key }}
     ansible.builtin.set_fact:
       services: '{{ manifest.services | map(attribute="name") }}'
 
-  - name: Checking for plugin has been installed
+  - name: Checking for plugin has been installed {{ plugin.key }}
     ansible.builtin.shell:
       cmd: "echo \"select enabled from _pico_plugin where name='{{ manifest.name }}' and version='{{ manifest.version }}'\" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock | grep true | wc -l"
     register: plugin_status
 
   - block:
-    - name: Generate install.sql file into plugin path
+    - name: Generate install.sql file into plugin path {{ plugin.key }}
       ansible.builtin.template:
         src: config2sql.j2
         dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql'
@@ -74,7 +79,7 @@
         owner: '{{ user }}'
         group: '{{ group }}'
 
-    - name: Install plugin into cluster (run install.sql)
+    - name: Install plugin into cluster (run install.sql) {{ plugin.key }}
       ansible.builtin.shell:
         cmd: '{ echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock'
       when: (plugin.value.do_not_run_plugin_install_sql | default(false)) == false

@@ -24,7 +24,7 @@ ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ADD SERVICE "{{ servic
 ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ENABLE OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 {% endif %}
 
-{% if conf is defined %}
+{% if conf is defined and conf != '' %}
 {% for conf_service, conf_params in conf.items() %}
 ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET
 {% for param, val in conf_params.items() %}
