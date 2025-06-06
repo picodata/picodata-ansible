@@ -31,7 +31,7 @@ while getopts 's:d:' param ; do
   esac
 done
 
-SNAP=$(echo -e "\lua\n box.snapshot(); box.backup.stop(); box.backup.start();" | picodata admin $SOCK | grep "snap$" | sed -E 's/.* //g')
+SNAP=$(echo -e "\lua\n box.snapshot()\n box.backup.stop()\n box.backup.start()\n" | picodata admin $SOCK | grep "snap$" | sed -E 's/.* //g')
 
 [ "$SNAP" = "" ] && exit 2
 
@@ -45,4 +45,4 @@ chown $SNAPOWNER $BACKUP_DIR/$SNAP_DIR
 cp -p $SNAP $(dirname $SNAP)/.picodata-cookie $BACKUP_DIR/$SNAP_DIR/
 cp -pr $(dirname $SNAP)/../plugins $BACKUP_DIR/
 
-echo -e "\lua\n box.backup.stop();" | picodata admin $SOCK &>/dev/null
+echo -e "\lua\n box.backup.stop()\n" | picodata admin $SOCK &>/dev/null
