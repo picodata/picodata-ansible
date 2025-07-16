@@ -3,7 +3,7 @@
 - block:
 
   - block:
-    - name: Set failure domain
+    - name: Set filename of package
       ansible.builtin.set_fact:
         pkg_name: '{{ picodata_package_path | basename  }}'
 

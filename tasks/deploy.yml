@@ -120,7 +120,7 @@
 
 - name: Set failure domain
   ansible.builtin.set_fact:
-    fd: '"DC":"{{ group_names }}","HOST":"{{ inventory_hostname }}"'
+    fd: '"G":"{{ group_names }}","H":"{{ inventory_hostname }}"'
   when: not fd_uniq_per_instance
 
 - name: Debug failure domain

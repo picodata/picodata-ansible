@@ -54,6 +54,16 @@
     file: restart.yml
   tags: [ never, restart ]
 
+- name: Stop Picodata cluster
+  ansible.builtin.import_tasks:
+    file: stop.yml
+  tags: [ never, stop ]
+
+- name: Start Picodata cluster
+  ansible.builtin.import_tasks:
+    file: start.yml
+  tags: [ never, start ]
+
 - name: Backup Picodata cluster
   ansible.builtin.import_tasks:
     file: backup.yml
