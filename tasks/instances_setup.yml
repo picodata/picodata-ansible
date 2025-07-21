@@ -41,6 +41,7 @@
 
 - name: Save target for prometheus in tier {{ tier.key }}
   ansible.builtin.set_fact:
+    list_instances: '{{ list_instances | union([instance_name]) }}'
     list_target: '{{ list_target | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int) + "/metrics"] ) }}'
     list_http: '{{ list_http | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int)] ) }}'
     list_pg: '{{ list_pg | union( [listen_address + ":" + "{0:d}".format(first_pg_port+instance_num|int)] ) }}'

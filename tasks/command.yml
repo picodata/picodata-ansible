@@ -1,0 +1,91 @@
+---
+# tasks for execute command lua command on instances
+
+- name: Generate list of instances per server
+  ansible.builtin.import_tasks:
+    file: genin.yml
+
+- block:
+
+  - name: Debug cmdline
+    ansible.builtin.debug:
+      var: cmdline
+    run_once: true
+    when: debug == true
+
+  - name: Create temporary file
+    ansible.builtin.tempfile:
+      path: '{{ data_dir }}/{{ cluster_name }}'
+      state: file
+      suffix: picocmd
+    register: tempfile
+
+  - name: Debug tempfile
+    ansible.builtin.debug:
+      var: tempfile
+    run_once: true
+    when: debug == true
+
+  - name: Generate command file
+    ansible.builtin.copy:
+      content: |
+        {{ cmdline }}
+      dest: '{{ tempfile.path }}'
+
+  - name: Set name of command file
+    ansible.builtin.set_fact:
+      cmdfile: '{{ tempfile.path }}'
+
+  when: cmdline is defined
+
+- block:
+  - name: Get name of command file
+    ansible.builtin.set_fact:
+      cmdfile_name: '{{ cmdfile | basename  }}'
+
+  - name: Debug cmdfile_name
+    ansible.builtin.debug:
+      var: cmdfile_name
+    run_once: true
+
+  - name: Copy command file to hosts
+    ansible.builtin.copy:
+      src: '{{ cmdfile }}'
+      dest: '{{ data_dir }}/{{ cluster_name }}'
+    when: tempfile.path is undefined
+
+  - name: Execute file with commands
+    ansible.builtin.shell:
+      cmd: 'echo "Host: {{ inventory_hostname }}"; echo "Instance: {{ instance }}"; (echo "\lua"; cat "{{ data_dir }}/{{ cluster_name }}/{{ cmdfile_name }}") | picodata admin --ignore-errors {{ run_dir }}/{{ cluster_name }}/{{ instance }}.sock'
+    loop: '{{ instances_on_host }}'
+    loop_control:
+      loop_var: instance
+    register: result
+
+  - name: Remove command file on hosts
+    ansible.builtin.file:
+      path: '{{ data_dir }}/{{ cluster_name }}/{{ cmdfile_name }}'
+      state: absent
+
+  - name: Debug result
+    ansible.builtin.debug:
+      var: result
+    run_once: true
+    when: debug == true
+
+  - name: Debug ansible_play_hosts
+    ansible.builtin.debug:
+      var: ansible_play_hosts
+    run_once: true
+    when: debug == true
+
+  - name: Save sqlline result to local file
+    become: false
+    ansible.builtin.copy:
+      content: |
+        {% for host in ansible_play_hosts | sort %}{{ hostvars[host].result.results | map(attribute="stdout_lines") | to_nice_json() }}{% endfor %}
+      dest: '{{ report_dir }}/command_result_{{ "%Y%m%d%H%M%S" | strftime }}.log'
+      mode: 0644
+    delegate_to: localhost
+
+  when: cmdfile is defined

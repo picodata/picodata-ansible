@@ -31,6 +31,16 @@
     loop: "{{ groups['all'] }}"
     run_once: true
 
+  - name: Init variables
+    ansible.builtin.set_fact:
+      instance_num: 0
+      need_restart: true
+      list_instances: []
+      list_target: []
+      list_http: []
+      list_pg: []
+      list_bin: []
+
   tags: [ always ]
 # end block
 
@@ -39,7 +49,7 @@
     file: deploy.yml
   tags: [ deploy, restore_full ]
 
-- name: Install Picodata packages
+- name: Install Picodata packages for Picodata cluster
   ansible.builtin.import_tasks:
     file: install_packages.yml
   tags: [ never, install_pkgs ]
@@ -74,12 +84,12 @@
     file: restore.yml
   tags: [ never, restore, restore_full ]
 
-- name: Generate inventory
+- name: Generate inventory for Picodata cluster
   ansible.builtin.import_tasks:
     file: genin.yml
   tags: [ never, genin ]
 
-- name: Install plugins
+- name: Install plugins into Picodata cluster
   ansible.builtin.import_tasks:
     file: plugins.yml
   tags: [ never, plugins, plugin ]
@@ -94,7 +104,12 @@
     file: remove_become.yml
   tags: [ never, remove_become ]
 
-- name: Get picodata crashed dumpfiles
+- name: Get crashed dumpfiles of Picodata cluster
   ansible.builtin.import_tasks:
     file: crash_dump.yml
   tags: [ never, crash_dump ]
+
+- name: Execute command on Picodata cluster
+  ansible.builtin.import_tasks:
+    file: command.yml
+  tags: [ never, command ]

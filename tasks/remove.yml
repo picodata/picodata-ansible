@@ -73,9 +73,6 @@
     when: systemd_scope == 'user'
 
   when: init_system == 'supervisord'
-
-
-  when: init_system == 'supervisord'
 # end block
 
 - name: Send SIGKILL signals for all picodata processes on servers

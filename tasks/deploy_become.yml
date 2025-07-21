@@ -59,7 +59,7 @@
     when: init_system == 'supervisord'
 
   - name: 'Configure rundir'
-    copy:
+    ansible.builtin.copy:
       content: |
         d {{ run_dir }} {{ dir_mode }} {{ user }} {{ group }}
         d {{ run_dir }}/{{ cluster_name }} {{ dir_mode }} {{ user }} {{ group }}

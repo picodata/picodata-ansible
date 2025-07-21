@@ -17,6 +17,7 @@
   ansible.builtin.set_fact:
     instance_num: 0
     need_restart: true
+    list_instances: []
     list_target: []
     list_http: []
     list_pg: []
@@ -208,10 +209,16 @@
     file: plugins.yml
   when: plugins is defined
 
-- name: Save report about endpoint of all instances
+- name: Save report about endpoint per server
   become: false
   ansible.builtin.template:
     src: report.j2
+    dest: '{{ conf_dir }}/{{ cluster_name }}/report.yml'
+
+- name: Save report about endpoint of all instances
+  become: false
+  ansible.builtin.template:
+    src: report_all.j2
     dest: '{{ report_dir }}/report.yml'
   delegate_to: localhost
   run_once: true

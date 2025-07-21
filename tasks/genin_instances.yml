@@ -1,14 +1,22 @@
 ---
 # subtasks for generate list of instances
 
-- name: Set instance name from {{ tier.key }}
+- name: Set instance name in {{ tier.key }}
   ansible.builtin.set_fact:
-    instance_current: '{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
+    instance_name: '{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
 
-- name: Add instance name from {{ tier.key }} to list
+- name: Add instance name to list in tier {{ tier.key }}
   ansible.builtin.set_fact:
-    instances_on_host: '{{ instances_on_host + [ instance_current ] }}'
+    instances_on_host: '{{ instances_on_host + [ instance_name ] }}'
 
-- name: Calculate next port number on server
+- name: Save target about all intstances port in tier {{ tier.key }}
+  ansible.builtin.set_fact:
+    list_instances: '{{ list_instances | union([instance_name]) }}'
+    list_target: '{{ list_target | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int) + "/metrics"] ) }}'
+    list_http: '{{ list_http | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int)] ) }}'
+    list_pg: '{{ list_pg | union( [listen_address + ":" + "{0:d}".format(first_pg_port+instance_num|int)] ) }}'
+    list_bin: '{{ list_bin | union( [listen_address + ":" + "{0:d}".format(first_bin_port+instance_num|int)] ) }}'
+
+- name: Calculate next port number on server in tier {{ tier.key }}
   ansible.builtin.set_fact:
     instance_num: '{{ instance_num|int + 1}}'

@@ -1,0 +1,14 @@
+instances:
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_instances | sort | to_nice_yaml() }}{% endfor %}
+
+prometheus:
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_target | sort | to_nice_yaml() }}{% endfor %}
+
+http:
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_http | sort | to_nice_yaml() }}{% endfor %}
+
+pg:
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_pg | sort | to_nice_yaml() }}{% endfor %}
+
+bin:
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_bin | sort | to_nice_yaml() }}{% endfor %}
