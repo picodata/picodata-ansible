@@ -40,6 +40,7 @@
       list_http: []
       list_pg: []
       list_bin: []
+      all_hosts: '{{ groups["all"] }}'
 
   tags: [ always ]
 # end block

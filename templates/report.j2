@@ -1,14 +1,14 @@
 instances:
-{{ list_instances | sort | to_nice_yaml() }}
+{{ list_instances | to_nice_yaml(sort_keys=false) }}
 
 prometheus:
-{{ list_target | sort | to_nice_yaml() }}
+{{ list_target | to_nice_yaml(sort_keys=false) }}
 
 http:
-{{ list_http | sort | to_nice_yaml() }}
+{{ list_http | to_nice_yaml(sort_keys=false) }}
 
 pg:
-{{ list_pg | sort | to_nice_yaml() }}
+{{ list_pg | to_nice_yaml(sort_keys=false) }}
 
 bin:
-{{ list_bin | sort | to_nice_yaml() }}
+{{ list_bin | to_nice_yaml(sort_keys=false) }}

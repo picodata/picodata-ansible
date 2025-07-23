@@ -69,6 +69,11 @@ ansible-playbook -i hosts.yml picodata.yml -t restart
 ansible-playbook -i hosts.yml picodata.yml -t stop
 ```
 
+Пример команды для остановки всего кластера с отключением systemd служб (службы не будут запускаться автоматически после перезагрузки сервера):
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t stop -e enable=false
+```
+
 ---
 
 Пример команды для остановки инстансов на определенном сервере с именем `host` (из указывается из инвентарного файла):
@@ -120,7 +125,16 @@ ansible-playbook -i hosts.yml picodata.yml -t crash_dump
 ```
 
 Будет собрана вся информация для расследования инцидента. 
-После выполнения передать файлы "*_crash_dump.tar.gz" из каталога `backup_fetch_dir/cluster_name/` (`backup_fetch_dir` и `cluster_name` - переменные из инвентарного файла, если не определены, то используются значения по умолчанию) в техническую поддержку Пикодаты
+После выполнения передать файлы **"*_crash_dump_??????????????.tar.gz"** из каталога `backup_fetch_dir/cluster_name/` (`backup_fetch_dir` и `cluster_name` - переменные из инвентарного файла, если не определены, то используются значения по умолчанию) в техническую поддержку Пикодаты любым доступным способом
+
+> Внимание! В случае проблем с выкачиванием файлов на хост с ansible, файлы будут сохранены в каталоге `backup_dir` на каждом сервере, их можно скачать вручную
+
+> Внимание! На серверах и на станции ansible должно быть достаточно свободного места в разделах, где будут сформированы архивы `crash_dump`
+
+Пример команды для сбора информации **без snap и xlog файлов** после сбоя кластера для отправки ее в техподдержку Пикодаты:
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t crash_dump -e skipdata=true
+```
 
 ---
 
@@ -135,3 +149,15 @@ ansible-playbook -i hosts.yml picodata.yml -t install_pkgs
 ```bash
 ansible-playbook -i hosts.yml picodata.yml -t genin
 ```
+
+Пример команды для выполнения lua-команды на всех инстансах кластера:
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info()"
+```
+
+Пример команды для выполнения файла с набором lua-команд на всех инстансах кластера:
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdfile='../cmdfile.lua"
+```
+
+> В обоих командаъ результат выполнения будет записан в файл `command_result_??????????????.log` в каталоге, определенном переменной `report_dir`

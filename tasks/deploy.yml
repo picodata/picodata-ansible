@@ -13,16 +13,6 @@
     listen_address: "{{ listen_address }}"
   when: hostvars[inventory_hostname]['listen_address'] is undefined
 
-- name: Init variables
-  ansible.builtin.set_fact:
-    instance_num: 0
-    need_restart: true
-    list_instances: []
-    list_target: []
-    list_http: []
-    list_pg: []
-    list_bin: []
-
 - name: Check picodata is installed
   ansible.builtin.command:
     cmd: 'picodata --version'
@@ -210,7 +200,6 @@
   when: plugins is defined
 
 - name: Save report about endpoint per server
-  become: false
   ansible.builtin.template:
     src: report.j2
     dest: '{{ conf_dir }}/{{ cluster_name }}/report.yml'

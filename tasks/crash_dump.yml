@@ -1,23 +1,58 @@
 ---
   # tasks for crash dump
 
-  - name: List of directories to backup
-    ansible.builtin.debug:
-      msg: 'DIRS TO BACKUP: {{ data_dir }} {{ conf_dir }} {{ log_dir }} {{ systemd_dir }} {{ supervisord_dir }} and picodata binary'
-    run_once: true
+- name: Generate list of instances per server
+  ansible.builtin.import_tasks:
+    file: genin.yml
 
-  - name: Create backup_dir
-    ansible.builtin.file:
-      path: '{{ backup_dir }}/{{ cluster_name }}'
-      state: directory
+- name: Set list of directories to backup
+  ansible.builtin.set_fact:
+    listdir: '{% if not skipdata | default(false) %}{{ data_dir }}/{{ cluster_name }} {% endif %}{{ conf_dir }}/{{ cluster_name }} {{ log_dir }}/{{ cluster_name }} {% if init_system == "supervisord" %}{{ supervisord_dir }}/{{ cluster_name }}{% else %}{{ systemd_dir }}/{{ cluster_name }}*  {{ systemd_dir }}/**/{{ cluster_name }}*{% endif %}'
+  run_once: true
 
-  - name: Pack crashed dump for fetch
-    ansible.builtin.shell:
-      chdir: '{{ backup_dir }}'
-      cmd: 'tar --ignore-failed-read --exclude={{ backup_dir }} -czhf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump.tar.gz {{ data_dir }} {{ conf_dir }} {{ log_dir }} {{ systemd_dir }}/{{ cluster_name }}* {{ supervisord_dir }} /etc/os-release /usr/bin/picodata'
+- name: Set datetime for filename
+  ansible.builtin.set_fact:
+    dt: '{{ "%Y%m%d%H%M%S" | strftime }}'
+  run_once: true
 
-  - name: Fetch crash dump from remote hosts
-    ansible.builtin.fetch:
-      src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump.tar.gz'
-      dest: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump.tar.gz'
-      flat: true
+- name: Unload log files from journald to log_dir
+  ansible.builtin.shell:
+    cmd: 'journalctl -u {{ cluster_name }}@{{ instance }} --all --no-pager {% if systemd_scope == "user" %}--user{% endif %} |  gzip > {{ log_dir }}/{{ cluster_name }}/{{ instance }}.log.gz'
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
+  when: init_system == 'systemd'
+
+- name: List of directories to backup
+  ansible.builtin.debug:
+    msg: 'DIRS TO BACKUP: {{ listdir }}'
+  run_once: true
+
+- name: Create backup_dir
+  ansible.builtin.file:
+    path: '{{ backup_dir }}/{{ cluster_name }}'
+    state: directory
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    mode: '{{ dir_mode }}'
+
+- name: Pack crashed dump for fetch
+  ansible.builtin.shell:
+    chdir: '{{ backup_dir }}'
+    cmd: 'tar --ignore-failed-read --exclude={{ backup_dir }} -czhf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz {{ listdir }} /etc/os-release /usr/bin/picodata'
+
+- name: Remove unloaded logs from journald
+  ansible.builtin.file:
+    path: '{{ log_dir }}/{{ cluster_name }}/{{ instance }}.log.gz'
+    state: absent
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
+  when: init_system == 'systemd'
+
+- name: Fetch crash dump from remote hosts
+  become: false
+  ansible.builtin.fetch:
+    src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz'
+    dest: '{{ backup_fetch_dir }}/{{ cluster_name }}/'
+    flat: true

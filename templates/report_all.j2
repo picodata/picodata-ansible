@@ -1,14 +1,14 @@
 instances:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_instances | sort | to_nice_yaml() }}{% endfor %}
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_instances | to_nice_yaml(sort_keys=false) }}{% endfor %}
 
 prometheus:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_target | sort | to_nice_yaml() }}{% endfor %}
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_target | to_nice_yaml(sort_keys=false) }}{% endfor %}
 
 http:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_http | sort | to_nice_yaml() }}{% endfor %}
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_http | to_nice_yaml(sort_keys=false) }}{% endfor %}
 
 pg:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_pg | sort | to_nice_yaml() }}{% endfor %}
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_pg | to_nice_yaml(sort_keys=false) }}{% endfor %}
 
 bin:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_bin | sort | to_nice_yaml() }}{% endfor %}
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_bin | to_nice_yaml(sort_keys=false) }}{% endfor %}

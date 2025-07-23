@@ -3,7 +3,7 @@
 
 - name: Set instance name in tier {{ tier.key }}
   ansible.builtin.set_fact:
-    instance_name: '{{ tier.key }}-{{ (groups["all"].index(inventory_hostname) +1)*1000 + instance_num|int }}'
+    instance_name: '{{ tier.key }}-{{ (all_hosts.index(inventory_hostname) +1)*1000 + instance_num|int }}'
 
 - name: Print instance_id and instance_num in tier {{ tier.key }}
   ansible.builtin.debug:
@@ -38,14 +38,6 @@
     group: '{{ group }}'
   notify:
     - restart
-
-- name: Save target for prometheus in tier {{ tier.key }}
-  ansible.builtin.set_fact:
-    list_instances: '{{ list_instances | union([instance_name]) }}'
-    list_target: '{{ list_target | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int) + "/metrics"] ) }}'
-    list_http: '{{ list_http | union( [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int)] ) }}'
-    list_pg: '{{ list_pg | union( [listen_address + ":" + "{0:d}".format(first_pg_port+instance_num|int)] ) }}'
-    list_bin: '{{ list_bin | union( [listen_address + ":" + "{0:d}".format(first_bin_port+instance_num|int)] ) }}'
 
 - block:
   - name: Create dirs for instances in tier {{ tier.key }}
