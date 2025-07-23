@@ -18,7 +18,7 @@ share_dir: '/usr/share/picodata'
 run_dir: '/var/run/picodata'
 log_dir: '/var/log/picodata'
 
-dir_mode: '0750'
+dir_mode: '0755'
 
 log_to: 'syslog'
 backup_dir: '{{ data_dir }}/backup'
