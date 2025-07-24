@@ -1,5 +1,5 @@
 ---
-# tasks for execute command lua command on instances
+# tasks for execute lua command on instances
 
 - name: Generate list of instances per server
   ansible.builtin.import_tasks:
