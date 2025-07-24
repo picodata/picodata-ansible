@@ -157,7 +157,7 @@ ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info
 
 Пример команды для выполнения файла с набором lua-команд на всех инстансах кластера:
 ```bash
-ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdfile='../cmdfile.lua"
+ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdfile='../cmdfile.lua'"
 ```
 
 > В обоих командах результат выполнения будет записан в файл `command_result_??????????????.log` в каталоге, определенном переменной `report_dir`
