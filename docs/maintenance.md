@@ -160,4 +160,4 @@ ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info
 ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdfile='../cmdfile.lua"
 ```
 
-> В обоих командаъ результат выполнения будет записан в файл `command_result_??????????????.log` в каталоге, определенном переменной `report_dir`
+> В обоих командах результат выполнения будет записан в файл `command_result_??????????????.log` в каталоге, определенном переменной `report_dir`
