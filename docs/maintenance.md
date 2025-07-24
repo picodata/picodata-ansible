@@ -152,7 +152,7 @@ ansible-playbook -i hosts.yml picodata.yml -t genin
 
 Пример команды для выполнения lua-команды на всех инстансах кластера:
 ```bash
-ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info()"
+ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info()'"
 ```
 
 Пример команды для выполнения файла с набором lua-команд на всех инстансах кластера:
