@@ -51,7 +51,7 @@
   when: init_system == 'systemd'
 
 - name: Fetch crash dump from remote hosts
-  become: false
+  become: '{{ not rootless }}'
   ansible.builtin.fetch:
     src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz'
     dest: '{{ backup_fetch_dir }}/{{ cluster_name }}/'
