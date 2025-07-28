@@ -84,7 +84,7 @@ all:
     share_dir: '/usr/share/picodata'  # каталог для хранения размещения служебных данных (плагинов)
 
     listen_address: '{{ ansible_fqdn }}'     # адрес, который будет слушать инстанс. Для IP указать {{ansible_default_ipv4.address}}
-    pg_address: '{{ listen_address }}'         # адрес, который будет слушать postgress-протокола инстанса
+    pg_address: '{{ listen_address }}'       # адрес, который будет слушать postgress-протокола инстанса
 
     first_bin_port: 13301     # начальный бинарный порт для первого инстанса
     first_http_port: 18001    # начальный http-порт для первого инстанса для веб-интерфейса
