@@ -4,8 +4,8 @@ command=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/{{ inst
 autostart=true
 autorestart=true
 startretries=3
-startsecs=10
-stopwaitsecs=10
+startsecs=20
+stopwaitsecs=60
 user={{ user }}
 redirect_stderr=true
 
