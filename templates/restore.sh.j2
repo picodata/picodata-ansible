@@ -49,7 +49,8 @@ echo "Make dest dir"
 mkdir -p $DATA_DIR/$CLUSTER/
 
 echo "Restore data from backup"
-cp -pr $BACKUP_DIR/* $DATA_DIR/$CLUSTER/
+cp -pr $BACKUP_DIR/*-* $DATA_DIR/$CLUSTER/
+cp -pr $BACKUP_DIR/share/* "{{ share_dir }}/{{ cluster_name }}"/
 
 echo "Start all instances of cluster $CLUSTER on hosts"
 {% if init_system == 'systemd' %}

@@ -43,6 +43,10 @@ mkdir -p $BACKUP_DIR/$SNAP_DIR
 chown $SNAPOWNER $BACKUP_DIR/$SNAP_DIR
 
 cp -p $SNAP $(dirname $SNAP)/.picodata-cookie $BACKUP_DIR/$SNAP_DIR/
-cp -pr $(dirname $SNAP)/../plugins $BACKUP_DIR/
+
+if [ ! -d "$BACKUP_DIR/share" ]; then
+   mkdir -p "$BACKUP_DIR/share"
+   cp -pr "{{ share_dir }}/{{ cluster_name }}/"*  $BACKUP_DIR/share/
+fi
 
 echo -e "\lua\n box.backup.stop()\n" | picodata admin $SOCK &>/dev/null

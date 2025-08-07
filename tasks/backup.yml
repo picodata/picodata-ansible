@@ -2,12 +2,13 @@
 # tasks for backup
 
 - name: Copy utility files on remote hosts
-  ansible.builtin.copy:
-    src: '{{ item }}'
-    dest: '{{ backup_dir }}'
+  ansible.builtin.template:
+    src: backup.sh.j2
+    dest: '{{ backup_dir }}/backup.sh'
     mode: '0755'
-  loop:
-    - backup.sh
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    force: true
 
 - name: Generate list of instances per server
   ansible.builtin.import_tasks:
@@ -57,7 +58,5 @@
 
 - name: Remove utility files on remote hosts
   ansible.builtin.file:
-    path: '{{ backup_dir }}/{{ item }}'
+    path: '{{ backup_dir }}/backup.sh'
     state: absent
-  loop:
-    - backup.sh
