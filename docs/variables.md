@@ -13,6 +13,7 @@
 | admin_password | | пароль для учетной записи admin, который должен удовлетворять [условиям](https://docs.picodata.io/picodata/24.4/tutorial/access_control/#allowed_passwords) |
 | init_system | systsemd | система управления сервисами и процессами (systemd, supervisord)  |
 | install_packages | true | необходимость установки picodata из репозитория пакетов |
+| package_with_version | | имя пакета picodata с нужной версией для установки из репозитория. Пример для ubuntu focal: `package_with_version: 'picodata=25.3.1.0-focal'` |
 | systemd_params | | словарь с [настройками systemd служб](systemd.md) |
 | db_config | | словарь с [параметрами конфигурации кластера](https://docs.picodata.io/picodata/stable/reference/db_config/) |
 | default_bucket_count | 30000 | количество бакетов в каждом тире по умолчанию |
@@ -152,3 +153,19 @@ GROUP3:                             # Группа серверов
 | do_not_run_plugin_install_sql | false | не выполнять sql-инструкции по включению и настройке плагина (используется для отладки) |
 | do_not_enable_plugin | false | выполнить все sql-инструкции настройке плагина, кроме его включения |
 | services | | словарь с настройками для служб плагина (пока поддерживаются только тиры) |
+
+Пример настройки плагина
+```yaml
+plugins:
+  example:
+    path: '../files/weather-cache_0.1.0-ubuntu-focal.tar.gz'
+    config: '../files/weather-config.yml'
+    services:
+      weather_service:
+        tiers:
+          - default
+    migration_context:
+      red_tier: 'my_tier'
+    migration_timeout: 600
+    plugin_timeout: 900
+```

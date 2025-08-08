@@ -2,6 +2,8 @@
 Description=Supervisor process control system for UNIX
 Documentation=http://supervisord.org
 After=network.target
+StartLimitIntervalSec=600
+StartLimitBurst=10
 
 [Service]
 {% if rootless == false %}
