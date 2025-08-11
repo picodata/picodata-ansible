@@ -31,6 +31,9 @@
       content: |
         {{ cmdline }}
       dest: '{{ tempfile.path }}'
+      owner: '{{ user }}'
+      group: '{{ group }}'
+      mode: '0644'
 
   - name: Set name of command file
     ansible.builtin.set_fact:
@@ -52,6 +55,9 @@
     ansible.builtin.copy:
       src: '{{ cmdfile }}'
       dest: '{{ data_dir }}/{{ cluster_name }}'
+      owner: '{{ user }}'
+      group: '{{ group }}'
+      mode: '0644'
     when: tempfile.path is undefined
 
   - name: Execute file with commands
@@ -61,6 +67,7 @@
     loop_control:
       loop_var: instance
     register: result
+    ignore_errors: true
 
   - name: Remove command file on hosts
     ansible.builtin.file:
@@ -83,7 +90,9 @@
     become: false
     ansible.builtin.copy:
       content: |
-        {% for host in ansible_play_hosts | sort %}{{ hostvars[host].result.results | map(attribute="stdout_lines") | to_nice_json() }}{% endfor %}
+        {% for host in ansible_play_hosts | sort %}
+        {{ hostvars[host].result.results | map(attribute="stdout") }}
+        {% endfor %}
       dest: '{{ report_dir }}/command_result_{{ "%Y%m%d%H%M%S" | strftime }}.log'
       mode: 0644
     delegate_to: localhost

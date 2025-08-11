@@ -42,6 +42,11 @@
       list_bin: []
       all_hosts: '{{ groups["all"] }}'
 
+  - name: Debug all_hosts
+    ansible.builtin.debug:
+      var: all_hosts
+    when: debug == true
+
   tags: [ always ]
 # end block
 

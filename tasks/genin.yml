@@ -11,6 +11,66 @@
     host_group: "none"
   when: host_group is undefined
 
+- name: Find report file on host
+  ansible.builtin.find:
+    paths: '{{ conf_dir }}/{{ cluster_name }}'
+    patterns: 'report.yml'
+    file_type: file
+  register: check_report
+
+- block:
+  - name: Read a file from a remote host
+    ansible.builtin.slurp:
+      src: '{{ check_report.files[0].path }}'
+    register: report_file
+
+  - name: Load report file from host
+    ansible.builtin.set_fact:
+      report: "{{ report_file.content | b64decode | from_yaml }}"
+    when: debug == true
+
+  - name: Print instances from report file
+    ansible.builtin.debug:
+      msg: "{{ report.instances[0] }}"
+    when: debug == true
+
+  - name: Set server id for installed cluster
+    ansible.builtin.set_fact:
+      server_id: "{{ report.instances[0] | regex_search('.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
+
+  when: server_id is undefined and check_report.matched > 0
+
+- block:
+
+  - name: Get configs on all hosts
+    ansible.builtin.find:
+      paths: '{{ conf_dir }}/{{ cluster_name }}'
+      patterns: '*-*.conf'
+      file_type: file
+    register: check_install
+
+  - name: Print check_install
+    ansible.builtin.debug:
+      msg: "{{ check_install.files[0].path[0] }}"
+    when: debug == true and check_install.matched > 0
+
+  - name: Set server id for installed cluster
+    ansible.builtin.set_fact:
+      server_id: "{{ check_install.files[0].path | regex_search('/.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
+    when: check_install.matched > 0
+
+  when: server_id is undefined
+
+- name: Set server id for first time
+  ansible.builtin.set_fact:
+    server_id: "{{ all_hosts.index(inventory_hostname) + 1 }}"
+  when: server_id is undefined
+
+- name: Print server id
+  ansible.builtin.debug:
+    var: server_id
+  when: debug == true
+
 - name: Tiers loop
   ansible.builtin.include_tasks:
     file: genin_tiers.yml

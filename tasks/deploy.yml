@@ -162,6 +162,14 @@
   run_once: true
   when: debug == true
 
+- name: Generate list of instances per server
+  ansible.builtin.include_tasks:
+    file: genin.yml
+
+- name: Init start values
+  ansible.builtin.set_fact:
+    instance_num: 0
+
 - name: Tiers setup
   ansible.builtin.include_tasks:
     file: tiers_setup.yml
@@ -174,10 +182,6 @@
   ansible.builtin.command:
     cmd: '/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf update'
   when: init_system == 'supervisord'
-
-- name: Generate list of instances per server
-  ansible.builtin.include_tasks:
-    file: genin.yml
 
 - name: Wait creating admin-sock files for all instances
   ansible.builtin.wait_for:
@@ -203,6 +207,8 @@
   ansible.builtin.template:
     src: report.j2
     dest: '{{ conf_dir }}/{{ cluster_name }}/report.yml'
+    owner: '{{ user }}'
+    group: '{{ group }}'
 
 - name: Save report about endpoint of all instances
   become: false
@@ -213,3 +219,7 @@
   run_once: true
   notify:
     - messages
+
+- name: Print instances on hosts
+  ansible.builtin.debug:
+    var: instances_on_host

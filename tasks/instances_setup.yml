@@ -3,7 +3,7 @@
 
 - name: Set instance name in tier {{ tier.key }}
   ansible.builtin.set_fact:
-    instance_name: '{{ tier.key }}-{{ (all_hosts.index(inventory_hostname) +1)*1000 + instance_num|int }}'
+    instance_name: '{{ tier.key }}-{{ "%d%03d" % (server_id|int, instance_num|int) }}'
 
 - name: Print instance_id and instance_num in tier {{ tier.key }}
   ansible.builtin.debug:
