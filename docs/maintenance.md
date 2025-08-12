@@ -160,4 +160,19 @@ ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info
 ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdfile='../cmdfile.lua'"
 ```
 
-> В обоих командах результат выполнения будет записан в файл `command_result_??????????????.log` в каталоге, определенном переменной `report_dir`
+Пример команды для выполнения lua-команды на инстансах кластера с именем `default`:
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info()' -e "filter='default'"
+```
+
+Пример команды для выполнения lua-команды на инстансах кластера, отфильтрованных по условию с использованием регулярного выражения:
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info()' -e "filter='.*-2[0-9]{3}'"
+```
+
+> Результат выполнения команд будет записан в файл `command_result_??????????????.log` в каталоге, определенном переменной `report_dir`
+
+Для удобства вывода результата выполнения на экран можно использовать данную команду:
+```bash
+cat command_result_*.log | sed "s/\\\n/\n/g"
+```

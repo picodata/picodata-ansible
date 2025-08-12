@@ -60,10 +60,24 @@
       mode: '0644'
     when: tempfile.path is undefined
 
+  - name: Set filter on instances
+    ansible.builtin.set_fact:
+      instances_filtered: '{{ instances_on_host | select ("search", filter | default(".*")) }}'
+
+  - name: Debug instances_on_host
+    ansible.builtin.debug:
+      var: instances_on_host
+    run_once: true
+
+  - name: Debug instances_filtered
+    ansible.builtin.debug:
+      var: instances_filtered
+    run_once: true
+
   - name: Execute file with commands
     ansible.builtin.shell:
       cmd: 'echo "Host: {{ inventory_hostname }}"; echo "Instance: {{ instance }}"; (echo "\lua"; cat "{{ data_dir }}/{{ cluster_name }}/{{ cmdfile_name }}") | picodata admin --ignore-errors {{ run_dir }}/{{ cluster_name }}/{{ instance }}.sock'
-    loop: '{{ instances_on_host }}'
+    loop: '{{ instances_filtered }}'
     loop_control:
       loop_var: instance
     register: result
@@ -74,7 +88,7 @@
       path: '{{ data_dir }}/{{ cluster_name }}/{{ cmdfile_name }}'
       state: absent
 
-  - name: Debug result
+  - name: Debug result from one host
     ansible.builtin.debug:
       var: result
     run_once: true
