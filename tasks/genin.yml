@@ -27,7 +27,6 @@
   - name: Load report file from host
     ansible.builtin.set_fact:
       report: "{{ report_file.content | b64decode | from_yaml }}"
-    when: debug == true
 
   - name: Print instances from report file
     ansible.builtin.debug:
