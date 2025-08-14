@@ -162,7 +162,7 @@ ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdfile='../cmdfile.lu
 
 Пример команды для выполнения lua-команды на инстансах кластера с именем `default`:
 ```bash
-ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info()' -e "filter='default'"
+ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info()'" -e "filter='default'"
 ```
 
 Пример команды для выполнения lua-команды на инстансах кластера, отфильтрованных по условию с использованием регулярного выражения:
