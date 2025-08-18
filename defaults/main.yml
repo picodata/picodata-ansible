@@ -17,6 +17,7 @@ data_dir: '/var/lib/picodata'
 share_dir: '/usr/share/picodata'
 run_dir: '/var/run/picodata'
 log_dir: '/var/log/picodata'
+cert_dir: '{{ conf_dir }}'
 
 dir_mode: '0755'
 

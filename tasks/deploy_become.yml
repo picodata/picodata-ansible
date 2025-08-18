@@ -40,12 +40,14 @@
       - '{{ run_dir }}'
       - '{{ share_dir }}'
       - '{{ backup_dir }}'
+      - '{{ cert_dir }}'
       - '{{ conf_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
       - '{{ data_dir }}/{{ cluster_name }}'
       - '{{ share_dir }}/{{ cluster_name }}'
       - '{{ run_dir }}/{{ cluster_name }}'
       - '{{ backup_dir }}/{{ cluster_name }}'
+      - '{{ cert_dir }}/{{ cluster_name }}'
 
   - name: Create dirs for supervisord
     ansible.builtin.file:

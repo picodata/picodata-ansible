@@ -30,6 +30,19 @@
     mode: '0400'
   when: service_password is defined
 
+- name: Create links for PG-certs in tier {{ tier.key }}
+  ansible.builtin.file:
+    src: '{{ cert_dir }}/{{ cluster_name }}/{{ item.filename | basename }}'
+    dest: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}/{{ item.linkname }}'
+    state: link
+    owner: '{{ user }}'
+    group: '{{ group }}'
+  loop:
+    - { filename: '{{ cert_file }}', linkname: 'server.crt' }
+    - { filename: '{{ key_file }}', linkname: 'server.key' }
+    - { filename: '{{ ca_file }}', linkname: 'ca.crt' }
+  when: pg_ssl == true
+
 - name: Create config file for instances in tier {{ tier.key }}
   ansible.builtin.template:
     src: instance-conf.j2

@@ -58,6 +58,7 @@
     - '{{ data_dir }}/{{ cluster_name }}'
     - '{{ share_dir }}/{{ cluster_name }}'
     - '{{ run_dir }}/{{ cluster_name }}'
+    - '{{ cert_dir }}/{{ cluster_name }}'
 
 - name: Create dirs for cluster for rootless
   become_user: '{{ systemd_user }}'
@@ -161,6 +162,18 @@
     msg: "tiers_host_groups: {{ all_host_groups }}"
   run_once: true
   when: debug == true
+
+- name: Copy certs for PG
+  become: true
+  ansible.builtin.copy:
+    src: '{{ item.filename }}'
+    dest: '{{ cert_dir }}/{{ cluster_name }}/'
+    mode: '{{ item.mode }}'
+  loop:
+    - { filename: '{{ cert_file }}', mode: '0644' }
+    - { filename: '{{ key_file }}', mode: '0640' }
+    - { filename: '{{ ca_file }}', mode: '0644' }
+  when: pg_ssl == true
 
 - name: Generate list of instances per server
   ansible.builtin.include_tasks:
