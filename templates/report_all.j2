@@ -4,6 +4,18 @@ instances:
 prometheus:
 {% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_target | to_nice_yaml(sort_keys=false) }}{% endfor %}
 
+prometheus:
+  scrape_configs:
+    - job_name: {{ cluster_name }}
+      static_configs:
+{% for host in ansible_play_hosts | sort %}
+{% for http in hostvars[host].list_http %}
+        - targets: [{{ http }}]
+          labels:
+            instance: {{ hostvars[host].list_instances[loop.index0] }}
+{% endfor %}
+{% endfor %}
+
 http:
 {% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_http | to_nice_yaml(sort_keys=false) }}{% endfor %}
 
