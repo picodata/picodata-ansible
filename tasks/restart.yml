@@ -29,5 +29,8 @@
 - name: Restart supervisord processes
   throttle: '{{ serial_host_restart | default(100) }}'
   ansible.builtin.shell:
-    cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf restart all
+    cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf restart {{ instance }}
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
   when: init_system == 'supervisord'
