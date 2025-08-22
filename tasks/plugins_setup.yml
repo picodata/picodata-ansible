@@ -19,10 +19,7 @@
 
   - name: Find manifest file {{ plugin.key }}
     ansible.builtin.set_fact:
-      manifest_file: "{{ archive.files[item] }}"
-    loop: "{{ lookup('ansible.utils.index_of', archive.files, 'regex', expression, wantlist=True) }}"
-    vars:
-      expression: '.*/manifest.yaml$'
+      manifest_file: "{{ archive.files | select('ansible.builtin.search', '.*/manifest.yaml$') | list | first }}"
 
   - name: Create temporary directory {{ plugin.key }}
     become: false
@@ -34,10 +31,10 @@
 
   - name: Unarchive manifest file from package to temporary directory {{ plugin.key }}
     become: false
-    ansible.builtin.unarchive:
-      src: '{{ plugin.value.path }}'
-      dest: '{{ tempdir.path }}/'
-      include: '{{ manifest_file }}'
+    ansible.builtin.command:
+      cmd: 'tar -C {{ tempdir.path }} -xvzf {{ plugin.value.path }} {{ manifest_file }}'
+    args:
+      creates: '{{ tempdir.path }}/{{ manifest_file }}'
     delegate_to: localhost
 
   - name: Load manifest file from temporary directory {{ plugin.key }}
@@ -63,7 +60,7 @@
 
   - name: Get services from manifest {{ plugin.key }}
     ansible.builtin.set_fact:
-      services: '{{ manifest.services | map(attribute="name") }}'
+      services: '{{ manifest.services | map(attribute="name") | list }}'
 
   - name: Checking for plugin has been installed {{ plugin.key }}
     ansible.builtin.shell:

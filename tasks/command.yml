@@ -62,7 +62,7 @@
 
   - name: Set filter on instances
     ansible.builtin.set_fact:
-      instances_filtered: '{{ instances_on_host | select ("search", filter | default(".*")) }}'
+      instances_filtered: '{{ instances_on_host | select ("search", filter | default(".*")) | list }}'
 
   - name: Debug instances_on_host
     ansible.builtin.debug:
@@ -105,7 +105,7 @@
     ansible.builtin.copy:
       content: |
         {% for host in ansible_play_hosts | sort %}
-        {{ hostvars[host].result.results | map(attribute="stdout") }}
+        {{ hostvars[host].result.results | map(attribute="stdout_lines") | list | to_nice_json }}
         {% endfor %}
       dest: '{{ report_dir }}/command_result_{{ "%Y%m%d%H%M%S" | strftime }}.log'
       mode: 0644
