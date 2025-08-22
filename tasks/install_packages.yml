@@ -28,7 +28,7 @@
 
     - name: Install Picodata package for Altlinux
       ansible.builtin.command:
-        cmd: 'apt-get install -y /tmp/{{ pkg_name }}'
+        cmd: 'apt-get install -y /tmp/{{ pkg_name }} logrotate'
       when: ansible_pkg_mgr == 'apt_rpm'
 
     - name: Clean temporary files

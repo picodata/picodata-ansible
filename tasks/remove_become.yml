@@ -38,6 +38,31 @@
       - '/etc/tmpfiles.d/picodata.conf'
     ignore_errors: True
 
+  - block:
+    - debug:
+       var: ansible_pkg_mgr
+
+    - name: Remove Picodata package for rpm-based
+      ansible.builtin.dnf:
+        name: 'picodata'
+        state: absent
+        use_backend: dnf
+      when: ansible_pkg_mgr in ['dnf', 'dnf5']
+
+    - name: Remove Picodata package for deb-based
+      ansible.builtin.apt:
+        name: 'picodata'
+        state: absent
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: Remove Picodata package for Altlinux
+      ansible.builtin.command:
+        cmd: 'apt-get remove -y picodata'
+      when: ansible_pkg_mgr == 'apt_rpm'
+
+    when: remove_pkg | default('false') == 'true'
+  # end block
+
   become: true
 # end block
 
