@@ -1,34 +1,51 @@
 ---
   # tasks for crash dump
 
-- name: Generate list of instances per server
+- name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.import_tasks:
     file: genin.yml
 
-- name: Set list of directories to backup
+- name: ({{ cluster_name }}) Set list of directories to backup
   ansible.builtin.set_fact:
     listdir: '{% if not skipdata | default(false) %}{{ data_dir }}/{{ cluster_name }} {% endif %}{{ conf_dir }}/{{ cluster_name }} {{ log_dir }}/{{ cluster_name }} {% if init_system == "supervisord" %}{{ supervisord_dir }}/{{ cluster_name }}{% else %}{{ systemd_dir }}/{{ cluster_name }}*  {{ systemd_dir }}/**/{{ cluster_name }}*{% endif %}'
   run_once: true
 
-- name: Set datetime for filename
+- name: ({{ cluster_name }}) Set datetime for filename
   ansible.builtin.set_fact:
     dt: '{{ "%Y%m%d%H%M%S" | strftime }}'
   run_once: true
 
-- name: Unload log files from journald to log_dir
-  ansible.builtin.shell:
-    cmd: 'journalctl -u {{ cluster_name }}@{{ instance }} --all --no-pager {% if systemd_scope == "user" %}--user{% endif %} |  gzip > {{ log_dir }}/{{ cluster_name }}/{{ instance }}.log.gz'
-  loop: '{{ instances_on_host }}'
-  loop_control:
-    loop_var: instance
+- block:
+  - name: ({{ cluster_name }}) Unload log files from journald to log_dir
+    ansible.builtin.shell:
+      cmd: 'journalctl -u {{ cluster_name }}@{{ instance }} --all --no-pager {% if systemd_scope == "user" %}--user{% endif %} |  gzip > {{ log_dir }}/{{ cluster_name }}/{{ instance }}.log.gz'
+    loop: '{{ instances_on_host }}'
+    loop_control:
+      loop_var: instance
+    when: autonames == false
+
+  - name: ({{ cluster_name }}) Unload log files from journald to log_dir
+    ansible.builtin.shell:
+      cmd: 'journalctl -u {{ cluster_name }}-{{ instance }} --all --no-pager {% if systemd_scope == "user" %}--user{% endif %} |  gzip > {{ log_dir }}/{{ cluster_name }}/{{ instance }}.log.gz'
+    loop: '{{ instances_on_host }}'
+    loop_control:
+      loop_var: instance
+    when: autonames == true
+
   when: init_system == 'systemd'
 
-- name: List of directories to backup
+- name: ({{ cluster_name }}) List of directories to backup
   ansible.builtin.debug:
     msg: 'DIRS TO BACKUP: {{ listdir }}'
   run_once: true
 
-- name: Create backup_dir
+- name: ({{ cluster_name }}) Create os-release temp file to conf_dir
+  ansible.builtin.copy:
+    src: /etc/os-release
+    dest: '{{ conf_dir }}/{{ cluster_name }}/'
+    remote_src: true
+
+- name: ({{ cluster_name }}) Create backup_dir
   ansible.builtin.file:
     path: '{{ backup_dir }}/{{ cluster_name }}'
     state: directory
@@ -36,12 +53,17 @@
     group: '{{ group }}'
     mode: '{{ dir_mode }}'
 
-- name: Pack crashed dump for fetch
+- name: ({{ cluster_name }}) Pack crashed dump for fetch
   ansible.builtin.shell:
     chdir: '{{ backup_dir }}'
-    cmd: 'tar --ignore-failed-read --exclude={{ backup_dir }} -czhf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz {{ listdir }} /etc/os-release /usr/bin/picodata'
+    cmd: |
+         tar --ignore-failed-read \
+         --exclude={{ backup_dir }} \
+         -czf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz \
+         {{ listdir }} \
+         /usr/bin/picodata
 
-- name: Remove unloaded logs from journald
+- name: ({{ cluster_name }}) Remove unloaded logs from journald
   ansible.builtin.file:
     path: '{{ log_dir }}/{{ cluster_name }}/{{ instance }}.log.gz'
     state: absent
@@ -50,7 +72,12 @@
     loop_var: instance
   when: init_system == 'systemd'
 
-- name: Fetch crash dump from remote hosts
+- name: ({{ cluster_name }}) Remove os-release temp file from conf_dir
+  ansible.builtin.file:
+    path: '{{ conf_dir }}/{{ cluster_name }}/os-release'
+    state: absent
+
+- name: ({{ cluster_name }}) Fetch crash dump from remote hosts
   become: '{{ not rootless }}'
   ansible.builtin.fetch:
     src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz'

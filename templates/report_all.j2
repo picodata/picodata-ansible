@@ -1,8 +1,10 @@
-instances:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_instances | to_nice_yaml(sort_keys=false) }}{% endfor %}
+instance_units:
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].instances_on_host | to_nice_yaml(sort_keys=false) }}{% endfor %}
 
-prometheus:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_target | to_nice_yaml(sort_keys=false) }}{% endfor %}
+{% if autonames  == true %}
+instance_names:
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].instance_link | map(attribute='0') | list | to_nice_yaml(sort_keys=false) }}{% endfor %}
+{% endif %}
 
 prometheus:
   scrape_configs:
@@ -12,7 +14,16 @@ prometheus:
 {% for http in hostvars[host].list_http %}
         - targets: [{{ http }}]
           labels:
-            instance: {{ hostvars[host].list_instances[loop.index0] }}
+            host: {{ hostvars[host].listen_address }}
+{% if instance_link is defined %}
+            instance: {{ hostvars[host].instance_link[loop.index0][0] }}
+            unit: {{ hostvars[host].instance_link[loop.index0][1] }}
+            replicaset: {{ hostvars[host].instance_link[loop.index0][0] | regex_search('(^.*_[0-9]+)_[0-9]+', '\\1') | list | last }}
+            tier: {{ hostvars[host].instance_link[loop.index0][0] | regex_search('(^.*)_[0-9]+_[0-9]+', '\\1') | list | last }}
+{% else %}
+            instance: {{ hostvars[host].instances_on_host[loop.index0] }}
+            unit: {{ hostvars[host].instances_on_host[loop.index0] }}
+{% endif %}
 {% endfor %}
 {% endfor %}
 
@@ -24,3 +35,7 @@ pg:
 
 bin:
 {% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_bin | to_nice_yaml(sort_keys=false) }}{% endfor %}
+
+properties:
+  autonames: {{ autonames }}
+  role_ver: {{ role_ver }}

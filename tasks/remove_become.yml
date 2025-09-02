@@ -2,14 +2,14 @@
 - block:
 
   - block:
-    - name: Disable systemd service for supervisord
+    - name: ({{ cluster_name }}) Disable systemd service for supervisord
       ansible.builtin.systemd:
         name: 'supervisord-{{ cluster_name }}.service'
         enabled: false
         state: stopped
       ignore_errors: True
 
-    - name: Remove supervisord configs
+    - name: ({{ cluster_name }}) Remove supervisord configs
       ansible.builtin.file:
         name: '{{ supervisord_dir }}/{{ cluster_name }}.conf'
         state: absent
@@ -17,13 +17,13 @@
     when: init_system == 'supervisord' and systemd_scope == 'system'
   # end block
 
-  - name: Remove logrotate file
+  - name: ({{ cluster_name }}) Remove logrotate file
     ansible.builtin.file:
       name: '/etc/logrotate.d/picodata-{{ cluster_name }}'
       state: absent
     when: log_to == 'file'
 
-  - name: Remove dirs
+  - name: ({{ cluster_name }}) Remove dirs
     ansible.builtin.file:
       name: '{{ item }}'
       state: absent
@@ -42,20 +42,20 @@
     - debug:
        var: ansible_pkg_mgr
 
-    - name: Remove Picodata package for rpm-based
+    - name: ({{ cluster_name }}) Remove Picodata package for rpm-based
       ansible.builtin.dnf:
         name: 'picodata'
         state: absent
         use_backend: dnf
       when: ansible_pkg_mgr in ['dnf', 'dnf5']
 
-    - name: Remove Picodata package for deb-based
+    - name: ({{ cluster_name }}) Remove Picodata package for deb-based
       ansible.builtin.apt:
         name: 'picodata'
         state: absent
       when: ansible_pkg_mgr == 'apt'
 
-    - name: Remove Picodata package for Altlinux
+    - name: ({{ cluster_name }}) Remove Picodata package for Altlinux
       ansible.builtin.command:
         cmd: 'apt-get remove -y picodata'
       when: ansible_pkg_mgr == 'apt_rpm'

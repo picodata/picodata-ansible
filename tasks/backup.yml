@@ -1,7 +1,7 @@
 ---
 # tasks for backup
 
-- name: Copy utility files on remote hosts
+- name: ({{ cluster_name }}) Copy utility files on remote hosts
   ansible.builtin.template:
     src: backup.sh.j2
     dest: '{{ backup_dir }}/backup.sh'
@@ -10,26 +10,26 @@
     group: '{{ group }}'
     force: true
 
-- name: Generate list of instances per server
+- name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.import_tasks:
     file: genin.yml
 
-- name: Set current time
+- name: ({{ cluster_name }}) Set current time
   ansible.builtin.set_fact:
     YYYYMMDDHHSS: '{{ "%Y%m%d%H%M%S" | strftime }}'
   run_once: true
   delegate_to: localhost
 
-- name: Set current time
+- name: ({{ cluster_name }}) Set current time
   ansible.builtin.set_fact:
     DT: '{{ YYYYMMDDHHSS }}'
 
-- name: Debug
+- name: ({{ cluster_name }}) Debug
   debug:
     msg: 'BACKUP_DIR: {{ DT }}'
   run_once: true
 
-- name: Backup instances
+- name: ({{ cluster_name }}) Backup instances
   ansible.builtin.command:
     cmd: '{{ backup_dir }}/backup.sh -s {{ run_dir }}/{{ cluster_name }}/{{ instance }}.sock -d {{ backup_dir }}/{{ cluster_name }}/{{ DT }}'
   loop: '{{ instances_on_host }}'
@@ -37,18 +37,18 @@
     loop_var: instance
 
 - block:
-  - name: Pack backups for fetch
+  - name: ({{ cluster_name }}) Pack backups for fetch
     ansible.builtin.shell:
       chdir: '{{ backup_dir }}//{{ cluster_name }}/{{ DT }}'
       cmd: 'tar -cf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}.tar *'
 
-  - name: Fetch backups from remote hosts
+  - name: ({{ cluster_name }}) Fetch backups from remote hosts
     ansible.builtin.fetch:
       src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}.tar'
       dest: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ DT }}/{{ inventory_hostname }}.tar'
       flat: true
 
-  - name: Remove archive on remote hosts
+  - name: ({{ cluster_name }}) Remove archive on remote hosts
     ansible.builtin.file:
       path: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}.tar'
       state: absent
@@ -56,7 +56,8 @@
   when: backup_fetch == True
 # end block
 
-- name: Remove utility files on remote hosts
+- name: ({{ cluster_name }}) Remove utility files on remote hosts
   ansible.builtin.file:
     path: '{{ backup_dir }}/backup.sh'
     state: absent
+  when: debug != true

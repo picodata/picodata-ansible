@@ -1,83 +1,152 @@
 ---
 # tasks for generate list of instances
 
-- name: Init start values
+- name: ({{ cluster_name }}) Init start values
   ansible.builtin.set_fact:
     instance_num: 0
     instances_on_host: []
 
-- name: Set server failure domain
+- name: ({{ cluster_name }}) Set server failure domain
   ansible.builtin.set_fact:
     host_group: "none"
   when: host_group is undefined
 
-- name: Find report file on host
+- name: ({{ cluster_name }}) Find report file on host
   ansible.builtin.find:
     paths: '{{ conf_dir }}/{{ cluster_name }}'
     patterns: 'report.yml'
     file_type: file
   register: check_report
 
+# if report file is exist
 - block:
-  - name: Read a file from a remote host
+  - name: ({{ cluster_name }}) Read a file from a remote host
     ansible.builtin.slurp:
       src: '{{ check_report.files[0].path }}'
     register: report_file
 
-  - name: Load report file from host
+  - name: ({{ cluster_name }}) Load report file from host
     ansible.builtin.set_fact:
       report: "{{ report_file.content | b64decode | from_yaml }}"
 
-  - name: Print instances from report file
+  - name: ({{ cluster_name }}) Print report file
     ansible.builtin.debug:
-      msg: "{{ report.instances[0] }}"
+      var: report
     when: debug == true
 
-  - name: Set server id for installed cluster
+  - name: ({{ cluster_name }}) Set instance names from report file newver
     ansible.builtin.set_fact:
-      server_id: "{{ report.instances[0] | regex_search('.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
+      instances_on_host: '{{ report.instance_units }}'
+    when: report.instance_units is defined
 
-  when: server_id is undefined and check_report.matched > 0
+  - name: ({{ cluster_name }}) Set instance names from report file oldver
+    ansible.builtin.set_fact:
+      instances_on_host: '{{ report.instances }}'
+    when: report.instances is defined
 
+  - name: ({{ cluster_name }}) Print first instances from report file
+    ansible.builtin.debug:
+      msg: "{{ instances_on_host[0] }}"
+    when: debug == true
+
+  - name: ({{ cluster_name }}) Set server id for installed cluster
+    ansible.builtin.set_fact:
+      server_id: "{{ instances_on_host[0] | regex_search('.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
+    when: autonames == false
+
+  - name: ({{ cluster_name }}) Set values from report file
+    ansible.builtin.set_fact:
+      list_http: "{{ report.http }}"
+      list_pg: "{{ report.pg }}"
+      list_bin: "{{ report.bin }}"
+
+  - name: ({{ cluster_name }}) Set real instance names from report file
+    ansible.builtin.set_fact:
+      list_instance_names: "{{ report.instance_names }}"
+    when: autonames == true
+
+  when: check_report.matched > 0
+
+# if report file is not exist
 - block:
 
-  - name: Get configs on all hosts
+  - name: ({{ cluster_name }}) Get configs on all hosts
     ansible.builtin.find:
       paths: '{{ conf_dir }}/{{ cluster_name }}'
       patterns: '*-*.conf'
       file_type: file
     register: check_install
 
-  - name: Print check_install
+  - name: ({{ cluster_name }}) Print check_install
     ansible.builtin.debug:
-      msg: "{{ check_install.files[0].path[0] }}"
+      msg: "{{ check_install.files[0].path }}"
     when: debug == true and check_install.matched > 0
 
-  - name: Set server id for installed cluster
+  - name: ({{ cluster_name }}) Set server id for installed cluster
     ansible.builtin.set_fact:
       server_id: "{{ check_install.files[0].path | regex_search('/.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
     when: check_install.matched > 0
 
-  when: server_id is undefined
+  when: server_id is undefined and autonames == false
 
-- name: Set server id for first time
+###################################
+# start: failure domain check version
+
+- block:
+
+  - name: ({{ cluster_name }}) Read a first config file from a remote host from report file
+    ansible.builtin.slurp:
+      src: '{{ conf_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.conf'
+    register: config_file
+    when: instances_on_host
+
+  - name: ({{ cluster_name }}) Read a first config file from a remote host from config file
+    ansible.builtin.slurp:
+      src: '{{ check_install.files[0].path }}'
+    register: config_file
+    when: check_install.matched > 0
+
+  - name: ({{ cluster_name }}) Load report file from host
+    ansible.builtin.set_fact:
+      config: "{{ config_file.content  | b64decode | from_yaml }}"
+
+  - name: ({{ cluster_name }}) Check previous version of failure domain
+    ansible.builtin.debug:
+      msg: 'old version of FD'
+    when: '"DC" in config.instance.failure_domain'
+
+  - name: ({{ cluster_name }}) Set version of failure domain for compablility
+    ansible.builtin.set_fact:
+      ver_fd: 1
+    run_once: false
+    when: '"DC" in config.instance.failure_domain'
+
+  run_once: true
+  when: server_id is defined
+
+# end: failure domain check version
+###################################
+
+
+- name: ({{ cluster_name }}) Set server id for first time
   ansible.builtin.set_fact:
     server_id: "{{ all_hosts.index(inventory_hostname) + 1 }}"
   when: server_id is undefined
 
-- name: Print server id
+- name: ({{ cluster_name }}) Print server id
   ansible.builtin.debug:
     var: server_id
   when: debug == true
 
-- name: Tiers loop
+- name: ({{ cluster_name }}) Tiers loop
   ansible.builtin.include_tasks:
     file: genin_tiers.yml
   loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
   loop_control:
     loop_var: tier
     extended: true
+  when: not instances_on_host
 
-- name: Print instances on hosts
+- name: ({{ cluster_name }}) Print instances on hosts
   ansible.builtin.debug:
     var: instances_on_host

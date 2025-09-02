@@ -1,48 +1,48 @@
 ---
 # subtasks for deploy cluster
 
-- name: Debug host_group for tier {{ tier.key }}
+- name: ({{ cluster_name }}) Debug host_group for tier {{ tier.key }}
   debug:
     msg: "host_group = {{ host_group }}    tier.value.host_groups = {{ tier.value.host_groups | default(['none']) }}"
   when: debug == true
 
 - block:
-  - name: Init count of host groups for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Init count of host groups for tier {{ tier.key }}
     ansible.builtin.set_fact:
       tier_server_cnt: 0
 
-  - name: Set count of host groups for servers if host_groups is defined for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Set count of host groups for servers if host_groups is defined for tier {{ tier.key }}
     ansible.builtin.set_fact:
       tier_server_cnt: '{{ tier_server_cnt | int  + all_host_groups | select("equalto", item) | length | int }}'
     loop: '{{ tier.value.host_groups }}'
     when: tier.value.host_groups is defined
 
-  - name: Set all host groups for servers if host_groups is undefined for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Set all host groups for servers if host_groups is undefined for tier {{ tier.key }}
     ansible.builtin.set_fact:
       tier_server_cnt: '{{ all_host_groups | length  }}'
     when: tier.value.host_groups is undefined
 
-  - name: Debug host group server count for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Debug host group server count for tier {{ tier.key }}
     debug:
       msg: 'tier_server_cnt: {{ tier_server_cnt }}'
     when: debug == true
 
-  - name: Error if replication factor less to server count
+  - name: ({{ cluster_name }}) Error if replication factor less to server count
     ansible.builtin.fail:
       msg: 'Error! Cluster bad: replication factor must be more server count!'
     run_once: true
     when: tier.value.replication_factor | default(1) | int > tier_server_cnt | int and fd_uniq_per_instance == false
 
-  - name: Calculate instances_per_server for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Calculate instances_per_server for tier {{ tier.key }}
     ansible.builtin.set_fact:
       instances_per_server: '{{ tier.value.replicaset_count | default(1) | int * tier.value.replication_factor | default(1) | int / tier_server_cnt | int }}'
 
-  - name: Error if instance per server not is integer
+  - name: ({{ cluster_name }}) Error if instance per server not is integer
     ansible.builtin.fail:
       msg: 'Error! Cluster bad: Check replicaset count, replication factor and count of servers (instances_per_server={{ instances_per_server }})!'
     when: instances_per_server | float != instances_per_server | float | round
 
-  - name: Debug instances_per_server for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Debug instances_per_server for tier {{ tier.key }}
     debug:
       msg: 'instances_per_server: {{ instances_per_server }}'
     delegate_to: localhost
@@ -52,36 +52,35 @@
 # end block
 
 - block:
-  - name: Init count of host groups for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Init count of host groups for tier {{ tier.key }}
     ansible.builtin.set_fact:
       instances_per_server: '{{ tier.value.instances_per_server }}'
     when: tier.value.instances_per_server is defined
 
-  - name: Debug instances_per_server for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Debug instances_per_server for tier {{ tier.key }}
     debug:
       msg: 'instances_per_server: {{ instances_per_server }}       tier.value.instances_per_server: {{ tier.value.instances_per_server }}'
     when: debug == true
 
-  - name: Set init-replication-factor for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Set init-replication-factor for tier {{ tier.key }}
     ansible.builtin.set_fact:
       init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
 
-  - name: Setup instances for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Setup instances for tier {{ tier.key }}
     ansible.builtin.include_tasks:
       file: instances_setup.yml
     loop: "{{ range(1, instances_per_server | int + 1) | list }}"
     loop_control:
       loop_var: instance_id
 
-  - name: Generate sql-file for db_config tier {{ tier.key }}
-    ansible.builtin.lineinfile:
-      create: true
-      path: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
-      line: 'alter system set "{{ item.key }}" = {{ item.value }} for tier {{ tier.key }};'
-    loop: "{{ lookup('ansible.builtin.dict', tier.value.db_config | default({}), wantlist=True) }}"
-    run_once: true
-    notify:
-      - apply_db_config
+  - name: ({{ cluster_name }}) Fill db_config_all with parameters for tier {{ tier.key }};
+    ansible.builtin.set_fact:
+      db_config_all: |
+        {{ db_config_all }}
+        {% for key, value in tier.value.db_config.items() %}
+        alter system set "{{ key }}" = {{ value }} for tier {{ tier.key }};
+        {% endfor %}
+    when: tier.value.db_config is defined
 
   when: host_group in tier.value.host_groups | default(['none']) or tier.value.host_groups is undefined
 # end block

@@ -2,7 +2,7 @@
 # tasks file for picodata-ansible
 
 - block:
-  - name: Set scope for systemd
+  - name: ({{ cluster_name }}) Set scope for systemd
     ansible.builtin.set_fact:
       systemd_scope: 'user'
       systemd_user: '{{ user }}'
@@ -10,39 +10,37 @@
     run_once: true
     when: rootless == true and init_system == 'systemd'
 
-  - name: Register uid of {{ systemd_user }}
+  - name: ({{ cluster_name }}) Register uid of {{ systemd_user }}
     command: 'id -u {{ systemd_user }}'
     register: uid
 
-  - name: Debug uid
+  - name: ({{ cluster_name }}) Debug uid
     ansible.builtin.debug:
       var: uid
     run_once: true
     when: debug == true
 
-  - name: Set server failure domain
+  - name: ({{ cluster_name }}) Set server failure domain
     ansible.builtin.set_fact:
       host_group: "none"
     when: host_group is undefined
 
-  - name: Set all host groups for servers
+  - name: ({{ cluster_name }}) Set all host groups for servers
     ansible.builtin.set_fact:
       all_host_groups: "{{ all_host_groups|default([])  + [ hostvars[item]['host_group'] ]  }}"
     loop: "{{ groups['all'] }}"
     run_once: true
 
-  - name: Init variables
+  - name: ({{ cluster_name }}) Init variables
     ansible.builtin.set_fact:
       instance_num: 0
       need_restart: true
-      list_instances: []
-      list_target: []
       list_http: []
       list_pg: []
       list_bin: []
       all_hosts: '{{ groups["all"] }}'
 
-  - name: Debug all_hosts
+  - name: ({{ cluster_name }}) Debug all_hosts
     ansible.builtin.debug:
       var: all_hosts
     when: debug == true
@@ -50,72 +48,77 @@
   tags: [ always ]
 # end block
 
-- name: Deploy Picodata cluster
+- name: ({{ cluster_name }}) Deploy Picodata cluster
   ansible.builtin.import_tasks:
     file: deploy.yml
   tags: [ deploy, restore_full ]
 
-- name: Install Picodata packages for Picodata cluster
+- name: ({{ cluster_name }}) Install Picodata packages for Picodata cluster
   ansible.builtin.import_tasks:
     file: install_packages.yml
   tags: [ never, install_pkgs ]
 
-- name: Remove Picodata cluster
+- name: ({{ cluster_name }}) Remove Picodata cluster
   ansible.builtin.import_tasks:
     file: remove.yml
   tags: [ never, remove ]
 
-- name: Restart Picodata cluster
+- name: ({{ cluster_name }}) Restart Picodata cluster
   ansible.builtin.import_tasks:
     file: restart.yml
   tags: [ never, restart ]
 
-- name: Stop Picodata cluster
+- name: ({{ cluster_name }}) Stop Picodata cluster
   ansible.builtin.import_tasks:
     file: stop.yml
   tags: [ never, stop ]
 
-- name: Start Picodata cluster
+- name: ({{ cluster_name }}) Start Picodata cluster
   ansible.builtin.import_tasks:
     file: start.yml
   tags: [ never, start ]
 
-- name: Backup Picodata cluster
+- name: ({{ cluster_name }}) Backup Picodata cluster
   ansible.builtin.import_tasks:
     file: backup.yml
   tags: [ never, backup ]
 
-- name: Restore Picodata cluster
+- name: ({{ cluster_name }}) Restore Picodata cluster
   ansible.builtin.import_tasks:
     file: restore.yml
   tags: [ never, restore, restore_full ]
 
-- name: Generate inventory for Picodata cluster
+- name: ({{ cluster_name }}) Generate inventory for Picodata cluster
   ansible.builtin.import_tasks:
     file: genin.yml
   tags: [ never, genin ]
 
-- name: Install plugins into Picodata cluster
+- name: ({{ cluster_name }}) Install plugins into Picodata cluster
   ansible.builtin.import_tasks:
     file: plugins.yml
   tags: [ never, plugins, plugin ]
 
-- name: Deploy Picodata cluster (for become with rootless)
+- name: ({{ cluster_name }}) Deploy Picodata cluster (for become with rootless)
   ansible.builtin.import_tasks:
     file: deploy_become.yml
   tags: [ never, deploy_become ]
 
-- name: Remove root files after remove (for become with rootless)
+- name: ({{ cluster_name }}) Remove root files after remove (for become with rootless)
   ansible.builtin.import_tasks:
     file: remove_become.yml
   tags: [ never, remove_become ]
 
-- name: Get crashed dumpfiles of Picodata cluster
+- name: ({{ cluster_name }}) Get crashed dumpfiles of Picodata cluster
   ansible.builtin.import_tasks:
     file: crash_dump.yml
   tags: [ never, crash_dump ]
 
-- name: Execute command on Picodata cluster
+- name: ({{ cluster_name }}) Execute command on Picodata cluster
   ansible.builtin.import_tasks:
     file: command.yml
   tags: [ never, command ]
+
+- name: Make links on instances
+  ansible.builtin.import_tasks:
+    file: make_links.yml
+  tags: [ never, make_links ]

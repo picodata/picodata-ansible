@@ -1,8 +1,10 @@
-instances:
-{{ list_instances | to_nice_yaml(sort_keys=false) }}
+instance_units:
+{{ instances_on_host | to_nice_yaml(sort_keys=false) }}
 
-prometheus:
-{{ list_target | to_nice_yaml(sort_keys=false) }}
+{% if autonames  == true %}
+instance_names:
+{{ instance_link | map(attribute='0') | list | to_nice_yaml(sort_keys=false) }}
+{% endif %}
 
 http:
 {{ list_http | to_nice_yaml(sort_keys=false) }}
@@ -12,3 +14,7 @@ pg:
 
 bin:
 {{ list_bin | to_nice_yaml(sort_keys=false) }}
+
+properties:
+  autonames: {{ autonames }}
+  role_ver: {{ role_ver }}

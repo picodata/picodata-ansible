@@ -1,37 +1,65 @@
 ---
 # tasks for remove cluster
 
-- name: Generate list of instances per server
+- name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.import_tasks:
     file: genin.yml
 
 - block:
 
-  - name: Remove systemd unit files
-    ansible.builtin.systemd:
-      name: '{{ cluster_name }}@{{ instance }}.service'
-      enabled: false
-      state: stopped
-      scope: '{{ systemd_scope }}'
-    loop: '{{ instances_on_host }}'
-    loop_control:
-      loop_var: instance
-    ignore_errors: True
-    environment:
-      XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
+  # without autonames
+  - block:
+    - name: ({{ cluster_name }}) Remove systemd unit files
+      ansible.builtin.systemd:
+        name: '{{ cluster_name }}@{{ instance }}.service'
+        enabled: false
+        state: stopped
+        scope: '{{ systemd_scope }}'
+      loop: '{{ instances_on_host }}'
+      loop_control:
+        loop_var: instance
+      ignore_errors: True
+      environment:
+        XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
-  - name: Remove systemd env dirs
-    ansible.builtin.file:
-      name: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance }}.service.d'
-      state: absent
-    loop: '{{ instances_on_host }}'
-    loop_control:
-      loop_var: instance
+    - name: ({{ cluster_name }}) Remove systemd env dirs
+      ansible.builtin.file:
+        name: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance }}.service.d'
+        state: absent
+      loop: '{{ instances_on_host }}'
+      loop_control:
+        loop_var: instance
 
-  - name: Remove systemd template file
-    ansible.builtin.file:
-      name: '{{ systemd_dir }}/{{ cluster_name }}@.service'
-      state: absent
+    - name: ({{ cluster_name }}) Remove systemd template file
+      ansible.builtin.file:
+        name: '{{ systemd_dir }}/{{ cluster_name }}@.service'
+        state: absent
+    when: autonames == false
+
+  # with autonames
+  - block:
+    - name: ({{ cluster_name }}) Stop systemd service
+      ansible.builtin.systemd:
+        name: '{{ cluster_name }}-{{ instance }}.service'
+        enabled: false
+        state: stopped
+        scope: '{{ systemd_scope }}'
+      loop: '{{ instances_on_host }}'
+      loop_control:
+        loop_var: instance
+      ignore_errors: True
+      environment:
+        XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
+
+    - name: ({{ cluster_name }}) Remove systemd unit file
+      ansible.builtin.file:
+        name: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance }}.service'
+        state: absent
+      loop: '{{ instances_on_host }}'
+      loop_control:
+        loop_var: instance
+
+    when: autonames == true
 
   become: true
   become_user: '{{ systemd_user }}'
@@ -39,23 +67,23 @@
 # end block
 
 - block:
-  - name: Remove supervisord configs
+  - name: ({{ cluster_name }}) Remove supervisord configs
     ansible.builtin.file:
       name: '{{ supervisord_dir }}/{{ cluster_name }}'
       state: absent
     when: rootless == false
 
-  - name: Remove configs from supervisord dir if set purge variable and rootless
+  - name: ({{ cluster_name }}) Remove configs from supervisord dir if set purge variable and rootless
     ansible.builtin.shell:
       cmd: 'rm -f {{ supervisord_dir }}/{{ cluster_name }}/*'
     when: rootless == true
 
-  - name: Stop cluster in supervisord
+  - name: ({{ cluster_name }}) Stop cluster in supervisord
     ansible.builtin.command:
       cmd: '/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf update'
     ignore_errors: True
 
-  - name: Disable systemd service for supervisord
+  - name: ({{ cluster_name }}) Disable systemd service for supervisord
     ansible.builtin.systemd:
       name: 'supervisord-{{ cluster_name }}.service'
       enabled: false
@@ -66,7 +94,7 @@
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
     when: systemd_scope == 'user'
 
-  - name: Remove supervisord configs
+  - name: ({{ cluster_name }}) Remove supervisord configs
     ansible.builtin.file:
       name: '{{ supervisord_dir }}/{{ cluster_name }}.conf'
       state: absent
@@ -75,14 +103,14 @@
   when: init_system == 'supervisord'
 # end block
 
-- name: Send SIGKILL signals for all picodata processes on servers
+- name: ({{ cluster_name }}) Send SIGKILL signals for all picodata processes on servers
   ansible.builtin.shell:
     cmd: 'sleep 10 && /usr/bin/pkill -9 picodata'
   when: sigkill | default("false") == "true"
   ignore_errors: True
 
 - block:
-  - name: Remove dirs if set purge variable when rootless is unset
+  - name: ({{ cluster_name }}) Remove dirs if set purge variable when rootless is unset
     ansible.builtin.file:
       name: '{{ item }}'
       state: absent
@@ -95,7 +123,7 @@
       - '{{ cert_dir }}/{{ cluster_name }}'
     when: rootless == false
 
-  - name: Remove data from dirs if set purge variable and rootless
+  - name: ({{ cluster_name }}) Remove data from dirs if set purge variable and rootless
     ansible.builtin.shell:
       cmd: 'rm -rf {{ item }}/*'
     loop:
@@ -110,7 +138,7 @@
   when: purge
 # end block
 
-- name: Remove report file
+- name: ({{ cluster_name }}) Remove report file
   become: false
   ansible.builtin.file:
     name: '{{ report_dir }}/report.yml'
@@ -118,7 +146,7 @@
   delegate_to: localhost
   run_once: true
 
-- name: Remove tasks for become
+- name: ({{ cluster_name }}) Remove tasks for become
   ansible.builtin.include_tasks:
     file: remove_become.yml
   when: rootless == false

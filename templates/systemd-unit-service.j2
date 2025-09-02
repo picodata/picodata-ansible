@@ -6,7 +6,6 @@ StartLimitBurst=10
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/%i.conf
 Restart=on-failure
 RestartSec=2
 
@@ -22,7 +21,19 @@ Environment={{ param }}={{ val }}
 {% endfor %}
 {% endif %}
 
+{% if autonames == true and tier.value.extra_vars is defined %}
+{% for param, val in tier.value.extra_vars.items() %}
+Environment={{ param }}={{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instance_num|int) ) | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_num|int) ) }}
+{% endfor %}
+{% endif %}
+
+{% if autonames == true %}
+ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/{{ instance_name }}'
+ExecStart=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf
+{% else %}
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/%i'
+ExecStart=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/%i.conf
+{% endif %}
 ExecStartPre=/bin/sh -c 'mkdir -p {{ share_dir }}/{{ cluster_name }}'
 
 # Disable OOM killer

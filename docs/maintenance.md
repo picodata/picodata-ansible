@@ -171,8 +171,3 @@ ansible-playbook -i hosts.yml picodata.yml -t command -e "cmdline='box.slab.info
 ```
 
 > Результат выполнения команд будет записан в файл `command_result_??????????????.log` в каталоге, определенном переменной `report_dir`
-
-Для удобства вывода результата выполнения на экран можно использовать данную команду:
-```bash
-cat command_result_*.log | sed "s/\\\n/\n/g"
-```

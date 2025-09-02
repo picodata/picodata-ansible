@@ -1,36 +1,58 @@
 ---
 # tasks for restart cluster
 
-- name: Set server failure domain
+- name: ({{ cluster_name }}) Set server failure domain
   ansible.builtin.set_fact:
     host_group: "none"
   when: host_group is undefined
 
-- name: Generate list of instances per server
+- name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.include_tasks:
     file: genin.yml
   when: instances_on_host is undefined
 
-- name: Restart systemd units
-  become_user: '{{ systemd_user }}'
-  throttle: '{{ serial_host_restart | default(100) }}'
-  ansible.builtin.systemd:
-    name: '{{ cluster_name }}@{{ instance }}.service'
-    state: restarted
-    scope: '{{ systemd_scope }}'
-  loop: '{{ instances_on_host }}'
-  loop_control:
-    loop_var: instance
-  ignore_errors: True
-  environment:
-    XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+- name: ({{ cluster_name }}) Set filter on instances
+  ansible.builtin.set_fact:
+    instances_filtered: '{{ instances_on_host | select ("search", filter | default(".*")) | list }}'
+
+- block:
+  - name: ({{ cluster_name }}) Restart systemd units
+    become_user: '{{ systemd_user }}'
+    throttle: '{{ serial_host_restart | default(100) }}'
+    ansible.builtin.systemd:
+      name: '{{ cluster_name }}@{{ instance }}.service'
+      state: restarted
+      scope: '{{ systemd_scope }}'
+    loop: '{{ instances_filtered }}'
+    loop_control:
+      loop_var: instance
+    ignore_errors: True
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    when: autonames == false
+
+  - name: ({{ cluster_name }}) Restart systemd units
+    become_user: '{{ systemd_user }}'
+    throttle: '{{ serial_host_restart | default(100) }}'
+    ansible.builtin.systemd:
+      name: '{{ cluster_name }}-{{ instance }}.service'
+      state: restarted
+      scope: '{{ systemd_scope }}'
+    loop: '{{ instances_filtered }}'
+    loop_control:
+      loop_var: instance
+    ignore_errors: True
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    when: autonames == true
+
   when: init_system == 'systemd'
 
-- name: Restart supervisord processes
+- name: ({{ cluster_name }}) Restart supervisord processes
   throttle: '{{ serial_host_restart | default(100) }}'
   ansible.builtin.shell:
     cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf restart {{ instance }}
-  loop: '{{ instances_on_host }}'
+  loop: '{{ instances_filtered }}'
   loop_control:
     loop_var: instance
   when: init_system == 'supervisord'

@@ -1,51 +1,51 @@
 ---
 # tasks for deploy cluster
 
-- name: Check admin password is defined
+- name: ({{ cluster_name }}) Check admin password is defined
   ansible.builtin.fail:
     msg: 'Error! Your need define admin password (admin_password variable)!'
   when: admin_password is undefined
   run_once: true
   delegate_to: localhost
 
-- name: Set listen address for every host
+- name: ({{ cluster_name }}) Set listen address for every host
   ansible.builtin.set_fact:
     listen_address: "{{ listen_address }}"
   when: hostvars[inventory_hostname]['listen_address'] is undefined
 
-- name: Check picodata is installed
+- name: ({{ cluster_name }}) Check picodata is installed
   ansible.builtin.command:
     cmd: 'picodata --version'
   register: result
   ignore_errors: true
 
-- name: Set flag for install picodata needed
+- name: ({{ cluster_name }}) Set flag for install picodata needed
   ansible.builtin.set_fact:
     install_packages: true
   when: result.rc != 0
 
-- name: Unset flag for install picodata if exists
+- name: ({{ cluster_name }}) Unset flag for install picodata if exists
   ansible.builtin.set_fact:
     install_packages: false
   when: result.rc == 0
 
-- name: Need to install Picodata package
+- name: ({{ cluster_name }}) Need to install Picodata package
   ansible.builtin.fail:
     msg: 'Error! Your need install Picodata package on every server in cluster!'
   when: install_packages == true and rootless == true
   run_once: true
   delegate_to: localhost
 
-- name: Set flag for skip check install tasks
+- name: ({{ cluster_name }}) Set flag for skip check install tasks
   ansible.builtin.set_fact:
     skip_check_install: true
 
-- name: Deploy tasks for become
+- name: ({{ cluster_name }}) Deploy tasks for become
   ansible.builtin.include_tasks:
     file: deploy_become.yml
   when: rootless == false
 
-- name: Create dirs with cluster-name
+- name: ({{ cluster_name }}) Create dirs with cluster-name
   ansible.builtin.file:
     name: '{{ item }}'
     state: directory
@@ -60,7 +60,7 @@
     - '{{ run_dir }}/{{ cluster_name }}'
     - '{{ cert_dir }}/{{ cluster_name }}'
 
-- name: Create dirs for cluster for rootless
+- name: ({{ cluster_name }}) Create dirs for cluster for rootless
   become_user: '{{ systemd_user }}'
   ansible.builtin.file:
     name: '{{ item }}'
@@ -70,7 +70,7 @@
   when: systemd_scope == 'user'
 
 - block:
-  - name: Create dirs for supervisord
+  - name: ({{ cluster_name }}) Create dirs for supervisord
     ansible.builtin.file:
       name: '{{ item }}'
       state: directory
@@ -80,19 +80,19 @@
     loop:
       - '{{ supervisord_dir }}/{{ cluster_name }}'
 
-  - name: Generate service unit for supervisord
+  - name: ({{ cluster_name }}) Generate service unit for supervisord
     ansible.builtin.template:
       src: supervisord-unit-service.j2
       dest: '{{ systemd_dir }}/supervisord-{{ cluster_name }}.service'
 
-  - name: Generate cluster config file for supervisord
+  - name: ({{ cluster_name }}) Generate cluster config file for supervisord
     ansible.builtin.template:
       src: supervisord-conf.j2
       dest: '{{ supervisord_dir }}/{{ cluster_name }}.conf'
     notify:
       - restart
 
-  - name: Enable systemd service for supervisord
+  - name: ({{ cluster_name }}) Enable systemd service for supervisord
     ansible.builtin.systemd:
       name: 'supervisord-{{ cluster_name }}.service'
       enabled: true
@@ -103,35 +103,25 @@
     environment:
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
 
-  - name: Check restart if needed
+  - name: ({{ cluster_name }}) Check restart if needed
     ansible.builtin.set_fact:
       need_restart: false
     when: supervisord_service.changed == true
 
   when: init_system == 'supervisord' and systemd_scope == 'user'
 
-- name: Set failure domain
-  ansible.builtin.set_fact:
-    fd: '"G":"{{ group_names }}","H":"{{ inventory_hostname }}"'
-  when: not fd_uniq_per_instance
-
-- name: Debug failure domain
-  ansible.builtin.debug:
-    msg: 'fd is {{ fd }}'
-  when: not fd_uniq_per_instance
-
-- name: Merge systemd params
+- name: ({{ cluster_name }}) Merge systemd params
   ansible.builtin.set_fact:
     systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params|default({})) }}'
   run_once: true
 
-- name: Debug systemd_params
+- name: ({{ cluster_name }}) Debug systemd_params
   ansible.builtin.debug:
     var: systemd_params
   run_once: true
   when: debug == true
 
-- name: Generate template file for systemd
+- name: ({{ cluster_name }}) Generate template file for systemd
   become: true
   become_user: '{{ systemd_user }}'
   ansible.builtin.template:
@@ -141,29 +131,33 @@
   when: init_system == 'systemd'
   notify:
     - restart
+  when: autonames == false
 
-- name: Clear sql-file for db_config
-  ansible.builtin.file:
-    state: absent
-    path: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
-
-- name: Generate sql-file for db_config
-  ansible.builtin.lineinfile:
-    create: true
-    path: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
-    line: 'alter system set "{{ item.key }}" = {{ item.value }} for all tiers;'
-  loop: "{{ lookup('ansible.builtin.dict', db_config | default({}), wantlist=True) }}"
+- name: ({{ cluster_name }}) Debug db_config
+  debug:
+    var: db_config
   run_once: true
-  notify:
-    - apply_db_config
+  when: debug == true
 
-- name: Debug all host group
+- name: ({{ cluster_name }}) init db_config_all
+  ansible.builtin.set_fact:
+    db_config_all: ""
+
+- name: ({{ cluster_name }}) Fill db_config_all with parameters
+  ansible.builtin.set_fact:
+    db_config_all: |
+      {% for key, value in db_config.items() %}
+      alter system set "{{ key }}" = {{ value }} for all tiers;
+      {% endfor %}
+  when: db_config is defined
+
+- name: ({{ cluster_name }}) Debug all host group
   debug:
     msg: "tiers_host_groups: {{ all_host_groups }}"
   run_once: true
   when: debug == true
 
-- name: Copy certs for PG
+- name: ({{ cluster_name }}) Copy certs for PG
   become: true
   ansible.builtin.copy:
     src: '{{ item.filename }}'
@@ -175,15 +169,33 @@
     - { filename: '{{ ca_file }}', mode: '0644' }
   when: pg_ssl == true
 
-- name: Generate list of instances per server
+- name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.include_tasks:
     file: genin.yml
 
-- name: Init start values
+- block:
+  - name: ({{ cluster_name }}) Set actual failure domain
+    ansible.builtin.set_fact:
+      fd: '"G":"{{ group_names }}","H":"{{ inventory_hostname }}"'
+    when: ver_fd | default(2) == 2
+
+  - name: ({{ cluster_name }}) Set failure domain for previous version
+    ansible.builtin.set_fact:
+      fd: '"DC":"{{ group_names }}","HOST":"{{ inventory_hostname }}"'
+    when: ver_fd | default(2) == 1
+
+  - name: ({{ cluster_name }}) Debug failure domain
+    ansible.builtin.debug:
+      msg: 'fd is {{ fd }}'
+
+  when: not fd_uniq_per_instance
+# end block
+
+- name: ({{ cluster_name }}) Init start values
   ansible.builtin.set_fact:
     instance_num: 0
 
-- name: Tiers setup
+- name: ({{ cluster_name }}) Tiers setup
   ansible.builtin.include_tasks:
     file: tiers_setup.yml
   loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
@@ -191,12 +203,12 @@
     loop_var: tier
     extended: true
 
-- name: Update cluster in supervisord
+- name: ({{ cluster_name }}) Update cluster in supervisord
   ansible.builtin.command:
     cmd: '/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf update'
   when: init_system == 'supervisord'
 
-- name: Wait creating admin-sock files for all instances
+- name: ({{ cluster_name }}) Wait creating admin-sock files for all instances
   ansible.builtin.wait_for:
     path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
     state: present
@@ -204,35 +216,38 @@
     timeout: 60
   loop: '{{ instances_on_host }}'
 
-- name: Set admin password
+- name: ({{ cluster_name }}) Make links for instance name
+  ansible.builtin.include_tasks:
+    file: make_links.yml
+  when: autonames == true
+
+- name: ({{ cluster_name }}) Debug db_config_all
+  debug:
+    var: db_config_all
+  run_once: true
+  when: debug == true
+
+- name: ({{ cluster_name }}) Generate sql-file for db_config
+  ansible.builtin.copy:
+    content: '{{ db_config_all }}'
+    dest: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
+  run_once: true
+  when: db_config_all != ""
+  notify:
+    - apply_db_config
+
+- name: ({{ cluster_name }}) Set admin password
   ansible.builtin.shell:
     cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5; alter user \"admin\" with login;" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   retries: 3
   delay: 5
   run_once: true
 
-- name: Install plugins
+- name: ({{ cluster_name }}) Install plugins
   ansible.builtin.include_tasks:
     file: plugins.yml
   when: plugins is defined
 
-- name: Save report about endpoint per server
-  ansible.builtin.template:
-    src: report.j2
-    dest: '{{ conf_dir }}/{{ cluster_name }}/report.yml'
-    owner: '{{ user }}'
-    group: '{{ group }}'
-
-- name: Save report about endpoint of all instances
-  become: false
-  ansible.builtin.template:
-    src: report_all.j2
-    dest: '{{ report_dir }}/report.yml'
-  delegate_to: localhost
-  run_once: true
-  notify:
-    - messages
-
-- name: Print instances on hosts
+- name: ({{ cluster_name }}) Print instances on hosts
   ansible.builtin.debug:
     var: instances_on_host

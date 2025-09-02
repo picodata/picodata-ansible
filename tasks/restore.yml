@@ -2,7 +2,7 @@
 # tasks for restore cluster
 
 
-- name: Copy utility files
+- name: ({{ cluster_name }}) Copy utility files
   ansible.builtin.template:
     src: restore.sh.j2
     dest: '{{ backup_dir }}/restore.sh'
@@ -12,7 +12,7 @@
     force: true
 
 - block:
-  - name: Get list of local backups
+  - name: ({{ cluster_name }}) Get list of local backups
     become: false
     ansible.builtin.find:
       paths: '{{ backup_fetch_dir }}/{{ cluster_name }}'
@@ -25,22 +25,22 @@
     delegate_to: localhost
     when: restore_dir is undefined
 
-  - name: Set backup_dir
+  - name: ({{ cluster_name }}) Set backup_dir
     ansible.builtin.set_fact:
       restore_dir: '{{ restore_dirs.files | map(attribute="path") | list | max | basename }}'
       backup_fetch: true
     when: restore_dir is undefined
 
-  - name: Debug
+  - name: ({{ cluster_name }}) Debug
     debug:
       msg: 'restore_dir: {{ restore_dir }}'
 
-  - name: Create dir on remote hosts
+  - name: ({{ cluster_name }}) Create dir on remote hosts
     ansible.builtin.file:
       path: '{{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
       state: directory
 
-  - name: Unpack backup
+  - name: ({{ cluster_name }}) Unpack backup
     ansible.builtin.unarchive:
       src: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ restore_dir }}/{{ inventory_hostname }}.tar'
       dest: '{{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
@@ -49,16 +49,22 @@
 
   when: backup_fetch == True
 
-- name: Restore data
+- name: ({{ cluster_name }}) Restore data
   become_user: '{{ systemd_user }}'
   ansible.builtin.command:
     cmd: '{{ backup_dir }}/restore.sh -n {{ cluster_name }} -d {{ data_dir }} -b {{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
   environment:
     XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
 
-- name: Remove utility files
+- name: ({{ cluster_name }}) Remove utility files
   ansible.builtin.file:
     path: '{{ backup_dir }}/{{ item }}'
     state: absent
   loop:
     - restore.sh
+  when: debug != true
+
+- name: ({{ cluster_name }}) Make links for instance name
+  ansible.builtin.include_tasks:
+    file: make_links.yml
+  when: autonames == true

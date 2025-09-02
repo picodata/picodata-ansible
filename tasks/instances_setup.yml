@@ -1,17 +1,23 @@
 ---
 # subtasks for deploy cluster
 
-- name: Set instance name in tier {{ tier.key }}
+- name: ({{ cluster_name }}) Set instance name without autonames in {{ tier.key }}
   ansible.builtin.set_fact:
     instance_name: '{{ tier.key }}-{{ "%d%03d" % (server_id|int, instance_num|int) }}'
+  when: autonames == false
 
-- name: Print instance_id and instance_num in tier {{ tier.key }}
+- name: ({{ cluster_name }}) Set instance name with autonames in {{ tier.key }}
+  ansible.builtin.set_fact:
+    instance_name: '{{ "%03d" % (instance_num|int + 1 ) }}'
+  when: autonames == true
+
+- name: ({{ cluster_name }}) Print instance_id and instance_num in tier {{ tier.key }}
   ansible.builtin.debug:
     msg: 'instance_id = {{ instance_id }}   instance_num = {{ instance_num }}   instance_name = {{ instance_name }}'
   run_once: true
   when: debug == true
 
-- name: Create dirs for instance in tier {{ tier.key }}
+- name: ({{ cluster_name }}) Create dirs for instance in tier {{ tier.key }}
   ansible.builtin.file:
     name: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}'
     state: directory
@@ -19,7 +25,7 @@
     group: '{{ group }}'
     mode: '{{ dir_mode }}'
 
-- name: Generate service-password file in instance dir
+- name: ({{ cluster_name }}) Generate service-password file in instance dir
   ansible.builtin.lineinfile:
     path: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}/.picodata-cookie'
     regexp: '.*'
@@ -30,7 +36,7 @@
     mode: '0400'
   when: service_password is defined
 
-- name: Create links for PG-certs in tier {{ tier.key }}
+- name: ({{ cluster_name }}) Create links for PG-certs in tier {{ tier.key }}
   ansible.builtin.file:
     src: '{{ cert_dir }}/{{ cluster_name }}/{{ item.filename | basename }}'
     dest: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}/{{ item.linkname }}'
@@ -43,7 +49,7 @@
     - { filename: '{{ ca_file }}', linkname: 'ca.crt' }
   when: pg_ssl == true
 
-- name: Create config file for instances in tier {{ tier.key }}
+- name: ({{ cluster_name }}) Create config file for instances in tier {{ tier.key }}
   ansible.builtin.template:
     src: instance-conf.j2
     dest: '{{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf'
@@ -52,33 +58,72 @@
   notify:
     - restart
 
+# systemd block
 - block:
-  - name: Create dirs for instances in tier {{ tier.key }}
-    ansible.builtin.file:
-      path: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance_name }}.service.d'
-      state: directory
 
-  - name: Create systemd-env file for instances in tier {{ tier.key }}
-    ansible.builtin.template:
-      src: systemd-unit-env.j2
-      dest: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance_name }}.service.d/env.conf'
-      force: true
-    notify:
-      - restart
+  # autonames is off
+  - block:
+    - name: ({{ cluster_name }}) Create dirs for instances in tier {{ tier.key }}
+      ansible.builtin.file:
+        path: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance_name }}.service.d'
+        state: directory
 
-  - name: Enable systemd services for {{ instance_name }} in tier {{ tier.key }}
-    ansible.builtin.systemd:
-      name: '{{ cluster_name }}@{{ instance_name }}'
-      enabled: true
-      state: started
-      daemon_reload: true
-      scope: '{{ systemd_scope }}'
-      force: true
-    environment:
-      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
-    register: result
+    - name: ({{ cluster_name }}) Create systemd-env file for instances in tier {{ tier.key }}
+      ansible.builtin.template:
+        src: systemd-unit-env.j2
+        dest: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance_name }}.service.d/env.conf'
+        force: true
+      notify:
+        - restart
 
-  - name: Check restart if needed
+    - name: ({{ cluster_name }}) Enable systemd services for {{ instance_name }} in tier {{ tier.key }}
+      ansible.builtin.systemd:
+        name: '{{ cluster_name }}@{{ instance_name }}'
+        enabled: true
+        state: started
+        daemon_reload: true
+        scope: '{{ systemd_scope }}'
+        force: true
+      environment:
+        XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+      register: result
+
+    when: autonames == false
+
+  # autonames is on
+  - block:
+    - name: ({{ cluster_name }}) Create dirs for instances in tier {{ tier.key }}
+      ansible.builtin.file:
+        path: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance_name }}.service.d'
+        state: directory
+
+    - name: ({{ cluster_name }}) Generate template file for systemd
+      become: true
+      become_user: '{{ systemd_user }}'
+      ansible.builtin.template:
+        src: systemd-unit-service.j2
+        dest: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance_name }}.service'
+        force: true
+      notify:
+        - restart
+
+    - name: ({{ cluster_name }}) Enable systemd services for {{ instance_name }} in tier {{ tier.key }}
+      ansible.builtin.systemd:
+        name: '{{ cluster_name }}-{{ instance_name }}'
+        enabled: true
+        state: started
+        daemon_reload: true
+        scope: '{{ systemd_scope }}'
+        force: true
+      environment:
+        XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+      register: result
+      notify:
+        - refactor
+
+    when: autonames == true
+
+  - name: ({{ cluster_name }}) Check restart if needed
     ansible.builtin.set_fact:
       need_restart: false
     when: result.changed == true
@@ -88,7 +133,7 @@
   when: init_system == 'systemd'
 # end block
 
-- name: Create supervisord conf-files for instances in tier {{ tier.key }}
+- name: ({{ cluster_name }}) Create supervisord conf-files for instances in tier {{ tier.key }}
   ansible.builtin.template:
     src: supervisord-apps.j2
     dest: '{{ supervisord_dir }}/{{ cluster_name }}/{{ instance_name }}.conf'
@@ -97,6 +142,6 @@
   notify:
     - restart
 
-- name: Calculate next port number on server for all tiers
+- name: ({{ cluster_name }}) Calculate next port number on server for all tiers
   ansible.builtin.set_fact:
     instance_num: '{{ instance_num|int + 1}}'

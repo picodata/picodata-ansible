@@ -1,6 +1,8 @@
 ---
 # defaults file for picodata-ansible
 
+role_ver: 'master'
+
 repo: 'https://download.picodata.io' # value for nightly: https://download.binary.picodata.io
 install_packages: true
 picodata_package_path: false
@@ -69,3 +71,6 @@ systemd_params_default:
 pg_port_delay: 5
 
 report_dir: '..'
+
+# Не используйте autonames для промышленных сред!
+autonames: false

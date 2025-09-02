@@ -37,7 +37,11 @@ done
 
 echo "Stop all instances of cluster $CLUSTER on hosts"
 {% if init_system == 'systemd' %}
+{% if autonames == false %}
 systemctl stop --{{ systemd_scope }} $CLUSTER@*
+{% else %}
+systemctl stop --{{ systemd_scope }} $CLUSTER-*
+{% endif %}
 {% elif init_system == 'supervisord' %}
 supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf stop all || supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf signal KILL
 {% endif %}
@@ -54,7 +58,11 @@ cp -pr $BACKUP_DIR/share/* "{{ share_dir }}/{{ cluster_name }}"/
 
 echo "Start all instances of cluster $CLUSTER on hosts"
 {% if init_system == 'systemd' %}
+{% if autonames == false %}
 systemctl start --{{ systemd_scope }} --all $CLUSTER@*
+{% else %}
+systemctl start --{{ systemd_scope }} $CLUSTER-*
+{% endif %}
 {% elif init_system == 'supervisord' %}
 supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf start all
 {% endif %}

@@ -23,15 +23,26 @@
   run_once: true
   listen: apply_db_config
 
-- name: Clear sql-file for db_config
-  ansible.builtin.file:
-    state: absent
-    path: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
-  listen: apply_db_config
-
 - name: Message about targets for Prometheus
   ansible.builtin.debug:
     msg: 'Infrormation about of instances is saved to file {{ report_dir }}/report.yml on this host (ansible controller)'
   delegate_to: localhost
   run_once: true
   listen: messages
+
+- name: Save report about endpoint per server
+  ansible.builtin.template:
+    src: report.j2
+    dest: '{{ conf_dir }}/{{ cluster_name }}/report.yml'
+    owner: '{{ user }}'
+    group: '{{ group }}'
+  listen: refactor
+
+- name: Save report about endpoint of all instances
+  become: false
+  ansible.builtin.template:
+    src: report_all.j2
+    dest: '{{ report_dir }}/report.yml'
+  delegate_to: localhost
+  run_once: true
+  listen: refactor
