@@ -217,6 +217,23 @@ ansible-playbook -i hosts.yml picodata.yml -t restore
 
 Полное описание всех тэгов роли см. в [docs/tags.md](docs/tags.md)
 
+## Примечания
+
+Если разворачивается большой кластер, то для сокращения времени выполнения `ansible-playbook` настройте параметры `forks` и `pipelining` в файле `ansible.cfg`
+
+Пример файла `ansible.cfg`:
+```ini
+[defaults]
+roles_path =.roles/
+host_key_checking = false
+callbacks_enabled = profile_tasks
+forks = 50
+
+[ssh_connection]
+pipelining = true
+```
+
+Подробнее про эти параметры можно прочитать в [документации по Ansible](https://docs.ansible.com/ansible/).
 
 ## Лицензия
 

@@ -110,6 +110,7 @@
     loop_var: instance
   when: audit == True
 
+# for systemd
 - block:
   - name: ({{ cluster_name }}) Make links on systemd unit (alias)
     ansible.builtin.command:
@@ -128,8 +129,6 @@
     loop: '{{ instance_link }}'
     loop_control:
       loop_var: instance
-      # notify:
-      #   - restart
 
   - name: ({{ cluster_name }}) Reload systemd
     ansible.builtin.systemd:

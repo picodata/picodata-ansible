@@ -34,6 +34,15 @@
       ansible.builtin.file:
         name: '{{ systemd_dir }}/{{ cluster_name }}@.service'
         state: absent
+
+    - name: ({{ cluster_name }}) Remove systemd unit file for all picodata processes
+      ansible.builtin.shell:
+        cmd: 'rm -rf {{ item }}'
+      loop:
+        - '{{ systemd_dir }}/{{ cluster_name }}@*'
+        - '{{ systemd_dir }}/*/{{ cluster_name }}@*'
+      ignore_errors: True
+
     when: autonames == false
 
   # with autonames
@@ -51,6 +60,14 @@
       environment:
         XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
+    - name: ({{ cluster_name }}) Remove systemd env dirs
+      ansible.builtin.file:
+        name: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance }}.service.d'
+        state: absent
+      loop: '{{ instances_on_host }}'
+      loop_control:
+        loop_var: instance
+
     - name: ({{ cluster_name }}) Remove systemd unit file
       ansible.builtin.file:
         name: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance }}.service'
@@ -59,7 +76,21 @@
       loop_control:
         loop_var: instance
 
+    - name: ({{ cluster_name }}) Remove systemd unit file for all picodata processes
+      ansible.builtin.shell:
+        cmd: 'rm -rf {{ item }}'
+      loop:
+        - '{{ systemd_dir }}/{{ cluster_name }}-*'
+        - '{{ systemd_dir }}/*/{{ cluster_name }}-*'
+      ignore_errors: True
+
     when: autonames == true
+
+  - name: ({{ cluster_name }}) Reload systemd services
+    ansible.builtin.systemd:
+      daemon_reload: true
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
 
   become: true
   become_user: '{{ systemd_user }}'
@@ -105,7 +136,7 @@
 
 - name: ({{ cluster_name }}) Send SIGKILL signals for all picodata processes on servers
   ansible.builtin.shell:
-    cmd: 'sleep 10 && /usr/bin/pkill -9 picodata'
+    cmd: 'sleep 10 && /usr/bin/pkill -9 picodata && sleep 10'
   when: sigkill | default("false") == "true"
   ignore_errors: True
 

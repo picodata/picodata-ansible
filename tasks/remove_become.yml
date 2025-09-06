@@ -27,6 +27,7 @@
     ansible.builtin.file:
       name: '{{ item }}'
       state: absent
+      recurse: true
     loop:
       - '{{ conf_dir }}'
       - '{{ log_dir }}'
