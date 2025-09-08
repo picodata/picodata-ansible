@@ -128,10 +128,9 @@
     src: systemd-unit-service.j2
     dest: '{{ systemd_dir }}/{{ cluster_name }}@.service'
     force: true
-  when: init_system == 'systemd'
+  when: init_system == 'systemd' and autonames == false
   notify:
     - restart
-  when: autonames == false
 
 - name: ({{ cluster_name }}) Debug db_config
   debug:
