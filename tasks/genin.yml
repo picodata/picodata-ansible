@@ -65,6 +65,15 @@
       list_instance_names: "{{ report.instance_names }}"
     when: autonames == true
 
+  - name: ({{ cluster_name }}) Read a first config file from a remote host from report file
+    ansible.builtin.slurp:
+      src: '{{ conf_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.conf'
+    register: config_file
+
+  - name: debug config_file 2
+    ansible.builtin.debug:
+      var: config_file
+
   when: check_report.matched > 0
 
 # if report file is not exist
@@ -77,36 +86,38 @@
       file_type: file
     register: check_install
 
-  - name: ({{ cluster_name }}) Print check_install
-    ansible.builtin.debug:
-      msg: "{{ check_install.files[0].path }}"
-    when: debug == true and check_install.matched > 0
+  - block:
+    - name: ({{ cluster_name }}) Print check_install
+      ansible.builtin.debug:
+        msg: "{{ check_install.files[0].path }}"
+      when: debug == true
 
-  - name: ({{ cluster_name }}) Set server id for installed cluster
-    ansible.builtin.set_fact:
-      server_id: "{{ check_install.files[0].path | regex_search('/.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
+    - name: ({{ cluster_name }}) Set server id for installed cluster
+      ansible.builtin.set_fact:
+        server_id: "{{ check_install.files[0].path | regex_search('/.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
+
+    - name: ({{ cluster_name }}) Read a first config file from a remote host from config file
+      ansible.builtin.slurp:
+        src: '{{ check_install.files[0].path }}'
+      register: config_file
+
+    - name: debug config_file 1
+      ansible.builtin.debug:
+        var: config_file
+
     when: check_install.matched > 0
 
-  when: server_id is undefined and autonames == false
+  when: check_report.matched == 0
 
 ###################################
 # start: failure domain check version
 
 - block:
+  - name: debug config_file 0
+    ansible.builtin.debug:
+      var: config_file
 
-  - name: ({{ cluster_name }}) Read a first config file from a remote host from report file
-    ansible.builtin.slurp:
-      src: '{{ conf_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.conf'
-    register: config_file
-    when: instances_on_host
-
-  - name: ({{ cluster_name }}) Read a first config file from a remote host from config file
-    ansible.builtin.slurp:
-      src: '{{ check_install.files[0].path }}'
-    register: config_file
-    when: config_file is undefined and check_install.matched > 0
-
-  - name: ({{ cluster_name }}) Load report file from host
+  - name: ({{ cluster_name }}) Load config file from host
     ansible.builtin.set_fact:
       config: "{{ config_file.content  | b64decode | from_yaml }}"
 
@@ -122,11 +133,10 @@
     when: '"DC" in config.instance.failure_domain'
 
   run_once: true
-  when: server_id is defined
+  when: config_file.content is defined
 
 # end: failure domain check version
 ###################################
-
 
 - name: ({{ cluster_name }}) Set server id for first time
   ansible.builtin.set_fact:
