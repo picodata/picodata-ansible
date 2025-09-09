@@ -104,7 +104,7 @@
     ansible.builtin.slurp:
       src: '{{ check_install.files[0].path }}'
     register: config_file
-    when: check_install.matched > 0
+    when: config_file is undefined and check_install.matched > 0
 
   - name: ({{ cluster_name }}) Load report file from host
     ansible.builtin.set_fact:

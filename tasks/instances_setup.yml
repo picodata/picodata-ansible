@@ -87,6 +87,8 @@
       environment:
         XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
       register: result
+      notify:
+        - refactor
 
     when: autonames == false
 

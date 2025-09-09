@@ -89,6 +89,7 @@
   - name: ({{ cluster_name }}) Reload systemd services
     ansible.builtin.systemd:
       daemon_reload: true
+      scope: '{{ systemd_scope }}'
     environment:
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
 
