@@ -122,3 +122,8 @@
   ansible.builtin.import_tasks:
     file: make_links.yml
   tags: [ never, make_links ]
+
+- name: Create report files
+  ansible.builtin.import_tasks:
+    file: report.yml
+  tags: [ never, report ]
