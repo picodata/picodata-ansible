@@ -1,0 +1,51 @@
+---
+- name: Converge picodata1
+  hosts: picodata1
+  become: true
+  tasks:
+    - name: Get Service Status
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+      register: picodata_service
+      failed_when: picodata_service.status.SubState != "running" or picodata_service.status.UnitFileState != "enabled"
+      loop:
+        - "mycluster1@arbiter-1000"
+        - "mycluster1@default-1001"
+        - "mycluster1@default-1002"
+        - "mycluster1@default-1003"
+
+- name: Converge picodata2
+  hosts: picodata2
+  become: true
+  tasks:
+    - name: Get Service Status
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+      register: picodata_service
+      failed_when: picodata_service.status.SubState != "running" or picodata_service.status.UnitFileState != "enabled"
+      loop:
+        - "mycluster1@arbiter-2000"
+        - "mycluster1@default-2001"
+        - "mycluster1@default-2002"
+        - "mycluster1@default-2003"
+
+- name: Converge picodata3
+  hosts: picodata3
+  become: true
+  tasks:
+    - name: Get Service Status
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+      register: picodata_service
+      failed_when: picodata_service.status.SubState != "running" or picodata_service.status.UnitFileState != "enabled"
+      loop:
+        - "mycluster1@arbiter-3000"
+        - "mycluster1@default-3001"
+        - "mycluster1@default-3002"
+        - "mycluster1@default-3003"
+
+    
+    #- debug:
+    #    var: picodata_service
+
+      

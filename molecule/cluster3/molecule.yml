@@ -1,0 +1,116 @@
+---
+role_name_check: 1
+
+driver:
+  name: vagrant
+  provider:
+    name: libvirt
+platforms:
+  - name: picodata1
+    box: generic/debian12
+    memory: 2048
+    cpus: 1
+    groups:
+      - PICODATA1
+  - name: picodata2
+    box: generic/debian12
+    memory: 2048
+    cpus: 1
+    groups:
+      - PICODATA2
+  - name: picodata3
+    box: generic/debian12
+    memory: 2048
+    cpus: 1
+    groups:
+      - PICODATA3
+  
+
+
+provisioner:
+  name: ansible
+  options:
+    vvv: true
+  config_options:
+    defaults:
+      collections_path: ".collections"
+      roles_path: ".roles"
+  #ansible_args:
+  #  - --inventory=../molecule-hosts.yml
+  log: true
+  inventory:
+    group_vars:
+      all:
+        repo: 'https://download.picodata.io'
+        cluster_name: 'mycluster1'
+        admin_password: '123asdZXV'
+
+        log_level: 'info'
+        log_to: 'file'
+        log_dir: '/var/log/picodata'
+        listen_address: '{{ ansible_default_ipv4.address }}'
+        pg_address: '{{ listen_address }}'
+
+        first_bin_port: 13301
+        first_http_port: 18001
+        first_pg_port: 15001
+
+        tiers:
+          arbiter:
+            replicaset_count: 3
+            replication_factor: 1
+            config:
+              memtx:
+                memory: 71M
+            host_groups:
+              - PICODATA_R1
+          default:
+            replicaset_count: 3
+            replication_factor: 3
+            can_vote: false
+            config:
+              memtx:
+                memory: 71M
+            host_groups:
+              - PICODATA_R1
+
+        db_config:
+          governor_auto_offline_timeout: 30
+          iproto_net_msg_max: 500
+          memtx_checkpoint_count: 1
+          memtx_checkpoint_interval: 7200
+    host_vars:
+      picodata1:
+        host_group: 'PICODATA_R1'
+      picodata2:
+        host_group: 'PICODATA_R1'
+      picodata3:
+        host_group: 'PICODATA_R1'
+
+
+
+
+
+#provisioner:
+#  name: ansible
+#  inventory:
+#    links:
+#      hosts: "../../../../inventories/"
+#      group_vars: "../../../../inventories/group_vars"
+#      host_vars: "../../../../inventories/host_vars"
+
+
+scenario:
+  test_sequence:
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    # - idempotence
+    - side_effect
+    - verify
+    - cleanup
+    - destroy
