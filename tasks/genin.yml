@@ -69,10 +69,7 @@
     ansible.builtin.slurp:
       src: '{{ conf_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.conf'
     register: config_file
-
-  - name: debug config_file 2
-    ansible.builtin.debug:
-      var: config_file
+    ignore_errors: true
 
   when: check_report.matched > 0
 
@@ -101,10 +98,6 @@
         src: '{{ check_install.files[0].path }}'
       register: config_file
 
-    - name: debug config_file 1
-      ansible.builtin.debug:
-        var: config_file
-
     when: check_install.matched > 0
 
   when: check_report.matched == 0
@@ -113,9 +106,6 @@
 # start: failure domain check version
 
 - block:
-  - name: debug config_file 0
-    ansible.builtin.debug:
-      var: config_file
 
   - name: ({{ cluster_name }}) Load config file from host
     ansible.builtin.set_fact:

@@ -29,10 +29,10 @@ ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ENABLE OPTION (TIMEOUT
 ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET
 {% for param, val in conf_params.items() %}
 {% if loop.last %}{% set eol = '' %}{% else %}{% set eol = ',' %}{% endif %}
-  {% if val is boolean %}{% set val = val | string | lower %}{% endif %}
-  {{ conf_service }}."{{ param }}" = '{{ val | replace("'", '"') }}'{{ eol }}
+  {{ conf_service }}."{{ param }}" = '{{ val | replace("'", '"') | replace("True", "true") | replace("False", "false") }}'{{ eol }}
 {% endfor %}
 OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 
 {% endfor %}
 {% endif %}
+
