@@ -60,14 +60,6 @@
       environment:
         XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
-    - name: ({{ cluster_name }}) Remove systemd env dirs
-      ansible.builtin.file:
-        name: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance }}.service.d'
-        state: absent
-      loop: '{{ instances_on_host }}'
-      loop_control:
-        loop_var: instance
-
     - name: ({{ cluster_name }}) Remove systemd unit file
       ansible.builtin.file:
         name: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance }}.service'

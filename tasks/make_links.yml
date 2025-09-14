@@ -110,22 +110,23 @@
     loop_var: instance
   when: audit == True
 
+- name: ({{ cluster_name }}) Patch instance name in config file
+  ansible.builtin.replace:
+    path: '{{ conf_dir }}/{{ cluster_name }}/{{ instance[1] | basename }}.conf'
+    regexp: "^#  name: '.*'$"
+    replace: "  name: '{{ instance[0] }}'"
+    after: 'instance:'
+    before: '  peer: .*'
+  loop: '{{ instance_link }}'
+  loop_control:
+    loop_var: instance
+
 # for systemd
 - block:
   - name: ({{ cluster_name }}) Make links on systemd unit (alias)
     ansible.builtin.command:
       chdir: '{{ systemd_dir }}'
       cmd: 'ln -f -s {{ cluster_name }}-{{ instance[1] | basename }}.service {{ cluster_name }}-{{ instance[0] }}.service'
-    loop: '{{ instance_link }}'
-    loop_control:
-      loop_var: instance
-
-  - name: ({{ cluster_name }}) Create systemd-env file for instances
-    ansible.builtin.copy:
-      content: |
-        [Service]
-        Environment=PICODATA_INSTANCE_NAME={{ instance[0] }}
-      dest: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance[1] }}.service.d/env.conf'
     loop: '{{ instance_link }}'
     loop_control:
       loop_var: instance

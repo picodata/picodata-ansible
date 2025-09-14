@@ -94,11 +94,6 @@
 
   # autonames is on
   - block:
-    - name: ({{ cluster_name }}) Create dirs for instances in tier {{ tier.key }}
-      ansible.builtin.file:
-        path: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance_name }}.service.d'
-        state: directory
-
     - name: ({{ cluster_name }}) Generate template file for systemd
       become: true
       become_user: '{{ systemd_user }}'

@@ -19,7 +19,11 @@ instance:
 {% if autonames == false %}
   name: '{{ instance_name }}'
 {% else %}
-#  name: <see at systemd unit env file>
+{% if list_instance_names is defined %}
+  name: '{{ list_instance_names[instance_num | int] }}'
+{% else %}
+#  name: '{{ instance_name }}'
+{% endif %}
 {% endif %}
 
   tier: '{{ tier.key }}'
