@@ -83,4 +83,16 @@
 
     when: plugin_status.stdout == "0"
 
+  - block:
+    - name: ({{ cluster_name }}) Copy plugin congin on server {{ plugin.key }}
+      ansible.builtin.copy:
+        src: '{{ conf }}'
+        dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}'
+
+    - name: ({{ cluster_name }}) Configure plugin {{ plugin.key }}
+      ansible.builtin.shell:
+        cmd: 'picodata plugin configure {{ manifest.name }} {{ manifest.version }} {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/{{ conf | basename }}'
+
+    when: conf is defined and conf != ''
+
   run_once: true
