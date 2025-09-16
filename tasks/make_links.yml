@@ -31,7 +31,7 @@
 
 - name: ({{ cluster_name }}) Check list of instances
   ansible.builtin.fail:
-    msg: 'Error! List of instances is empty!'
+    msg: 'Ошибка! Список инстансов пуст!'
   when: not result_sql.stdout
   run_once: true
   delegate_to: localhost

@@ -29,7 +29,7 @@
 
   - name: ({{ cluster_name }}) Error if replication factor less to server count for tier {{ tier.key }}
     ansible.builtin.fail:
-      msg: 'Error! Cluster bad: replication factor must be more server count!'
+      msg: 'Ошибка! Некорректный фактор репликации для тира! Допустимы параметры между 1 и {{server_count}}'
     run_once: true
     when: tier.value.replication_factor | default(1) | int > tier_server_cnt | int and fd_uniq_per_instance == false
 
@@ -39,7 +39,7 @@
 
   - name: ({{ cluster_name }}) Error if instance per server not is integer for tier {{ tier.key }}
     ansible.builtin.fail:
-      msg: 'Error! Cluster bad: Check replicaset count, replication factor and count of servers (instances_per_server={{ instances_per_server }})!'
+      msg: 'Ошибка! Проверьте параметры replicaset count, replication factor и количество серверов для тира (instances_per_server={{ instances_per_server }})!'
     when: instances_per_server | float != instances_per_server | float | round
 
   - name: ({{ cluster_name }}) Debug instances_per_server for tier {{ tier.key }}

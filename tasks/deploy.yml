@@ -3,7 +3,7 @@
 
 - name: ({{ cluster_name }}) Check admin password is defined
   ansible.builtin.fail:
-    msg: 'Error! Your need define admin password (admin_password variable)!'
+    msg: 'Ошибка! Пароль администратора должен быть определен (admin_password)!'
   when: admin_password is undefined
   run_once: true
   delegate_to: localhost
@@ -31,7 +31,7 @@
 
 - name: ({{ cluster_name }}) Need to install Picodata package
   ansible.builtin.fail:
-    msg: 'Error! Your need install Picodata package on every server in cluster!'
+    msg: 'Ошибка! На серверах кластера необходимо установить пакет picodata!'
   when: install_packages == true and rootless == true
   run_once: true
   delegate_to: localhost
@@ -211,7 +211,7 @@
   ansible.builtin.wait_for:
     path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
     state: present
-    msg: 'Timeout to find file {{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
+    msg: 'Ошибка ожидания сокет-файла: {{ run_dir }}/{{ cluster_name }}/{{ item }}.sock! Проверьте логи инстанса!'
     timeout: 60
   loop: '{{ instances_on_host }}'
 
