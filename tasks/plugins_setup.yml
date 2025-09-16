@@ -72,8 +72,16 @@
 
   - name: ({{ cluster_name }}) Checking for plugin has been installed {{ plugin.key }}
     ansible.builtin.shell:
-      cmd: "echo \"select enabled from _pico_plugin where name='{{ manifest.name }}' and version='{{ manifest.version }}'\" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock | grep true | wc -l"
+      cmd: >
+           echo "select enabled from _pico_plugin where name='{{ manifest.name }}' and version='{{ manifest.version }}'" |
+           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
+           grep true | wc -l
     register: plugin_status
+
+  - name: ({{ cluster_name }}) Debug plugin_status {{ plugin.key }}
+    ansible.builtin.debug:
+      var: plugin_status
+    when: debug == true
 
   - block:
     - name: ({{ cluster_name }}) Generate install.sql file into plugin path {{ plugin.key }}
@@ -86,7 +94,9 @@
 
     - name: ({{ cluster_name }}) Install plugin into cluster (run install.sql) {{ plugin.key }}
       ansible.builtin.shell:
-        cmd: '{ echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock'
+        cmd: >
+            { echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } |
+            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
       when: (plugin.value.do_not_run_plugin_install_sql | default(false)) == false
 
     when: plugin_status.stdout == "0"
@@ -104,7 +114,7 @@
     - name: ({{ cluster_name }}) Configure plugin {{ plugin.key }}
       ansible.builtin.shell:
         cmd: >
-             picodata plugin configure {{ manifest.name }} {{ manifest.version }}
+             {{ bin_dir }}/picodata plugin configure {{ manifest.name }} {{ manifest.version }}
              {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/config.yaml
              --peer {{ listen_address }}:{{ first_bin_port }}
              --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie

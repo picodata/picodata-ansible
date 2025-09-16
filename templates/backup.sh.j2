@@ -31,7 +31,7 @@ while getopts 's:d:' param ; do
   esac
 done
 
-SNAP=$(echo -e "\lua\n box.snapshot()\n box.backup.stop()\n box.backup.start()\n" | picodata admin $SOCK | grep "snap$" | sed -E 's/.* //g')
+SNAP=$(echo -e "\lua\n box.snapshot()\n box.backup.stop()\n box.backup.start()\n" | {{ bin_dir }}/picodata admin $SOCK | grep "snap$" | sed -E 's/.* //g')
 
 [ "$SNAP" = "" ] && exit 2
 
@@ -49,4 +49,4 @@ if [ ! -d "$BACKUP_DIR/share" ]; then
    cp -pr "{{ share_dir }}/{{ cluster_name }}/"*  $BACKUP_DIR/share/
 fi
 
-echo -e "\lua\n box.backup.stop()\n" | picodata admin $SOCK &>/dev/null
+echo -e "\lua\n box.backup.stop()\n" | {{ bin_dir }}/picodata admin $SOCK &>/dev/null

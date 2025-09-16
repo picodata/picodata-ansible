@@ -29,6 +29,7 @@
 ### Пути
 | Имя | Значение по умолчанию | Описание |
 | ---      | ---      | ---      |
+| bin_dir | /usr/bin | путь до исполняемого файла `picodata` |
 | conf_dir | /etc/picodata | размещение настроечных файлов |
 | data_dir | /var/lib/picodata | размещение данных |
 | run_dir | /var/run/picodata | размещение socket-файлов |

@@ -14,10 +14,10 @@
   when: hostvars[inventory_hostname]['listen_address'] is undefined
 
 - name: ({{ cluster_name }}) Check picodata is installed
-  ansible.builtin.command:
+  ansible.builtin.shell:
     cmd: 'picodata --version'
   register: result
-  ignore_errors: true
+  failed_when: result.rc != 0 and result.rc != 127
 
 - name: ({{ cluster_name }}) Set flag for install picodata needed
   ansible.builtin.set_fact:
@@ -237,7 +237,10 @@
 
 - name: ({{ cluster_name }}) Set admin password
   ansible.builtin.shell:
-    cmd: echo "alter user \"admin\" password '{{ admin_password }}' using md5; alter user \"admin\" with login;" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+    cmd: >
+         echo "alter user \"admin\" password '{{ admin_password }}' using md5;
+         alter user \"admin\" with login;" |
+         {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   retries: 3
   delay: 5
   run_once: true

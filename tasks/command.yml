@@ -76,7 +76,11 @@
 
   - name: ({{ cluster_name }}) Execute file with commands
     ansible.builtin.shell:
-      cmd: 'echo "Host: {{ inventory_hostname }}"; echo "Instance: {{ instance }}"; (echo "\lua"; cat "{{ data_dir }}/{{ cluster_name }}/{{ cmdfile_name }}") | picodata admin --ignore-errors {{ run_dir }}/{{ cluster_name }}/{{ instance }}.sock'
+      cmd: >
+          echo "Host: {{ inventory_hostname }}";
+          echo "Instance: {{ instance }}";
+          (echo "\lua"; cat "{{ data_dir }}/{{ cluster_name }}/{{ cmdfile_name }}")
+          | {{ bin_dir }}/picodata admin --ignore-errors {{ run_dir }}/{{ cluster_name }}/{{ instance }}.sock
     loop: '{{ instances_filtered }}'
     loop_control:
       loop_var: instance

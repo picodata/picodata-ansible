@@ -22,7 +22,10 @@
 
 - name: ({{ cluster_name }}) Get information from service tables
   ansible.builtin.shell:
-    cmd: echo "SELECT i.name, p.address FROM _pico_instance AS i JOIN _pico_peer_address AS p ON i.raft_id=p.raft_id WHERE connection_type='iproto'" | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock  | grep '|' | grep -v '+-' | grep -Ev 'name.* | address' | tr -d ' ' | cut -f 2-3 -d '|' | tr '|' ','
+    cmd: >
+         echo "SELECT i.name, p.address FROM _pico_instance AS i JOIN _pico_peer_address AS p ON i.raft_id=p.raft_id WHERE connection_type='iproto'" |
+         {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock  |
+         grep '|' | grep -v '+-' | grep -Ev 'name.* | address' | tr -d ' ' | cut -f 2-3 -d '|' | tr '|' ','
   register: result_sql
   run_once: true
 

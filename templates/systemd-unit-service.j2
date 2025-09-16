@@ -33,10 +33,10 @@ Environment={{ param }}={{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instan
 
 {% if autonames == true %}
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/{{ instance_name }}'
-ExecStart=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf
+ExecStart={{ bin_dir }}/picodata run --config {{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf
 {% else %}
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/%i'
-ExecStart=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/%i.conf
+ExecStart={{ bin_dir }}/picodata run --config {{ conf_dir }}/{{ cluster_name }}/%i.conf
 {% endif %}
 ExecStartPre=/bin/sh -c 'mkdir -p {{ share_dir }}/{{ cluster_name }}'
 

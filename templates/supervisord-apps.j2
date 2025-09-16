@@ -1,5 +1,5 @@
 [program:{{ instance_name }}]
-command=/usr/bin/picodata run --config {{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf
+command={{ bin_dir }}/picodata run --config {{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf
 
 autostart=true
 autorestart=true

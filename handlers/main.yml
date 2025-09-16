@@ -17,7 +17,7 @@
 
 - name: Apply db_config
   ansible.builtin.shell:
-    cmd: cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql | picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+    cmd: cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   retries: 3
   delay: 5
   run_once: true
