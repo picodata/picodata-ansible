@@ -123,6 +123,11 @@
     file: make_links.yml
   tags: [ never, make_links ]
 
+- name: Rebootstrap of one instance
+  ansible.builtin.import_tasks:
+    file: rebootstrap.yml
+  tags: [ never, rebootstrap ]
+
 - name: Create report files
   ansible.builtin.import_tasks:
     file: report.yml
