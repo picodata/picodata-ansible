@@ -17,6 +17,14 @@
     run_once: false
     register: archive
 
+  - name: ({{ cluster_name }}) Change ownership for plugins-dir {{ plugin.key }}
+    ansible.builtin.file:
+      dest: '{{ plugins_dir }}'
+      owner: '{{ user }}'
+      group: '{{ group }}'
+      recurse: yes
+    run_once: false
+
   - name: ({{ cluster_name }}) Find manifest file {{ plugin.key }}
     ansible.builtin.set_fact:
       manifest_file: "{{ archive.files | select('ansible.builtin.search', '.*/manifest.yaml$') | list | first }}"
@@ -84,15 +92,25 @@
     when: plugin_status.stdout == "0"
 
   - block:
-    - name: ({{ cluster_name }}) Copy plugin congin on server {{ plugin.key }}
+
+    - name: ({{ cluster_name }}) Copy plugin config on server {{ plugin.key }}
       ansible.builtin.copy:
-        src: '{{ conf }}'
-        dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}'
+        src: '{{ plugin.value.config }}'
+        dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/config.yaml'
+        owner: '{{ user }}'
+        group: '{{ group }}'
+      register: res
 
     - name: ({{ cluster_name }}) Configure plugin {{ plugin.key }}
       ansible.builtin.shell:
-        cmd: 'picodata plugin configure {{ manifest.name }} {{ manifest.version }} {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/{{ conf | basename }}'
+        cmd: >
+             picodata plugin configure {{ manifest.name }} {{ manifest.version }}
+             {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/config.yaml
+             --peer {{ listen_address }}:{{ first_bin_port }}
+             --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie
+             --timeout {{ plugin.value.plugin_timeout | default(300) }}
+      when: res.changed is defined and res.changed == true
 
-    when: conf is defined and conf != ''
+    when: plugin.value.config is defined and plugin.value.config != ''
 
   run_once: true
