@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  tasks:
+    - name: "Include {{ playbook_dir | dirname | dirname }}"
+      include_role:
+        name: '{{ playbook_dir | dirname | dirname }}' 
+

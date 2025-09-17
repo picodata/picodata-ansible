@@ -1,0 +1,47 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Get server_name_number
+      ansible.builtin.set_fact:
+        server_name_number: "{{ inventory_hostname | regex_search('.*(\\d+)$', '\\1') | first }}"
+
+    - name: Check systemd services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+      register: picodata_service
+      failed_when: picodata_service.status.SubState != "running" or picodata_service.status.UnitFileState != "enabled"
+      loop:
+        - "mycluster1@arbiter-{{server_name_number}}000"
+        - "mycluster1@default-{{server_name_number}}001"
+        - "mycluster1@default-{{server_name_number}}002"
+        - "mycluster1@default-{{server_name_number}}003"
+
+    - name: Check instances online status
+      ansible.builtin.shell:
+        cmd: "echo \"select current_state from _pico_instance\" | picodata admin /var/run/picodata/mycluster1/arbiter-{{server_name_number}}000.sock | fgrep -c Online"
+      register: instances_status
+      failed_when: instances_status.stdout != "12"
+      timeout: 10
+      changed_when: False
+    
+    - name: Check tcp ports
+      ansible.builtin.wait_for:
+        port: "{{ item }}"
+        timeout: 2
+      loop:
+        - 18001
+        - 18002
+        - 18003
+        - 18004
+        - 15001
+        - 15002
+        - 15003
+        - 15004
+        - 13301
+        - 13302
+        - 13303
+        - 13304
+  
+      
