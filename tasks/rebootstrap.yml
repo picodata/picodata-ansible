@@ -1,0 +1,183 @@
+---
+# tasks for rebootstrap instances
+
+# Parameters:
+# - instance_name
+
+# Steps:
+# - read report.yml (if exist)
+# - find working admin socket (get work_instance)
+# - get uuid of instance_name for rebootstrap
+# - stop unit (systemctl or supervisord)
+# - picodata expel over peer of work_instance
+# - remove snap, xlog (vylog? need check) from instance_dir of rebootstrap
+# - start unit (systemctl or supervisord)
+
+# Set variables for work
+- name: ({{ cluster_name }}) Generate list of instances per server
+  ansible.builtin.include_tasks:
+    file: genin.yml
+
+# Check parameters
+- name: ({{ cluster_name }}) Check parameters
+  ansible.builtin.fail:
+    msg: 'Ошибка! Не указан инстанс для ребутсрапа (переменная instance)!'
+  when: instance is undefined
+  run_once: true
+  delegate_to: localhost
+
+# Find working admin socket (get work_instance)
+- name: ({{ cluster_name }}) Debug list_bin
+  ansible.builtin.debug:
+    var: list_bin
+  when: debug == true
+
+- name: ({{ cluster_name }}) Set peer for commands
+  ansible.builtin.set_fact:
+    peer_address: '{{ peer | default(list_bin[0]) }}'
+
+- name: ({{ cluster_name }}) Find index for peer in list on host
+  ansible.builtin.set_fact:
+    local_peer_index: '{{ list_bin.index(peer_address) | default(0) }}'
+  delegate_to: localhost
+  delegate_facts: true
+  register: find_result
+  when: peer_address in list_bin
+
+- name: ({{ cluster_name }}) Debug res
+  ansible.builtin.debug:
+    var: find_result
+  when: debug == true
+
+- name: ({{ cluster_name }}) Check peer
+  ansible.builtin.fail:
+    msg: 'Ошибка! Не могу найти инстанс для peer_address ({{ peer_address }})!'
+  when: hostvars['localhost']['local_peer_index'] is undefined
+  delegate_to: localhost
+  run_once: true
+
+- name: ({{ cluster_name }}) Set index for peer for all hosts
+  ansible.builtin.set_fact:
+    peer_index: "{{ hostvars['localhost']['local_peer_index'] }}"
+
+- name: ({{ cluster_name }}) Debug peer_index
+  ansible.builtin.debug:
+    var: peer_index
+  when: debug == true
+  run_once: true
+
+- name: ({{ cluster_name }}) Check instance is exist
+  ansible.builtin.fail:
+    msg: 'Ошибка! Не могу найти инстанс для expel ({{ instance }})!'
+  when: instance not in list_instance_names
+  delegate_to: localhost
+  run_once: true
+
+- block:
+  - name: ({{ cluster_name }}) Find index for instance {{ instance }} in list
+    ansible.builtin.set_fact:
+      instance_index: '{{ list_instance_names.index(instance) }}'
+    register: find_result
+
+  - name: ({{ cluster_name }}) Check intsane and peer are not the same
+    ansible.builtin.fail:
+      msg: 'Ошибка! Инстанс для ребутсрапа {{ instance }} не может совпадать с peer-инстансом ({{ peer_address }})!'
+    when: list_bin.index(peer_address) | int == instance_index | int
+    run_once: true
+
+  - name: ({{ cluster_name }}) Set name of peer
+    ansible.builtin.set_fact:
+      peer_name: '{{ instances_on_host[ peer_index|int ] }}'
+
+  - name: ({{ cluster_name }}) Debug peer
+    ansible.builtin.debug:
+      msg: 'peer_name: {{ peer_name }}     peer_address: {{ peer_address }}'
+    run_once: true
+    when: debug == true
+
+  - name: ({{ cluster_name }}) Check peer_name
+    ansible.builtin.fail:
+      msg: 'Ошибка! Не могу найти имя инстанса для peer_address ({{ peer_address }})!'
+    when: peer_name is undefined
+    delegate_to: localhost
+    run_once: true
+
+# - get uuid of instance_name for rebootstrap
+  - name: ({{ cluster_name }}) Get UUID
+    ansible.builtin.shell:
+      cmd: >
+            {{ bin_dir }}/picodata status
+            --peer {{ peer_address }}
+            --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ peer_name }}/.picodata-cookie 
+            | grep '^{{ instance }} '
+    register: result_status
+
+  - name: ({{ cluster_name }}) Debug result_status.stdout
+    ansible.builtin.debug:
+      var: result_status.stdout
+    when: debug == true
+
+  - name: ({{ cluster_name }}) Set UUID of instance {{ instance }}
+    ansible.builtin.set_fact:
+  # ex: 772cc0f0-6c3b-4fee-9061-1abeb4ad74e7
+      instance_uuid: "{{ result_status.stdout | regex_search('(.{8}-.{4}-.{4}-.{4}-.{12})', '\\1') | list | last }}"
+
+  - name: ({{ cluster_name }}) Debug result_uuid
+    ansible.builtin.debug:
+      var: instance_uuid
+    when: debug == true
+
+  - name: ({{ cluster_name }}) Check UUID of instance {{ instance }}
+    ansible.builtin.fail:
+      msg: 'Ошибка! Не найден uuid инстанса {{ instance }}'
+    when: instance_uuid == ""
+    delegate_to: localhost
+
+# - stop unit (systemctl or supervisord)
+  - name: ({{ cluster_name }}) Stop intsance {{ instance }} systemd service
+    ansible.builtin.systemd:
+      name: '{% set delim = "@" %}{% if autonames == true %}{% set delim = "-" %}{% endif %}{{ cluster_name }}{{ delim }}{{ instances_on_host[ instance_index|int ] }}'
+      state: stopped
+      scope: '{{ systemd_scope }}'
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    when: init_system == 'systemd'
+
+  - name: ({{ cluster_name }}) Stop intsance {{ instance }} supervisord service
+    ansible.builtin.shell:
+      cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf stop {{ instances_on_host[ instance_index|int ] }}
+    when: init_system == 'supervisord'
+
+# - picodata expel over peer of work_instance
+  - name: ({{ cluster_name }}) Expel instance {{ instance }}
+    ansible.builtin.shell:
+      cmd: >
+            {{ bin_dir }}/picodata expel
+            --peer {{ peer_address }}
+            --password-file {{ data_dir }}/{{ cluster_name }}/{{ peer_name }}/.picodata-cookie
+            -a chap-sha1 {%if force is defined and force == true %}--force {% endif %}
+            {{ instance_uuid }}
+
+# - remove snap, xlog (vylog? need check) from instance_dir of rebootstrap
+  - name: ({{ cluster_name }}) Remove snap/xlog in work_dir of intsance {{ instance }}
+    ansible.builtin.shell:
+      cmd: >
+           rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.snap; 
+           rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.xlog
+
+# - start unit (systemctl or supervisord)
+  - name: ({{ cluster_name }}) Start intsance {{ instance }} systemd service
+    ansible.builtin.systemd:
+      name: '{% set delim = "@" %}{% if autonames == true %}{% set delim = "-" %}{% endif %}{{ cluster_name }}{{ delim }}{{ instances_on_host[ instance_index|int ] }}'
+      state: started
+      scope: '{{ systemd_scope }}'
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    when: init_system == 'systemd'
+
+  - name: ({{ cluster_name }}) Start intsance {{ instance }} supervisord service
+    ansible.builtin.shell:
+      cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf start {{ instances_on_host[ instance_index|int ] }}
+    when: init_system == 'supervisord'
+
+  when: instance in list_instance_names

@@ -136,6 +136,24 @@ ansible-playbook -i hosts.yml picodata.yml -t crash_dump
 ansible-playbook -i hosts.yml picodata.yml -t crash_dump -e skipdata=true
 ```
 
+## Ребутсрап (пересоздание) инсанса
+
+Требуется в случаях, когда репликация сломана и нет возможности отремонтировать вручную
+
+> Работает только на репликасетов с фактором репликации больше 1!!!
+
+Команда для ребутсрапа инстанса с именем `default-3002`
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t rebootstrap -e instance=default-3002
+```
+
+Для работы команды нужен peer-адрес любого инстанса кластера, если он не указан, то будет взят адрес первого инстанса случайного сервера кластера
+
+В случаях, когда адрес первого инстанса случайного сервера кластера совпадает с пересоздаваемым инстансом, его можно указать отдельно через переменную `peer`
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t rebootstrap -e instance=default-3002 -e peer=192.168.101.168:3302
+```
+
 ---
 
 ## Прочее

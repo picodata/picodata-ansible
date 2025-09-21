@@ -120,6 +120,7 @@
              --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie
              --timeout {{ plugin.value.plugin_timeout | default(300) }}
       when: res.changed is defined and res.changed == true
+      ignore_errors: True
 
     when: plugin.value.config is defined and plugin.value.config != ''
 

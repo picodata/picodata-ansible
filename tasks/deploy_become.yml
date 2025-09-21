@@ -2,10 +2,10 @@
 
 - block:
   - name: ({{ cluster_name }}) Check picodata is installed
-    ansible.builtin.command:
-      cmd: 'picodata --version'
+    ansible.builtin.shell:
+      cmd: '{{ bin_dir }}/picodata --version'
     register: result
-    ignore_errors: true
+    failed_when: result.rc != 0 and result.rc != 127
 
   - name: ({{ cluster_name }}) Set flag for install picodata needed
     ansible.builtin.set_fact:

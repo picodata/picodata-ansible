@@ -15,9 +15,13 @@
   run_once: true
   listen: apply_db_config
 
-- name: Apply db_config
+- name: Wait 10 sec and apply db_config
+# 10 секунд нужны для исключения ошибки 'raft: proposal dropped'
   ansible.builtin.shell:
-    cmd: cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+    cmd: >
+         sleep 10 &&
+         cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql |
+           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   retries: 3
   delay: 5
   run_once: true

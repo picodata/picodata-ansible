@@ -62,8 +62,7 @@
 
   - name: ({{ cluster_name }}) Set real instance names from report file
     ansible.builtin.set_fact:
-      list_instance_names: "{{ report.instance_names }}"
-    when: autonames == true
+      list_instance_names: "{{ report.instance_names | default(instances_on_host) }}"
 
   - name: ({{ cluster_name }}) Read a first config file from a remote host from report file
     ansible.builtin.slurp:
