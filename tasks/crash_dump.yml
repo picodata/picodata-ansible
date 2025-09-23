@@ -62,6 +62,8 @@
          -czf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz \
          {{ listdir }} \
          /usr/bin/picodata
+  register: result
+  failed_when: result.rc != 0 and result.rc != 1
 
 - name: ({{ cluster_name }}) Remove unloaded logs from journald
   ansible.builtin.file:
