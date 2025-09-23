@@ -20,7 +20,7 @@ ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ADD SERVICE "{{ servic
 {% endfor %}
 {% endfor %}
 
-{% if (plugin.value.do_not_enable_plugin | default(false)) != true %}
+{% if (plugin_enable | bool ) == true %}
 ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ENABLE OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 {% endif %}
 

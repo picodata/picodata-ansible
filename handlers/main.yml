@@ -4,7 +4,7 @@
 - name: Restart all instances
   ansible.builtin.include_tasks:
     file: restart.yml
-  when: need_restart == true
+  when: need_restart == true and deny_restart | default(false) | bool == false
   listen: restart
 
 - name: Wait for PG-port and continue with play

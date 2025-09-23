@@ -83,6 +83,16 @@
       var: plugin_status
     when: debug == true
 
+  - name: ({{ cluster_name }}) Set plugin_enable flag {{ plugin.key }}
+    ansible.builtin.set_fact:
+      plugin_enable: '{{ plugin.value.enable | default(true) }}'
+
+  # TODO (deprecated) убрать в версии 26.1
+  - name: ({{ cluster_name }}) Set plugin_enable flag for compability {{ plugin.key }}
+    ansible.builtin.set_fact:
+      plugin_enable: '{{ not (plugin.value.do_not_enable_plugin | bool) }}'
+    when: plugin.value.do_not_enable_plugin is defined
+
   - block:
     - name: ({{ cluster_name }}) Generate install.sql file into plugin path {{ plugin.key }}
       ansible.builtin.template:
@@ -92,12 +102,22 @@
         owner: '{{ user }}'
         group: '{{ group }}'
 
+    - name: ({{ cluster_name }}) Set plugin_install_sql flag {{ plugin.key }}
+      ansible.builtin.set_fact:
+        plugin_install_sql: '{{ plugin.value.install_sql | default(true) }}'
+
+    # TODO (deprecated) убрать в версии 26.1
+    - name: ({{ cluster_name }}) Set plugin_install_sql flag for compability {{ plugin.key }}
+      ansible.builtin.set_fact:
+        plugin_install_sql: '{{ not (plugin.value.do_not_run_plugin_install_sql | bool) }}'
+      when: plugin.value.do_not_run_plugin_install_sql is defined
+
     - name: ({{ cluster_name }}) Install plugin into cluster (run install.sql) {{ plugin.key }}
       ansible.builtin.shell:
         cmd: >
             { echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } |
             {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-      when: (plugin.value.do_not_run_plugin_install_sql | default(false)) == false
+      when: plugin_install_sql | bool == true
 
     when: plugin_status.stdout == "0"
 
@@ -120,8 +140,9 @@
              --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie
              --timeout {{ plugin.value.plugin_timeout | default(300) }}
       when: res.changed is defined and res.changed == true
+
       ignore_errors: True
 
-    when: plugin.value.config is defined and plugin.value.config != ''
+    when: plugin.value.config is defined and plugin.value.config != '' and plugin_install_sql | bool == true and plugin_enable == true
 
   run_once: true
