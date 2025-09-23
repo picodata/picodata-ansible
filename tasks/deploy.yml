@@ -245,6 +245,15 @@
   delay: 5
   run_once: true
 
+- name: ({{ cluster_name }}) Copy sql-file on server
+  ansible.builtin.copy:
+    src: '{{ sql_file }}'
+    dest: '{{ conf_dir }}/{{ cluster_name }}/after_deploy.sql'
+  run_once: true
+  when: sql_file is defined
+  notify:
+    - apply_sql_file
+
 - name: ({{ cluster_name }}) Install plugins
   ansible.builtin.include_tasks:
     file: plugins.yml

@@ -27,6 +27,14 @@
   run_once: true
   listen: apply_db_config
 
+- name: Apply sql_file
+  ansible.builtin.shell:
+    cmd: >
+         cat {{ conf_dir }}/{{ cluster_name }}/after_deploy.sql |
+           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+  run_once: true
+  listen: apply_sql_file
+
 - name: Message about targets for Prometheus
   ansible.builtin.debug:
     msg: 'Infrormation about of instances is saved to file {{ report_dir }}/report.yml on this host (ansible controller)'
