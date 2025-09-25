@@ -66,10 +66,17 @@
   when: debug == true
   run_once: true
 
-- name: ({{ cluster_name }}) Check instance is exist
+
+- name: ({{ cluster_name }}) Collect all instance names from all nodes
+  ansible.builtin.set_fact:
+    all_instance_names: "{{ groups['all'] | map('extract', hostvars, 'list_instance_names') | flatten | unique }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: ({{ cluster_name }}) Check instance is exist in cluster
   ansible.builtin.fail:
-    msg: 'Ошибка! Не могу найти инстанс для expel ({{ instance }})!'
-  when: instance not in list_instance_names
+    msg: 'Ошибка! Не могу найти инстанс для expel ({{ instance }}) во всем кластере!'
+  when: instance not in all_instance_names
   delegate_to: localhost
   run_once: true
 
