@@ -163,7 +163,8 @@
     ansible.builtin.shell:
       cmd: >
            rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.snap; 
-           rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.xlog
+           rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.xlog;
+           rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.vylog;
 
 # - start unit (systemctl or supervisord)
   - name: ({{ cluster_name }}) Start intsance {{ instance }} systemd service
