@@ -146,6 +146,11 @@
     extended: true
   when: not instances_on_host
 
+- name: ({{ cluster_name }}) Set instance names
+  ansible.builtin.set_fact:
+    list_instance_names: "{{ instances_on_host }}"
+  when: list_instance_names is not defined
+
 - name: ({{ cluster_name }}) Print instances on hosts
   ansible.builtin.debug:
     var: instances_on_host
