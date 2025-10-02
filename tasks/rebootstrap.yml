@@ -66,7 +66,6 @@
   when: debug == true
   run_once: true
 
-
 - name: ({{ cluster_name }}) Collect all instance names from all nodes
   ansible.builtin.set_fact:
     all_instance_names: "{{ groups['all'] | map('extract', hostvars, 'list_instance_names') | flatten | unique }}"
@@ -172,6 +171,8 @@
            rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.snap; 
            rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.xlog;
            rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.vylog;
+           find {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }} -name "*.index" -delete;
+           find {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }} -name "*.run" -delete;
 
 # - start unit (systemctl or supervisord)
   - name: ({{ cluster_name }}) Start intsance {{ instance }} systemd service
