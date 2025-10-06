@@ -13,7 +13,7 @@
 
 - name: ({{ cluster_name }}) Set filter on instances
   ansible.builtin.set_fact:
-    instances_filtered: '{{ instances_on_host | select ("search", filter | default(".*")) | list }}'
+    instances_filtered: '{{ instances_on_host | select ("ansible.builtin.search", filter | default(".*")) | list }}'
 
 - block:
   - name: ({{ cluster_name }}) Stop systemd units without autonames
@@ -30,7 +30,7 @@
     ignore_errors: True
     environment:
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
-    when: autonames == false
+    when: autonames|bool == false
 
   - name: ({{ cluster_name }}) Stop systemd units with autonames
     become_user: '{{ systemd_user }}'
@@ -46,7 +46,7 @@
     ignore_errors: True
     environment:
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
-    when: autonames == true
+    when: autonames|bool == true
 
   when: init_system == 'systemd'
 

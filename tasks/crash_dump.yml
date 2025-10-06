@@ -22,7 +22,7 @@
     loop: '{{ instances_on_host }}'
     loop_control:
       loop_var: instance
-    when: autonames == false
+    when: autonames|bool == false
 
   - name: ({{ cluster_name }}) Unload log files from journald to log_dir
     ansible.builtin.shell:
@@ -30,7 +30,7 @@
     loop: '{{ instances_on_host }}'
     loop_control:
       loop_var: instance
-    when: autonames == true
+    when: autonames|bool == true
 
   when: init_system == 'systemd'
 

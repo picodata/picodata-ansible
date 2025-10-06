@@ -62,7 +62,7 @@
 
   - name: ({{ cluster_name }}) Set filter on instances
     ansible.builtin.set_fact:
-      instances_filtered: '{{ instances_on_host | select ("search", filter | default(".*")) | list }}'
+      instances_filtered: '{{ instances_on_host | select ("ansible.builtin.search", filter | default(".*")) | list }}'
 
   - name: ({{ cluster_name }}) Debug instances_on_host
     ansible.builtin.debug:
@@ -114,5 +114,6 @@
       dest: '{{ report_dir }}/command_result_{{ "%Y%m%d%H%M%S" | strftime }}.log'
       mode: 0644
     delegate_to: localhost
+    run_once: true
 
   when: cmdfile is defined

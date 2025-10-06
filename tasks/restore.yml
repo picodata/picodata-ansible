@@ -67,4 +67,4 @@
 - name: ({{ cluster_name }}) Make links for instance name
   ansible.builtin.include_tasks:
     file: make_links.yml
-  when: autonames == true
+  when: autonames|bool == true

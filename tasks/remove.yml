@@ -1,6 +1,10 @@
 ---
 # tasks for remove cluster
 
+- name: ({{ cluster_name }}) Set remove variable
+  ansible.builtin.set_fact:
+    tag: 'remove'
+
 - name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.import_tasks:
     file: genin.yml
@@ -43,7 +47,7 @@
         - '{{ systemd_dir }}/*/{{ cluster_name }}@*'
       ignore_errors: True
 
-    when: autonames == false
+    when: autonames|bool == false
 
   # with autonames
   - block:
@@ -76,7 +80,7 @@
         - '{{ systemd_dir }}/*/{{ cluster_name }}-*'
       ignore_errors: True
 
-    when: autonames == true
+    when: autonames|bool == true
 
   - name: ({{ cluster_name }}) Reload systemd services
     ansible.builtin.systemd:
@@ -129,7 +133,7 @@
 
 - name: ({{ cluster_name }}) Send SIGKILL signals for all picodata processes on servers
   ansible.builtin.shell:
-    cmd: 'sleep 10 && /usr/bin/pkill -9 picodata && sleep 10'
+    cmd: '/usr/bin/pkill -9 picodata && sleep 10'
   when: sigkill | default("false") == "true"
   ignore_errors: True
 
