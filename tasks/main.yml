@@ -13,6 +13,7 @@
   - name: ({{ cluster_name }}) Register uid of {{ systemd_user }}
     command: 'id -u {{ systemd_user }}'
     register: uid
+    changed_when: false
 
   - name: ({{ cluster_name }}) Debug uid
     ansible.builtin.debug:
@@ -33,12 +34,8 @@
 
   - name: ({{ cluster_name }}) Init variables
     ansible.builtin.set_fact:
-      instance_num: 0
-      need_restart: true
-      list_http: []
-      list_pg: []
-      list_bin: []
       all_hosts: '{{ groups["all"] }}'
+      tag: ''
 
   - name: ({{ cluster_name }}) Debug all_hosts
     ansible.builtin.debug:
@@ -132,3 +129,8 @@
   ansible.builtin.import_tasks:
     file: report.yml
   tags: [ never, report ]
+
+- name: Expand cluster
+  ansible.builtin.import_tasks:
+    file: expand.yml
+  tags: [ never, expand ]

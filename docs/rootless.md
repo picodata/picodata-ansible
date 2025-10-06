@@ -171,3 +171,51 @@ picosuper restart default-1000
 picosuper signal HUP router-1001
 picosuper stop all
 ```
+
+## Альтернатива: ручные действия
+
+В случае невозможности использования ansible для выполнения роли с тегом `deploy_become`
+
+Нужно выполнить шаги на каждом сервере до начала развертывания кластера
+
+> Далее `{{ cluster_name }}` - это имя кластера
+
+---
+
+- установить пакет `picodata`
+- создать каталоги (с подкаталогами)
+```
+/opt/picodata/etc/{{ cluster_name }}
+/opt/picodata/log/{{ cluster_name }}
+/opt/picodata/data/{{ cluster_name }}
+/opt/picodata/run/{{ cluster_name }}
+/opt/picodata/share/{{ cluster_name }}
+/opt/picodata/backup/{{ cluster_name }}
+```
+- для каталога `/opt/picodata/` и всех его подкаталогов:
+  * сделать владельцем пользователя `picodata:picodata`
+  * выставить права `755`
+
+- создать файл `/etc/tmpfiles.d/picodata.conf` следующего содержания:
+```
+d /opt/picodata/run 0770 picodata picodata
+d /opt/picodata/run/{{ cluster_name }} 0770 picodata picodata
+```
+- создать файл для logrotate `/etc/logrotate.d/picodata-{{ cluster_name }}`
+```
+/opt/picodata/logs/{{ cluster_name }}/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    create 0644 picodata picodata
+    postrotate
+        /usr/bin/killall -HUP picodata
+    endscript
+}
+```
+
+- выполнить команду для возможности работы systemd в пользовательском пространстве
+```
+loginctl enable-linger picodata
+```

@@ -1,42 +1,102 @@
 ---
 # subtasks for generate list of instances
 
-# subtasks for deploy cluster
-- block:
-  - name: ({{ cluster_name }}) Init count of host groups for tier {{ tier.key }}
-    ansible.builtin.set_fact:
-      tier_server_cnt: 0
+- name: ({{ cluster_name }}) genin Init count of host groups for tier {{ tier.key }}
+  ansible.builtin.set_fact:
+    tier_server_cnt: 0
+    start_num: 1
 
-  - name: ({{ cluster_name }}) Set count of host groups for servers if host_groups is defined for tier {{ tier.key }}
+- block:
+  - name: ({{ cluster_name }}) genin Set count of host groups for servers if host_groups is defined for tier {{ tier.key }}
     ansible.builtin.set_fact:
-      tier_server_cnt: '{{ tier_server_cnt | int  + all_host_groups | select("equalto", item) | length | int }}'
+      tier_server_cnt: '{{ tier_server_cnt|int  + all_host_groups | select("equalto", item) | list| length }}'
     loop: '{{ tier.value.host_groups }}'
-    run_once: true
     when: tier.value.host_groups is defined
 
-  - name: ({{ cluster_name }}) Set all host groups for servers if host_groups is undefined for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) genin Set all host groups for servers if host_groups is undefined for tier {{ tier.key }}
     ansible.builtin.set_fact:
       tier_server_cnt: '{{ all_host_groups | length  }}'
-    run_once: true
     when: tier.value.host_groups is undefined
 
-  - name: ({{ cluster_name }}) Calculate instances_per_server for tier {{ tier.key }}
-    ansible.builtin.set_fact:
-      instances_per_server: '{{ tier.value.replicaset_count | default(1) | int * tier.value.replication_factor | default(1) | int / tier_server_cnt | int }}'
+  - name: ({{ cluster_name }}) genin Debug host group server count for tier {{ tier.key }}
+    debug:
+      msg: 'tier_server_cnt: {{ tier_server_cnt }}'
+    when: debug == true
+
+  - name: ({{ cluster_name }}) genin Error if replication factor less to server count for tier {{ tier.key }}
+    ansible.builtin.fail:
+      msg: 'Ошибка! Некорректный фактор репликации для тира! Допустимы параметры между 1 и {{server_count}}'
     run_once: true
+    when: tier.value.replication_factor | default(1)|int > tier_server_cnt|int and fd_uniq_per_instance == false
+
+  - name: ({{ cluster_name }}) genin Calculate instances_per_server for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+      instances_per_server: '{{ tier.value.replicaset_count | default(1)|int * tier.value.replication_factor | default(1)|int / tier_server_cnt|int }}'
+
+  - name: ({{ cluster_name }}) genin Error if instance per server not is integer for tier {{ tier.key }}
+    ansible.builtin.fail:
+      msg: 'Ошибка! Проверьте параметры replicaset count, replication factor и количество серверов для тира (instances_per_server={{ instances_per_server }})!'
+    when: instances_per_server | float != instances_per_server | float | round
+
+  - name: ({{ cluster_name }}) genin Debug instances_per_server for tier {{ tier.key }}
+    debug:
+      msg: 'instances_per_server: {{ instances_per_server }}'
+    delegate_to: localhost
+    when: debug == true
 
   when: tier.value.instances_per_server is undefined
 # end block
 
-- name: ({{ cluster_name }}) Init count of host groups for tier {{ tier.key }}
+- name: ({{ cluster_name }}) genin Set instances_per_server if defined for tier {{ tier.key }}
   ansible.builtin.set_fact:
     instances_per_server: '{{ tier.value.instances_per_server }}'
   when: tier.value.instances_per_server is defined
 
-- name: ({{ cluster_name }}) Instances in tier {{ tier.key }} loop
+- name: ({{ cluster_name }}) genin Calculate instances_per_server for tier {{ tier.key }}
+  ansible.builtin.set_fact:
+    dict_instances_per_server: '{{ dict_instances_per_server|default({}) | combine({tier.key: instances_per_server}) }}'
+
+# Check on shrink or expand of cluster
+- block:
+
+  - name: ({{ cluster_name }}) genin Set instances_per_server_from_report for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+      instances_per_server_from_report: '{{ props_from_report.tiers[tier.key].instances_per_server }}'
+    when: props_from_report.tiers[tier.key].instances_per_server is defined
+
+  - name: ({{ cluster_name }}) genin Check instances_per_server on expand for tier {{ tier.key }}
+    ansible.builtin.fail:
+      msg: 'Ошибка! Зафиксировано увеличение количества инстансов в инвентарном файле, для расширения кластера используйте тег expand!'
+    when: instances_per_server_from_report is defined and instances_per_server|int > instances_per_server_from_report|int
+
+  run_once: true
+  when: props_from_report is defined and tag not in ('expand', 'remove')
+
+- name: ({{ cluster_name }}) genin Check instances_per_server on shrink for tier {{ tier.key }}
+  ansible.builtin.fail:
+    msg: 'Ошибка! В настоящий момент picodata не может урезать кластер! Такая возможность появится в версии 26.2!'
+  when: instances_per_server_from_report is defined and instances_per_server|int < instances_per_server_from_report|int and props_from_report is defined
+  run_once: true
+# end block of Check on shrink or expand of cluster
+
+# block expand
+- block:
+
+  - name: ({{ cluster_name }}) genin Set start number from report file for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+      start_num: '{{ props_from_report.tiers[tier.key].instances_per_server | default(instances_per_server_before_expand) | int + 1}}'
+
+  - name: ({{ cluster_name }}) genin Set start number from report file for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+     dict_start_num: '{{ dict_start_num|default({}) | combine({tier.key: start_num}) }}'
+
+  when: tag == 'expand' and props_from_report | default ({}) != {}
+# end block expand
+
+- name: ({{ cluster_name }}) genin Instances in tier {{ tier.key }} loop
   ansible.builtin.include_tasks:
     file: genin_instances.yml
-  loop: "{{ range(1, instances_per_server | int + 1) | list }}"
+  loop: "{{ range(start_num | int, instances_per_server | int + 1) | list }}"
   loop_control:
     loop_var: instance_id
   when: host_group in tier.value.host_groups | default(['none']) or tier.value.host_groups is undefined

@@ -1,156 +1,233 @@
 ---
 # tasks for generate list of instances
 
-- name: ({{ cluster_name }}) Init start values
+- name: ({{ cluster_name }}) genin Init start values
   ansible.builtin.set_fact:
-    instance_num: 0
-    instances_on_host: []
+    cnt: 0
 
-- name: ({{ cluster_name }}) Set server failure domain
+- name: ({{ cluster_name }}) genin Set server failure domain
   ansible.builtin.set_fact:
     host_group: "none"
   when: host_group is undefined
 
-- name: ({{ cluster_name }}) Find report file on host
-  ansible.builtin.find:
-    paths: '{{ conf_dir }}/{{ cluster_name }}'
-    patterns: 'report.yml'
-    file_type: file
+- name: ({{ cluster_name }}) genin Check report file on host
+  ansible.builtin.stat:
+    path: '{{ conf_dir }}/{{ cluster_name }}/report.yml'
   register: check_report
 
 # if report file is exist
 - block:
-  - name: ({{ cluster_name }}) Read a file from a remote host
+  - name: ({{ cluster_name }}) genin Read a file from a remote host
     ansible.builtin.slurp:
-      src: '{{ check_report.files[0].path }}'
+      src: '{{ conf_dir }}/{{ cluster_name }}/report.yml'
     register: report_file
 
-  - name: ({{ cluster_name }}) Load report file from host
+  - name: ({{ cluster_name }}) genin Load report file from host
     ansible.builtin.set_fact:
-      report: "{{ report_file.content | b64decode | from_yaml }}"
+      report: '{{ report_file.content | b64decode | from_yaml }}'
+      first_deploy: false
 
-  - name: ({{ cluster_name }}) Print report file
+  - name: ({{ cluster_name }}) genin Print report file
     ansible.builtin.debug:
       var: report
     when: debug == true
 
-  - name: ({{ cluster_name }}) Set instance names from report file newver
+  - name: ({{ cluster_name }}) genin Set instance names from report file newver
     ansible.builtin.set_fact:
       instances_on_host: '{{ report.instance_units }}'
     when: report.instance_units is defined
 
-  - name: ({{ cluster_name }}) Set instance names from report file oldver
+  - name: ({{ cluster_name }}) genin Set instance names from report file oldver
     ansible.builtin.set_fact:
       instances_on_host: '{{ report.instances }}'
     when: report.instances is defined
 
-  - name: ({{ cluster_name }}) Print first instances from report file
+  - name: ({{ cluster_name }}) genin Print first instances from report file
     ansible.builtin.debug:
-      msg: "{{ instances_on_host[0] }}"
+      msg: '{{ instances_on_host[0] }}'
     when: debug == true
 
-  - name: ({{ cluster_name }}) Set server id for installed cluster
+  - name: ({{ cluster_name }}) genin Set server id for installed cluster
     ansible.builtin.set_fact:
       server_id: "{{ instances_on_host[0] | regex_search('.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
-    when: autonames == false
+    when: autonames | bool == false
 
-  - name: ({{ cluster_name }}) Set values from report file
+  - name: ({{ cluster_name }}) genin Set values from report file
     ansible.builtin.set_fact:
-      list_http: "{{ report.http }}"
-      list_pg: "{{ report.pg }}"
-      list_bin: "{{ report.bin }}"
+      list_http: '{{ report.http }}'
+      list_pg: '{{ report.pg }}'
+      list_bin: '{{ report.bin }}'
 
-  - name: ({{ cluster_name }}) Set real instance names from report file
+  - name: ({{ cluster_name }}) genin Set real instance names from report file
     ansible.builtin.set_fact:
-      list_instance_names: "{{ report.instance_names | default(instances_on_host) }}"
+      list_instance_names: '{{ report.instance_names | default(instances_on_host) }}'
 
-  - name: ({{ cluster_name }}) Read a first config file from a remote host from report file
+  - name: ({{ cluster_name }}) genin Set props from report file
+    ansible.builtin.set_fact:
+      props_from_report: '{{ report.properties | default({}) }}'
+
+  - name: ({{ cluster_name }}) genin Read a first config file from a remote host from report file
     ansible.builtin.slurp:
       src: '{{ conf_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.conf'
     register: config_file
     ignore_errors: true
 
-  when: check_report.matched > 0
+  - name: ({{ cluster_name }}) genin Set dict_instances_per_server from props in report file
+    ansible.builtin.set_fact:
+      dict_instances_per_server: '{{ dict_instances_per_server|default({}) | combine({tier.key: tier.value.instances_per_server}) }}'
+    loop: "{{ lookup('ansible.builtin.dict', props_from_report.tiers|default({}), wantlist=True) }}"
+    loop_control:
+      loop_var: tier
+      extended: true
+    when: props_from_report.tiers is defined
+
+  - name: ({{ cluster_name }}) genin Set dict_instances_per_server from list_instance_names in report file
+    ansible.builtin.set_fact:
+      dict_instances_per_server: '{{ dict_instances_per_server|default({}) | combine({tier.key: list_instance_names | select ("ansible.builtin.search", tier.key) | list | length}) }}'
+    loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
+    loop_control:
+      loop_var: tier
+      extended: true
+    when: props_from_report.tiers is not defined
+
+  - name: ({{ cluster_name }}) genin Debug dict_instances_per_server {{ ansible_play_name }}
+    ansible.builtin.debug:
+      var: dict_instances_per_server
+    when: debug == true
+
+  when: check_report.stat.exists == true
+# end block if report file is exist
+
+- name: ({{ cluster_name }}) genin Set values from report file
+  ansible.builtin.set_fact:
+    autonames: '{{ props_from_report.autonames | default(false) }}'
+    ver_fd: '{{ props_from_report.ver_fd | default(2) }}'
+  when: props_from_report is defined
+
+- name: ({{ cluster_name }}) genin Debug autoname values
+  ansible.builtin.debug:
+    var: autonames
+  when: debug == true
 
 # if report file is not exist
 - block:
 
-  - name: ({{ cluster_name }}) Get configs on all hosts
+  - name: ({{ cluster_name }}) genin Get configs on all hosts
     ansible.builtin.find:
       paths: '{{ conf_dir }}/{{ cluster_name }}'
-      patterns: '*-*.conf'
+      patterns: '*-????.conf'
       file_type: file
     register: check_install
 
   - block:
-    - name: ({{ cluster_name }}) Print check_install
+    - name: ({{ cluster_name }}) genin Print check_install
       ansible.builtin.debug:
-        msg: "{{ check_install.files[0].path }}"
+        msg: '{{ check_install.files[0].path }}'
       when: debug == true
 
-    - name: ({{ cluster_name }}) Set server id for installed cluster
+    - name: ({{ cluster_name }}) genin Set server id for installed cluster
       ansible.builtin.set_fact:
         server_id: "{{ check_install.files[0].path | regex_search('/.*-([0-9]+)[0-9]{3}', '\\1') | last }}"
 
-    - name: ({{ cluster_name }}) Read a first config file from a remote host from config file
+    - name: ({{ cluster_name }}) genin Read a first config file from a remote host from config file
       ansible.builtin.slurp:
         src: '{{ check_install.files[0].path }}'
       register: config_file
 
     when: check_install.matched > 0
 
-  when: check_report.matched == 0
+  when: check_report.stat.exists == false
 
 ###################################
 # start: failure domain check version
-
 - block:
 
-  - name: ({{ cluster_name }}) Load config file from host
+  - name: ({{ cluster_name }}) genin Load config file from host
     ansible.builtin.set_fact:
-      config: "{{ config_file.content  | b64decode | from_yaml }}"
+      config: '{{ config_file.content | b64decode | from_yaml }}'
 
-  - name: ({{ cluster_name }}) Check previous version of failure domain
+  - name: ({{ cluster_name }}) genin Check previous version of failure domain
     ansible.builtin.debug:
       msg: 'old version of FD'
     when: '"DC" in config.instance.failure_domain'
 
-  - name: ({{ cluster_name }}) Set version of failure domain for compablility
+  - name: ({{ cluster_name }}) genin Set version of failure domain for compablility
     ansible.builtin.set_fact:
       ver_fd: 1
     run_once: false
-    when: '"DC" in config.instance.failure_domain'
+    when: '"DC" in config.instance.failure_domain | default({})'
 
   run_once: true
   when: config_file.content is defined
-
 # end: failure domain check version
 ###################################
 
-- name: ({{ cluster_name }}) Set server id for first time
+- name: ({{ cluster_name }}) genin Set server id for first time
   ansible.builtin.set_fact:
-    server_id: "{{ all_hosts.index(inventory_hostname) + 1 }}"
+    server_id: '{{ all_hosts.index(inventory_hostname) + 1 }}'
   when: server_id is undefined
 
-- name: ({{ cluster_name }}) Print server id
+- name: ({{ cluster_name }}) genin Print server id
   ansible.builtin.debug:
     var: server_id
-  when: debug == true
+  when: debug == true and autonames|bool == false
 
-- name: ({{ cluster_name }}) Tiers loop
+- name: ({{ cluster_name }}) genin Init count of all instances
+  ansible.builtin.set_fact:
+    cnt: "{{ instances_on_host|default([]) | list | length }}"
+  when: tag == 'expand'
+
+- name: ({{ cluster_name }}) genin Init count of all instances
+  ansible.builtin.set_fact:
+    real_cnt: "{{ instances_on_host|default([]) | list | length }}"
+
+- name: ({{ cluster_name }}) genin Init instances_on_host when instances_per_server isn't in report file
+  ansible.builtin.set_fact:
+    instances_on_host: []
+  when: instances_on_host is not defined
+
+- name: ({{ cluster_name }}) genin Tiers loop
   ansible.builtin.include_tasks:
     file: genin_tiers.yml
   loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
   loop_control:
     loop_var: tier
     extended: true
-  when: not instances_on_host
+  when: not instances_on_host or tag == 'expand'
 
-- name: ({{ cluster_name }}) Set instance names
+- name: ({{ cluster_name }}) genin Set instance names
   ansible.builtin.set_fact:
     list_instance_names: "{{ instances_on_host }}"
   when: list_instance_names is not defined
 
-- name: ({{ cluster_name }}) Print instances on hosts
+- name: ({{ cluster_name }}) genin Print instances on hosts
   ansible.builtin.debug:
     var: instances_on_host
+
+- name: ({{ cluster_name }}) genin Print name of instances on hosts
+  ansible.builtin.debug:
+    var: list_instance_names
+  when: list_instance_names != instances_on_host
+
+- name: ({{ cluster_name }}) genin Print props_from_report
+  ansible.builtin.debug:
+    var: props_from_report
+  when: debug == true
+
+- name: ({{ cluster_name }}) genin Print real_cnt
+  ansible.builtin.debug:
+    msg: 'real_cnt = {{ real_cnt }}    length instances_on_host = {{ instances_on_host | list | length  }}'
+  when: debug == true
+
+- name: ({{ cluster_name }}) genin Warning about left processes on host
+  ansible.builtin.debug:
+    msg: 'Внимание! Количество инстансов на сервере превышает количество инстансов в инвентарном файле! Для принудительной остановки лишних процессов добавьте флаг `sigkill=true`'
+  when: real_cnt | int > instances_on_host | list | length and tag == 'remove'
+  run_once: true
+
+- name: ({{ cluster_name }}) genin Check count of instances
+  ansible.builtin.fail:
+    msg: 'Ошибка! Не совпадает количество инстансов в инвентарном файле и на серверах, используйте тег `expand` для расширения кластера!'
+  when: real_cnt|int != instances_on_host | list | length and tag not in ('expand', 'remove') and real_cnt|int > 0
+  run_once: true
+  delegate_facts: true

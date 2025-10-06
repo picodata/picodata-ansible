@@ -8,7 +8,7 @@ install_packages: true
 picodata_package_path: false
 
 cluster_name: 'demo'
-audit: false
+audit: true
 audit_to: 'syslog'
 
 log_level: 'info'
@@ -73,5 +73,10 @@ pg_port_delay: 5
 
 report_dir: '..'
 
-# Не используйте autonames для промышленных сред!
-autonames: false
+autonames: true
+ver_fd: 2
+
+need_restart: true
+
+timeout_admin_sock: 60
+retries_admin_sock: 1

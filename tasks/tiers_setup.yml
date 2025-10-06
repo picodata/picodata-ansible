@@ -7,80 +7,43 @@
   when: debug == true
 
 - block:
-  - name: ({{ cluster_name }}) Init count of host groups for tier {{ tier.key }}
-    ansible.builtin.set_fact:
-      tier_server_cnt: 0
-
-  - name: ({{ cluster_name }}) Set count of host groups for servers if host_groups is defined for tier {{ tier.key }}
-    ansible.builtin.set_fact:
-      tier_server_cnt: '{{ tier_server_cnt | int  + all_host_groups | select("equalto", item) | length | int }}'
-    loop: '{{ tier.value.host_groups }}'
-    when: tier.value.host_groups is defined
-
-  - name: ({{ cluster_name }}) Set all host groups for servers if host_groups is undefined for tier {{ tier.key }}
-    ansible.builtin.set_fact:
-      tier_server_cnt: '{{ all_host_groups | length  }}'
-    when: tier.value.host_groups is undefined
-
-  - name: ({{ cluster_name }}) Debug host group server count for tier {{ tier.key }}
-    debug:
-      msg: 'tier_server_cnt: {{ tier_server_cnt }}'
-    when: debug == true
-
-  - name: ({{ cluster_name }}) Error if replication factor less to server count for tier {{ tier.key }}
-    ansible.builtin.fail:
-      msg: 'Ошибка! Некорректный фактор репликации для тира! Допустимы параметры между 1 и {{server_count}}'
-    run_once: true
-    when: tier.value.replication_factor | default(1) | int > tier_server_cnt | int and fd_uniq_per_instance == false
-
-  - name: ({{ cluster_name }}) Calculate instances_per_server for tier {{ tier.key }}
-    ansible.builtin.set_fact:
-      instances_per_server: '{{ tier.value.replicaset_count | default(1) | int * tier.value.replication_factor | default(1) | int / tier_server_cnt | int }}'
-
-  - name: ({{ cluster_name }}) Error if instance per server not is integer for tier {{ tier.key }}
-    ansible.builtin.fail:
-      msg: 'Ошибка! Проверьте параметры replicaset count, replication factor и количество серверов для тира (instances_per_server={{ instances_per_server }})!'
-    when: instances_per_server | float != instances_per_server | float | round
-
-  - name: ({{ cluster_name }}) Debug instances_per_server for tier {{ tier.key }}
-    debug:
-      msg: 'instances_per_server: {{ instances_per_server }}'
-    delegate_to: localhost
-    when: debug == true
-
-  when: tier.value.instances_per_server is undefined
-# end block
-
-- block:
-  - name: ({{ cluster_name }}) Init count of host groups for tier {{ tier.key }}
-    ansible.builtin.set_fact:
-      instances_per_server: '{{ tier.value.instances_per_server }}'
-    when: tier.value.instances_per_server is defined
-
-  - name: ({{ cluster_name }}) Debug instances_per_server for tier {{ tier.key }}
-    debug:
-      msg: 'instances_per_server: {{ instances_per_server }}       tier.value.instances_per_server: {{ tier.value.instances_per_server }}'
-    when: debug == true
-
-  - name: ({{ cluster_name }}) Set init-replication-factor for tier {{ tier.key }}
+  - name: ({{ cluster_name }}) Set init variables for tier {{ tier.key }}
     ansible.builtin.set_fact:
       init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
+      instances_per_server: '{{ dict_instances_per_server[tier.key] }}'
+      start_num: 1
+
+  - name: ({{ cluster_name }}) Set start number if expanded for tier {{ tier.key }}
+    ansible.builtin.set_fact:
+      start_num: '{{ dict_start_num[tier.key] }}'
+    when: tag == 'expand'
+
+  - name: ({{ cluster_name }}) Debug start_num and instances_per_server for tier {{ tier.key }}
+    debug:
+      msg: 'start_num = {{ start_num }}    instances_per_server = {{ instances_per_server }}   need_add_instances = {{ instances_per_server|int + 1 - start_num|int }}'
+    when: debug == true
+
+  - name: ({{ cluster_name }}) Check instances_per_server on shrink for tier {{ tier.key }}
+    ansible.builtin.fail:
+      msg: 'Ошибка! В настоящий момент picodata не может урезать кластер! Такая возможность появится в версии 26.2!'
+    when: instances_per_server|int + 1 < start_num|int
+    any_errors_fatal: true
 
   - name: ({{ cluster_name }}) Setup instances for tier {{ tier.key }}
     ansible.builtin.include_tasks:
       file: instances_setup.yml
-    loop: "{{ range(1, instances_per_server | int + 1) | list }}"
+    loop: "{{ range(start_num|int, instances_per_server|int + 1) | list }}"
     loop_control:
       loop_var: instance_id
 
-  - name: ({{ cluster_name }}) Fill db_config_all with parameters for tier {{ tier.key }};
+  - name: ({{ cluster_name }}) Fill db_config_all with parameters for tier {{ tier.key }}
     ansible.builtin.set_fact:
       db_config_all: |
         {{ db_config_all }}
         {% for key, value in tier.value.db_config.items() %}
         alter system set "{{ key }}" = {{ value }} for tier {{ tier.key }};
         {% endfor %}
-    when: tier.value.db_config is defined
+    when: tier.value.db_config is defined and tag != 'expand'
 
   when: host_group in tier.value.host_groups | default(['none']) or tier.value.host_groups is undefined
 # end block

@@ -1,19 +1,46 @@
 ---
 # subtasks for deploy cluster
 
-- name: ({{ cluster_name }}) Set instance name without autonames in {{ tier.key }}
+- name: ({{ cluster_name }}) Set new instance name in {{ tier.key }}
   ansible.builtin.set_fact:
-    instance_name: '{{ tier.key }}-{{ "%d%03d" % (server_id|int, instance_num|int) }}'
-  when: autonames == false
+    instance_name: '{{ instances_on_host[ cnt|int ] }}'
+  when: first_deploy == true or tag == 'expand'
 
-- name: ({{ cluster_name }}) Set instance name with autonames in {{ tier.key }}
+- name: ({{ cluster_name }}) Set instance index without autonames in {{ tier.key }}
   ansible.builtin.set_fact:
-    instance_name: '{{ "%03d" % (instance_num|int + 1 ) }}'
-  when: autonames == true
+    instance_index: '{{ cnt|int }}'
 
-- name: ({{ cluster_name }}) Print instance_id and instance_num in tier {{ tier.key }}
+- block:
+  - block:
+    - name: ({{ cluster_name }}) Set existing instance name without autonames in {{ tier.key }}
+      ansible.builtin.set_fact:
+        instance_name: '{{ (instances_on_host | select ("ansible.builtin.search", tier.key) | list)[instance_id-1] }}'
+
+    - name: ({{ cluster_name }}) Set instance index without autonames in {{ tier.key }}
+      ansible.builtin.set_fact:
+        instance_index: '{{ instances_on_host.index(instance_name) }}'
+
+    when: autonames == false
+
+  - block:
+    - name: ({{ cluster_name }}) Set existing instance with autonames name in {{ tier.key }}
+      ansible.builtin.set_fact:
+        iname: '{{ (list_instance_names | select ("ansible.builtin.search", tier.key) | list)[instance_id-1] }}'
+
+    - name: ({{ cluster_name }}) Set instance index with autonames in {{ tier.key }}
+      ansible.builtin.set_fact:
+        instance_index: '{{ list_instance_names.index(iname) }}'
+
+    - name: ({{ cluster_name }}) Set existing instance name with autonames in {{ tier.key }}
+      ansible.builtin.set_fact:
+        instance_name: '{{ instances_on_host[instance_index|int] }}'
+
+    when: autonames == true
+  when: first_deploy == false and tag != 'expand'
+
+- name: ({{ cluster_name }}) Print instance_id and cnt in tier {{ tier.key }}
   ansible.builtin.debug:
-    msg: 'instance_id = {{ instance_id }}   instance_num = {{ instance_num }}   instance_name = {{ instance_name }}'
+    msg: 'instance_id = {{ instance_id }}   cnt = {{ cnt }}   instance_name = {{ instance_name }}   instance_index = {{ instance_index }}'
   run_once: true
   when: debug == true
 
@@ -34,7 +61,6 @@
     owner: '{{ user }}'
     group: '{{ group }}'
     mode: '0400'
-#  when: service_password is defined
 
 - name: ({{ cluster_name }}) Create links for PG-certs in tier {{ tier.key }}
   ansible.builtin.file:
@@ -57,6 +83,7 @@
     group: '{{ group }}'
   notify:
     - restart
+    - refactor
 
 # systemd block
 - block:
@@ -87,10 +114,8 @@
       environment:
         XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
       register: result
-      notify:
-        - refactor
 
-    when: autonames == false
+    when: autonames|bool == false
 
   # autonames is on
   - block:
@@ -115,10 +140,8 @@
       environment:
         XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
       register: result
-      notify:
-        - refactor
 
-    when: autonames == true
+    when: autonames|bool == true
 
   - name: ({{ cluster_name }}) Check restart if needed
     ansible.builtin.set_fact:
@@ -141,4 +164,4 @@
 
 - name: ({{ cluster_name }}) Calculate next port number on server for all tiers
   ansible.builtin.set_fact:
-    instance_num: '{{ instance_num|int + 1}}'
+    cnt: '{{ cnt|int + 1}}'

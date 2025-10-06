@@ -19,8 +19,8 @@ instance:
 {% if autonames == false %}
   name: '{{ instance_name }}'
 {% else %}
-{% if list_instance_names is defined %}
-  name: '{{ list_instance_names[instance_num | int] }}'
+{% if list_instance_names is defined and first_deploy == false and tag != 'expand' %}
+  name: '{{ list_instance_names[instance_index | int] }}'
 {% else %}
 #  name: '{{ instance_name }}'
 {% endif %}
@@ -30,13 +30,13 @@ instance:
   peer: [ {% for host in all_hosts | difference([inventory_hostname ]) | sort %}{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }},{% endfor %}{{ listen_address }}:{{ first_bin_port }} ]
   failure_domain: { {% if fd_uniq_per_instance %}'I': '{{ instance_name }}'{% else %}{{ fd }}{% endif %} }
 
-  iproto_listen: '0.0.0.0:{{ first_bin_port + instance_num|int }}'
-  iproto_advertise: '{{ listen_address }}:{{ first_bin_port + instance_num|int }}'
-  http_listen: '0.0.0.0:{{ first_http_port + instance_num|int }}'
+  iproto_listen: "0.0.0.0:{{ list_bin[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}"
+  iproto_advertise: '{{ list_bin[instance_index | int] }}'
+  http_listen: '0.0.0.0:{{ list_http[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
   admin_socket: '{{ run_dir }}/{{ cluster_name }}/{{ instance_name }}.sock'
   pg:
-    listen: '0.0.0.0:{{ first_pg_port + instance_num|int }}'
-    advertise: '{{ pg_address }}:{{ first_pg_port + instance_num|int }}'
+    listen: '0.0.0.0:{{ list_pg[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
+    advertise: '{{ list_pg[instance_index | int] }}'
     ssl: {{ pg_ssl }}
 
   share_dir: '{{ share_dir }}/{{ cluster_name }}'

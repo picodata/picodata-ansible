@@ -1,28 +1,28 @@
 ---
 # subtasks for generate list of instances
 
-- name: ({{ cluster_name }}) Set instance name without autonames in {{ tier.key }}
+- name: ({{ cluster_name }}) genin Set instance name without autonames in {{ tier.key }}
   ansible.builtin.set_fact:
-    instance_name: '{{ tier.key }}-{{ "%d%03d" % (server_id|int, instance_num|int) }}'
-  when: autonames == false
+    instance_name: '{{ tier.key }}-{{ "%d%03d" % (server_id|int, cnt|int) }}'
+  when: autonames|bool == false
 
-- name: ({{ cluster_name }}) Set instance name with autonames in {{ tier.key }}
+- name: ({{ cluster_name }}) genin Set instance name with autonames in {{ tier.key }}
   ansible.builtin.set_fact:
-    instance_name: '{{ "%03d" % (instance_num|int + 1 ) }}'
-  when: autonames == true
+    instance_name: '{{ "%03d" % (cnt|int + 1) }}'
+  when: autonames|bool == true
 
-- name: ({{ cluster_name }}) Add instance info to lists in tier {{ tier.key }}
+- name: ({{ cluster_name }}) genin Add instance info to lists in tier {{ tier.key }}
   ansible.builtin.set_fact:
-    instances_on_host: '{{ instances_on_host + [ instance_name ] }}'
-    list_http: '{{ list_http + [listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int)] }}'
-    list_pg: '{{ list_pg + [listen_address + ":" + "{0:d}".format(first_pg_port+instance_num|int)] }}'
-    list_bin: '{{ list_bin + [listen_address + ":" + "{0:d}".format(first_bin_port+instance_num|int)] }}'
+    instances_on_host: '{{ instances_on_host|default([]) + [ instance_name ] }}'
+    list_http: '{{ list_http|default([]) + [listen_address + ":" + "{0:d}".format(first_http_port+cnt|int)] }}'
+    list_pg: '{{ list_pg|default([]) + [listen_address + ":" + "{0:d}".format(first_pg_port+cnt|int)] }}'
+    list_bin: '{{ list_bin|default([]) + [listen_address + ":" + "{0:d}".format(first_bin_port+cnt|int)] }}'
 
-- name: ({{ cluster_name }}) Debug info about instances
+- name: ({{ cluster_name }}) genin Debug info about instances
   ansible.builtin.debug:
-    msg: 'instance_name is {{ instance_name }}\n listen_address is {{ listen_address + ":" + "{0:d}".format(first_http_port+instance_num|int)  }}'
+    msg: 'instance_name is {{ instance_name }}\n listen_address is {{ listen_address + ":" + "{0:d}".format(first_http_port+cnt|int)  }}'
   when: debug == true
 
-- name: ({{ cluster_name }}) Calculate next port number on server in tier {{ tier.key }}
+- name: ({{ cluster_name }}) genin Calculate next port number on server in tier {{ tier.key }}
   ansible.builtin.set_fact:
-    instance_num: '{{ instance_num|int + 1}}'
+    cnt: '{{ cnt|int + 1}}'

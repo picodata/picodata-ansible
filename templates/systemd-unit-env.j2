@@ -1,6 +1,6 @@
 [Service]
 {% if tier.value.extra_vars is defined %}
 {% for param, val in tier.value.extra_vars.items() %}
-Environment={{ param }}={{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instance_num|int) ) | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_num|int) ) }}
+Environment={{ param }}={{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instance_index|int) ) | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_index|int) ) }}
 {% endfor %}
 {% endif %}

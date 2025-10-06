@@ -18,3 +18,9 @@ bin:
 properties:
   autonames: {{ autonames }}
   role_ver: {{ role_ver }}
+  ver_fd: {{ ver_fd | default(2) }}
+  tiers:
+{% for name, conf in tiers.items() %}
+    {{ name }}:
+      instances_per_server: {{ dict_instances_per_server[name]|int}}
+{% endfor %}

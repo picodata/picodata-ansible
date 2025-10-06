@@ -2,20 +2,13 @@
 
 - block:
   - name: ({{ cluster_name }}) Check picodata is installed
-    ansible.builtin.shell:
-      cmd: '{{ bin_dir }}/picodata --version'
+    ansible.builtin.stat:
+      path: '{{ bin_dir }}/picodata'
     register: result
-    failed_when: result.rc != 0 and result.rc != 127
 
   - name: ({{ cluster_name }}) Set flag for install picodata needed
     ansible.builtin.set_fact:
-      install_packages: true
-    when: result.rc != 0
-
-  - name: ({{ cluster_name }}) Unset flag for install picodata if exists
-    ansible.builtin.set_fact:
-      install_packages: false
-    when: result.rc == 0
+      install_packages: '{{ not result.stat.exists }}'
 
   when: skip_check_install is undefined
 # end block

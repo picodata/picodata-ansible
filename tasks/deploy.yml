@@ -1,6 +1,11 @@
 ---
 # tasks for deploy cluster
 
+- name: ({{ cluster_name }}) Set expanded variable
+  ansible.builtin.set_fact:
+    tag: 'deploy'
+    first_deploy: true
+
 - name: ({{ cluster_name }}) Check admin password is defined
   ansible.builtin.fail:
     msg: 'Ошибка! Пароль администратора должен быть определен (admin_password)!'
@@ -14,20 +19,13 @@
   when: hostvars[inventory_hostname]['listen_address'] is undefined
 
 - name: ({{ cluster_name }}) Check picodata is installed
-  ansible.builtin.shell:
-    cmd: '{{ bin_dir }}/picodata --version'
+  ansible.builtin.stat:
+    path: '{{ bin_dir }}/picodata'
   register: result
-  failed_when: result.rc != 0 and result.rc != 127
 
 - name: ({{ cluster_name }}) Set flag for install picodata needed
   ansible.builtin.set_fact:
-    install_packages: true
-  when: result.rc != 0
-
-- name: ({{ cluster_name }}) Unset flag for install picodata if exists
-  ansible.builtin.set_fact:
-    install_packages: false
-  when: result.rc == 0
+    install_packages: '{{ not result.stat.exists }}'
 
 - name: ({{ cluster_name }}) Need to install Picodata package
   ansible.builtin.fail:
@@ -128,7 +126,7 @@
     src: systemd-unit-service.j2
     dest: '{{ systemd_dir }}/{{ cluster_name }}@.service'
     force: true
-  when: init_system == 'systemd' and autonames == false
+  when: init_system == 'systemd' and autonames|bool == false
   notify:
     - restart
 
@@ -176,12 +174,12 @@
   - name: ({{ cluster_name }}) Set actual failure domain
     ansible.builtin.set_fact:
       fd: '"G":"{{ group_names }}","H":"{{ inventory_hostname }}"'
-    when: ver_fd | default(2) == 2
+    when: ver_fd|int | default(2) == 2
 
   - name: ({{ cluster_name }}) Set failure domain for previous version
     ansible.builtin.set_fact:
       fd: '"DC":"{{ group_names }}","HOST":"{{ inventory_hostname }}"'
-    when: ver_fd | default(2) == 1
+    when: ver_fd|int | default(2) == 1
 
   - name: ({{ cluster_name }}) Debug failure domain
     ansible.builtin.debug:
@@ -190,9 +188,16 @@
   when: not fd_uniq_per_instance
 # end block
 
+- name: Reset failed systemd service
+  ansible.builtin.command: 'systemctl reset-failed --{{ systemd_scope }} {{ cluster_name }}* --all'
+  environment:
+    XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+  changed_when: false
+  when: init_system == 'systemd'
+
 - name: ({{ cluster_name }}) Init start values
   ansible.builtin.set_fact:
-    instance_num: 0
+    cnt: 0
 
 - name: ({{ cluster_name }}) Tiers setup
   ansible.builtin.include_tasks:
@@ -205,20 +210,19 @@
 - name: ({{ cluster_name }}) Update cluster in supervisord
   ansible.builtin.command:
     cmd: '/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf update'
+  register: supervisord_update
   when: init_system == 'supervisord'
+  changed_when: false
 
 - name: ({{ cluster_name }}) Wait creating admin-sock files for all instances
   ansible.builtin.wait_for:
     path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
     state: present
     msg: 'Ошибка ожидания сокет-файла: {{ run_dir }}/{{ cluster_name }}/{{ item }}.sock! Проверьте логи инстанса!'
-    timeout: 60
+    timeout: '{{ timeout_admin_sock }}'
+  any_errors_fatal: true
+  retries: '{{ retries_admin_sock }}'
   loop: '{{ instances_on_host }}'
-
-- name: ({{ cluster_name }}) Make links for instance name
-  ansible.builtin.include_tasks:
-    file: make_links.yml
-  when: autonames == true
 
 - name: ({{ cluster_name }}) Debug db_config_all
   debug:
@@ -241,6 +245,8 @@
          echo "alter user \"admin\" password '{{ admin_password }}' using md5;
          alter user \"admin\" with login;" |
          {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+  register: cluster_status
+  until: cluster_status.rc == 0
   retries: 3
   delay: 5
   run_once: true
@@ -254,6 +260,18 @@
   notify:
     - apply_sql_file
 
+# не рестартуем кластер, если это его первый деплой
+- name: ({{ cluster_name }}) Check restart if needed for first deploy
+  ansible.builtin.set_fact:
+    need_restart: false
+  when: first_deploy == true
+
+# создаем ссылки на инстансы кластера, если это его первый деплой
+- name: Make links for instance name
+  ansible.builtin.include_tasks:
+    file: make_links.yml
+  when: autonames|bool == true and first_deploy == true
+
 - name: ({{ cluster_name }}) Install plugins
   ansible.builtin.include_tasks:
     file: plugins.yml
@@ -261,4 +279,4 @@
 
 - name: ({{ cluster_name }}) Print instances on hosts
   ansible.builtin.debug:
-    var: instances_on_host
+    var: list_instance_names | default(instances_on_host)
