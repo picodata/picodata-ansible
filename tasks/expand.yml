@@ -1,0 +1,78 @@
+---
+# tasks for expand cluster
+
+- name: ({{ cluster_name }}) Set expanded variable
+  ansible.builtin.set_fact:
+    tag: 'expand'
+    first_deploy: false
+
+- name: ({{ cluster_name }}) Set listen address for every host
+  ansible.builtin.set_fact:
+    listen_address: "{{ listen_address }}"
+  when: hostvars[inventory_hostname]['listen_address'] is undefined
+
+- name: ({{ cluster_name }}) Generate list of instances per server
+  ansible.builtin.include_tasks:
+    file: genin.yml
+
+- name: ({{ cluster_name }}) Check on report file is exist
+  ansible.builtin.fail:
+    msg: 'Ошибка! Нет возможности расширить кластер, т.к. отсутствует файл с текущей конфигурацией или он устаревшей версии. Для его создания выполните роль с тегом `report` предварительно вернув прежние значения количества инстансов в тирах'
+  when: props_from_report | default({}) == {}
+  run_once: true
+  delegate_to: localhost
+
+- block:
+  - name: ({{ cluster_name }}) Set actual failure domain
+    ansible.builtin.set_fact:
+      fd: '"G":"{{ group_names }}","H":"{{ inventory_hostname }}"'
+    when: ver_fd|int | default(2)   == 2
+
+  - name: ({{ cluster_name }}) Set failure domain for previous version
+    ansible.builtin.set_fact:
+      fd: '"DC":"{{ group_names }}","HOST":"{{ inventory_hostname }}"'
+    when: ver_fd|int | default(2) == 1
+
+  - name: ({{ cluster_name }}) Debug failure domain
+    ansible.builtin.debug:
+      msg: 'fd is {{ fd }}'
+
+  when: not fd_uniq_per_instance
+# end block
+
+- name: ({{ cluster_name }}) Init start values
+  ansible.builtin.set_fact:
+    cnt: '{{ real_cnt | int }}'
+
+- name: ({{ cluster_name }}) Tiers setup
+  ansible.builtin.include_tasks:
+    file: tiers_setup.yml
+  loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
+  loop_control:
+    loop_var: tier
+    extended: true
+
+- name: ({{ cluster_name }}) Check restart if needed for expand
+  ansible.builtin.set_fact:
+    need_restart: false
+  when: instance_name_list is not defined
+
+- name: ({{ cluster_name }}) Update cluster in supervisord
+  ansible.builtin.command:
+    cmd: '/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf update'
+  register: supervisord_update
+  when: init_system == 'supervisord'
+  changed_when: false
+
+- name: ({{ cluster_name }}) Wait creating admin-sock files for all instances
+  ansible.builtin.wait_for:
+    path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
+    state: present
+    msg: 'Ошибка ожидания сокет-файла: {{ run_dir }}/{{ cluster_name }}/{{ item }}.sock! Проверьте логи инстанса!'
+    timeout: 60
+  loop: '{{ instances_on_host }}'
+
+- name: Make links for instance name
+  ansible.builtin.include_tasks:
+    file: make_links.yml
+  when: autonames|bool == true

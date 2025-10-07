@@ -189,11 +189,12 @@
 # end block
 
 - name: Reset failed systemd service
-  ansible.builtin.command: 'systemctl reset-failed --{{ systemd_scope }} {{ cluster_name }}* --all'
+  ansible.builtin.command:
+    cmd: 'systemctl reset-failed --{{ systemd_scope }} {{ cluster_name }}* --all'
   environment:
     XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
   changed_when: false
-  when: init_system == 'systemd'
+  when: init_system == 'systemd' and real_cnt|int > 0
 
 - name: ({{ cluster_name }}) Init start values
   ansible.builtin.set_fact:
