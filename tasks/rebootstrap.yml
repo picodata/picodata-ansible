@@ -85,7 +85,7 @@
       instance_index: '{{ list_instance_names.index(instance) }}'
     register: find_result
 
-  - name: ({{ cluster_name }}) Check intsane and peer are not the same
+  - name: ({{ cluster_name }}) Check instance and peer are not the same
     ansible.builtin.fail:
       msg: 'Ошибка! Инстанс для ребутсрапа {{ instance }} не может совпадать с peer-инстансом ({{ peer_address }})!'
     when: list_bin.index(peer_address) | int == instance_index | int

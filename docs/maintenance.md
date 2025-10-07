@@ -206,7 +206,7 @@ ansible-playbook -i hosts.yml picodata.yml -e need_restart=false
 - увеличить в инвентарном файле параметры `instance_per_server` или `replicaset_count` у нужных тиров
 - выполнить роль с тегом `expand`
 ```bash
-ansible-playbook -i hosts.yml picodata.yml -e need_restart=false
+ansible-playbook -i hosts.yml picodata.yml -t expand
 ```
 
 #### Добавление новых серверов в кластер
