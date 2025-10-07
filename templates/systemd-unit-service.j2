@@ -43,7 +43,7 @@ ExecStartPre=/bin/sh -c 'mkdir -p {{ share_dir }}/{{ cluster_name }}'
 # Disable OOM killer
 OOMScoreAdjust=-1000
 
-{% for param, val in systemd_params|dictsort %}
+{% for param, val in systemd_params| default({}) |dictsort %}
 {{ param }}={{ val }}
 {% endfor %}
 
