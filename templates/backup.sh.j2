@@ -31,18 +31,18 @@ while getopts 's:d:' param ; do
   esac
 done
 
-SNAP=$(echo -e "\lua\n box.snapshot()\n box.backup.stop()\n box.backup.start()\n" | {{ bin_dir }}/picodata admin $SOCK | grep "snap$" | sed -E 's/.* //g')
+SNAP=$(echo -e "\lua\n box.snapshot()\n box.backup.stop()\n box.backup.start()\n" | {{ bin_dir }}/picodata admin $SOCK | grep -E "(snap|vylog)$" | sed -E 's/.* //g')
 
 [ "$SNAP" = "" ] && exit 2
 
 # /var/lib/picodata/test.storage-1001/00000000000000002055.snap > test.storage-1001
-SNAP_DIR=$(dirname $SNAP | xargs basename)
+SNAP_DIR=$(dirname $SNAP | head -1 | xargs basename)
 
-SNAPOWNER=$(stat -c %U:%G $SNAP)
+SNAPOWNER=$(stat -c %U:%G $SNAP | head -1)
 mkdir -p $BACKUP_DIR/$SNAP_DIR
 chown $SNAPOWNER $BACKUP_DIR/$SNAP_DIR
 
-cp -p $SNAP $(dirname $SNAP)/.picodata-cookie $BACKUP_DIR/$SNAP_DIR/
+cp -p $SNAP $(dirname $SNAP|head -1)/.picodata-cookie $BACKUP_DIR/$SNAP_DIR/
 
 if [ ! -d "$BACKUP_DIR/share" ]; then
    mkdir -p "$BACKUP_DIR/share"
