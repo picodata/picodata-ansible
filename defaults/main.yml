@@ -34,6 +34,7 @@ first_http_port: 18001
 first_pg_port: 15001
 
 pg_ssl: false
+iproto_tls: false
 
 listen_address: '{{ ansible_fqdn }}'
 pg_address: '{{ ansible_fqdn }}'
@@ -80,3 +81,5 @@ need_restart: true
 
 timeout_admin_sock: 60
 retries_admin_sock: 1
+
+any_errors_fatal: true
