@@ -142,9 +142,8 @@
              --tls-cert {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_cert_file | basename }}
              --tls-key {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_key_file | basename }}
              --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
-             {% else %}
-             --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie
              {% endif %}
+             --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie
              --timeout {{ plugin.value.plugin_timeout | default(300) }}
       when: res.changed is defined and res.changed == true
 
