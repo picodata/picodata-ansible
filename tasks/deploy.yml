@@ -258,7 +258,9 @@
          echo "
          ALTER USER \"admin\" password '{{ admin_password }}' USING md5;
          ALTER USER \"admin\" WITH LOGIN;
+         {% if auth_webui is defined %}
          {% if auth_webui == false %} ALTER SYSTEM SET jwt_secret = '';{% else %}ALTER SYSTEM RESET jwt_secret;{% endif %}
+         {% endif %}
          " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   register: cluster_status
   until: cluster_status.rc == 0
