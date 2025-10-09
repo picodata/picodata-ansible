@@ -28,7 +28,7 @@
 
   - name: ({{ cluster_name }}) Set all host groups for servers
     ansible.builtin.set_fact:
-      all_host_groups: "{{ all_host_groups|default([])  + [ hostvars[item]['host_group'] ]  }}"
+      all_host_groups: "{{ all_host_groups|default([])  + [ hostvars[item]['host_group']|default([]) ]  }}"
     loop: "{{ groups['all'] }}"
     run_once: true
 
