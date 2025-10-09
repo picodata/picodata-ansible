@@ -3,7 +3,7 @@ instance_units:
 
 {% if autonames  == true %}
 instance_names:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_instance_names | map(attribute='0') | list | to_nice_yaml(sort_keys=false) }}{% endfor %}
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_instance_names | list | to_nice_yaml(sort_keys=false) }}{% endfor %}
 {% endif %}
 
 prometheus:
