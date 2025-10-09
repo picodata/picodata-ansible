@@ -83,3 +83,5 @@ timeout_admin_sock: 60
 retries_admin_sock: 1
 
 any_errors_fatal: true
+
+auth_webui: true
