@@ -57,6 +57,7 @@
     - '{{ share_dir }}/{{ cluster_name }}'
     - '{{ run_dir }}/{{ cluster_name }}'
     - '{{ cert_dir }}/{{ cluster_name }}'
+    - '{{ cert_dir }}/{{ cluster_name }}/tls/'
 
 - name: ({{ cluster_name }}) Create dirs for cluster for rootless
   become_user: '{{ systemd_user }}'
@@ -166,6 +167,18 @@
     - { filename: '{{ ca_file }}', mode: '0644' }
   when: pg_ssl == true
 
+- name: ({{ cluster_name }}) Copy certs for iproto
+  become: true
+  ansible.builtin.copy:
+    src: '{{ item.filename }}'
+    dest: '{{ cert_dir }}/{{ cluster_name }}/tls/'
+    mode: '{{ item.mode }}'
+  loop:
+    - { filename: '{{ iproto_cert_file }}', mode: '0644' }
+    - { filename: '{{ iproto_key_file }}', mode: '0640' }
+    - { filename: '{{ iproto_ca_file }}', mode: '0644' }
+  when: iproto_tls == true
+
 - name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.include_tasks:
     file: genin.yml
@@ -221,7 +234,6 @@
     state: present
     msg: 'Ошибка ожидания сокет-файла: {{ run_dir }}/{{ cluster_name }}/{{ item }}.sock! Проверьте логи инстанса!'
     timeout: '{{ timeout_admin_sock }}'
-  any_errors_fatal: true
   retries: '{{ retries_admin_sock }}'
   loop: '{{ instances_on_host }}'
 

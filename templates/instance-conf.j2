@@ -34,10 +34,19 @@ instance:
   iproto_advertise: '{{ list_bin[instance_index | int] }}'
   http_listen: '0.0.0.0:{{ list_http[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
   admin_socket: '{{ run_dir }}/{{ cluster_name }}/{{ instance_name }}.sock'
+
   pg:
     listen: '0.0.0.0:{{ list_pg[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
     advertise: '{{ list_pg[instance_index | int] }}'
     ssl: {{ pg_ssl }}
+
+{% if iproto_tls == true %}
+  iproto_tls:
+    enabled: true
+    cert_file: {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_cert_file | basename }}
+    key_file: {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_key_file | basename }}
+    ca_file: {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
+{% endif %}
 
   share_dir: '{{ share_dir }}/{{ cluster_name }}'
 {% if audit %}

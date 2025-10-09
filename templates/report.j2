@@ -3,7 +3,7 @@ instance_units:
 
 {% if autonames  == true %}
 instance_names:
-{{ instance_link | map(attribute='0') | list | to_nice_yaml(sort_keys=false) }}
+{{ list_instance_names | list | to_nice_yaml(sort_keys=false) }}
 {% endif %}
 
 http:

@@ -114,7 +114,13 @@
       cmd: >
             {{ bin_dir }}/picodata status
             --peer {{ peer_address }}
+            {% if iproto_tls == true %}
+            --tls-cert {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_cert_file | basename }}
+            --tls-key {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_key_file | basename }}
+            --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
+            {% else %}
             --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ peer_name }}/.picodata-cookie 
+            {% endif %}
             | grep '^{{ instance }} '
     register: result_status
 
@@ -160,7 +166,13 @@
       cmd: >
             {{ bin_dir }}/picodata expel
             --peer {{ peer_address }}
+            {% if iproto_tls == true %}
+            --tls-cert {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_cert_file | basename }}
+            --tls-key {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_key_file | basename }}
+            --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
+            {% else %}
             --password-file {{ data_dir }}/{{ cluster_name }}/{{ peer_name }}/.picodata-cookie
+            {% endif %}
             -a chap-sha1 {%if force is defined and force == true %}--force {% endif %}
             {{ instance_uuid }}
 

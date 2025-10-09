@@ -27,7 +27,6 @@
     ansible.builtin.fail:
       msg: 'Ошибка! В настоящий момент picodata не может урезать кластер! Такая возможность появится в версии 26.2!'
     when: instances_per_server|int + 1 < start_num|int
-    any_errors_fatal: true
 
   - name: ({{ cluster_name }}) Setup instances for tier {{ tier.key }}
     ansible.builtin.include_tasks:

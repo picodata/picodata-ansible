@@ -3,7 +3,7 @@ instance_units:
 
 {% if autonames  == true %}
 instance_names:
-{% for host in ansible_play_hosts | sort %}{{ hostvars[host].instance_link | map(attribute='0') | list | to_nice_yaml(sort_keys=false) }}{% endfor %}
+{% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_instance_names | map(attribute='0') | list | to_nice_yaml(sort_keys=false) }}{% endfor %}
 {% endif %}
 
 prometheus:
@@ -15,11 +15,11 @@ prometheus:
         - targets: [{{ http }}]
           labels:
             host: {{ hostvars[host].listen_address }}
-{% if instance_link is defined %}
-            instance: {{ hostvars[host].instance_link[loop.index0][0] }}
-            unit: {{ hostvars[host].instance_link[loop.index0][1] }}
-            replicaset: {{ hostvars[host].instance_link[loop.index0][0] | regex_search('(^.*_[0-9]+)_[0-9]+', '\\1') | list | last }}
-            tier: {{ hostvars[host].instance_link[loop.index0][0] | regex_search('(^.*)_[0-9]+_[0-9]+', '\\1') | list | last }}
+{% if autonames  == true %}
+            instance: {{ hostvars[host].list_instance_names[loop.index0] }}
+            unit: {{ hostvars[host].instances_on_host[loop.index0] }}
+            replicaset: {{ hostvars[host].list_instance_names[loop.index0] | regex_search('(^.*_[0-9]+)_[0-9]+', '\\1') | list | last }}
+            tier: {{ hostvars[host].list_instance_names[loop.index0] | regex_search('(^.*)_[0-9]+_[0-9]+', '\\1') | list | last }}
 {% else %}
             instance: {{ hostvars[host].instances_on_host[loop.index0] }}
             unit: {{ hostvars[host].instances_on_host[loop.index0] }}
