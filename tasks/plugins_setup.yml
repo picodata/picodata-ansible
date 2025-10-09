@@ -138,6 +138,7 @@
              {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/config.yaml
              --peer {{ listen_address }}:{{ first_bin_port }}
              {% if iproto_tls == true %}
+             --tls-auth
              --tls-cert {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_cert_file | basename }}
              --tls-key {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_key_file | basename }}
              --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
