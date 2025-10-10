@@ -26,6 +26,7 @@
   delay: 5
   run_once: true
   listen: apply_db_config
+  when: tag != 'restore'
 
 - name: Apply sql_file
   ansible.builtin.shell:
@@ -34,6 +35,7 @@
            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   run_once: true
   listen: apply_sql_file
+  when: tag != 'restore'
 
 - name: Message about targets for Prometheus
   ansible.builtin.debug:

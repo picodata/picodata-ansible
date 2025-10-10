@@ -1,7 +1,7 @@
 ---
 # tasks for deploy cluster
 
-- name: ({{ cluster_name }}) Set expanded variable
+- name: ({{ cluster_name }}) Set tag variable
   ansible.builtin.set_fact:
     tag: 'deploy'
     first_deploy: true

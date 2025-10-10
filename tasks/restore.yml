@@ -1,6 +1,14 @@
 ---
 # tasks for restore cluster
+- name: ({{ cluster_name }}) Set tag variable
+  ansible.builtin.set_fact:
+    tag: 'restore'
 
+# Set variables for work
+- name: ({{ cluster_name }}) Generate list of instances per server
+  ansible.builtin.include_tasks:
+    file: genin.yml
+  when: instances_on_host is not defined
 
 - name: ({{ cluster_name }}) Copy utility files
   ansible.builtin.template:
@@ -49,6 +57,18 @@
 
   when: backup_fetch == True
 
+- name: ({{ cluster_name }}) Clear instance name in config file before restore
+  ansible.builtin.replace:
+    path: '{{ conf_dir }}/{{ cluster_name }}/{{ instance }}.conf'
+    regexp: '^  name: '
+    replace: '#  name: '
+    after: 'instance:'
+    before: '  peer: .*'
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
+  when: autonames == true
+
 - name: ({{ cluster_name }}) Restore data
   become_user: '{{ systemd_user }}'
   ansible.builtin.command:
@@ -64,9 +84,9 @@
     - restore.sh
   when: debug != true
 
-- name: ({{ cluster_name }}) Wait 10s for build cluster
+- name: ({{ cluster_name }}) Wait 30s for build cluster
   ansible.builtin.pause:
-    seconds: 10
+    seconds: 30
 
 - name: ({{ cluster_name }}) Wait creating admin-sock files for all instances
   ansible.builtin.wait_for:
