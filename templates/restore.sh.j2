@@ -61,7 +61,7 @@ echo "Start all instances of cluster $CLUSTER on hosts"
 {% if autonames == false %}
 systemctl start --{{ systemd_scope }} --all $CLUSTER@*
 {% else %}
-systemctl start --{{ systemd_scope }} $CLUSTER-*
+systemctl start --{{ systemd_scope }} --all $CLUSTER-*
 {% endif %}
 {% elif init_system == 'supervisord' %}
 supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf start all

@@ -64,6 +64,19 @@
     - restore.sh
   when: debug != true
 
+- name: ({{ cluster_name }}) Wait 10s for build cluster
+  ansible.builtin.pause:
+    seconds: 10
+
+- name: ({{ cluster_name }}) Wait creating admin-sock files for all instances
+  ansible.builtin.wait_for:
+    path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
+    state: present
+    msg: 'Ошибка ожидания сокет-файла: {{ run_dir }}/{{ cluster_name }}/{{ item }}.sock! Проверьте логи инстанса!'
+    timeout: '{{ timeout_admin_sock }}'
+  retries: '{{ retries_admin_sock }}'
+  loop: '{{ instances_on_host }}'
+
 - name: ({{ cluster_name }}) Make links for instance name
   ansible.builtin.include_tasks:
     file: make_links.yml
