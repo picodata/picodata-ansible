@@ -258,8 +258,20 @@
          echo "
          ALTER USER \"admin\" password '{{ admin_password }}' USING md5;
          ALTER USER \"admin\" WITH LOGIN;
-         {% if auth_webui is defined %}
-         {% if auth_webui == false %} ALTER SYSTEM SET jwt_secret = '';{% else %}ALTER SYSTEM RESET jwt_secret;{% endif %}
+         " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+  register: cluster_status
+  until: cluster_status.rc == 0
+  retries: 3
+  delay: 5
+  run_once: true
+
+- name: ({{ cluster_name }}) Setup auth in WebUI
+  ansible.builtin.shell:
+    cmd: >
+         echo "
+         ALTER SYSTEM RESET jwt_secret;
+         {% if auth_webui == false %}
+         ALTER SYSTEM SET jwt_secret = '';
          {% endif %}
          " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   register: cluster_status
@@ -267,6 +279,7 @@
   retries: 3
   delay: 5
   run_once: true
+  when: auth_webui is defined
 
 - name: ({{ cluster_name }}) Copy sql-file on server
   ansible.builtin.copy:
