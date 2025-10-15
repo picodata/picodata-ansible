@@ -13,10 +13,10 @@
 
 - name: ({{ cluster_name }}) Set filter on instances
   ansible.builtin.set_fact:
-    instances_filtered: '{{ instances_on_host | select ("ansible.builtin.search", filter | default(".*")) | list }}'
+    instances_filtered: '{{ list_instance_names | select ("ansible.builtin.search", filter | default(".*")) | list }}'
 
 - block:
-  - name: ({{ cluster_name }}) Restart systemd units
+  - name: ({{ cluster_name }}) Restart systemd units without autonames
     become_user: '{{ systemd_user }}'
     throttle: '{{ serial_host_restart | default(100) }}'
     ansible.builtin.systemd:
@@ -31,7 +31,7 @@
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
     when: autonames|bool == false
 
-  - name: ({{ cluster_name }}) Restart systemd units
+  - name: ({{ cluster_name }}) Restart systemd units with autonames
     become_user: '{{ systemd_user }}'
     throttle: '{{ serial_host_restart | default(100) }}'
     ansible.builtin.systemd:

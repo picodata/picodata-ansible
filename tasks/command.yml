@@ -62,7 +62,7 @@
 
   - name: ({{ cluster_name }}) Set filter on instances
     ansible.builtin.set_fact:
-      instances_filtered: '{{ instances_on_host | select ("ansible.builtin.search", filter | default(".*")) | list }}'
+      instances_filtered: '{{ list_instance_names | select ("ansible.builtin.search", filter | default(".*")) | list }}'
 
   - name: ({{ cluster_name }}) Debug instances_on_host
     ansible.builtin.debug:

@@ -25,7 +25,7 @@ shell=/sbin/nologin
 
 > Для примера, настройка правил sudo для возможности переключения на четную запись `picodata` из под пользователя `dbadm`:
 ```
-Cmnd_Alias SHELL = /bin/sh, /bin/bash"
+Cmnd_Alias SHELL = /bin/sh, /bin/bash
 dbadm ALL = (picodata) NOPASSWD: SHELL
 ```
 
