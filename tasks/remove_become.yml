@@ -30,7 +30,6 @@
     loop:
       - '{{ conf_dir }}'
       - '{{ log_dir }}'
-      - '{{ data_dir }}'
       - '{{ run_dir }}'
       - '{{ share_dir }}'
       - '{{ cert_dir }}'
