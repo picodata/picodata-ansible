@@ -149,6 +149,6 @@
 
       ignore_errors: True
 
-    when: plugin.value.config is defined and plugin.value.config != '' and plugin_install_sql | bool == true and plugin_enable == true
+    when: plugin.value.config is defined and plugin.value.config != '' and plugin_install_sql | default(true) | bool == true and plugin_enable == true
 
   run_once: true

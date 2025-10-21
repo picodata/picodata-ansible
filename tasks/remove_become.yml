@@ -31,11 +31,17 @@
       - '{{ conf_dir }}'
       - '{{ log_dir }}'
       - '{{ run_dir }}'
-      - '{{ share_dir }}'
       - '{{ cert_dir }}'
       - '{{ systemd_dir }}/supervisord-{{ cluster_name }}.service'
       - '/etc/tmpfiles.d/picodata.conf'
     ignore_errors: True
+
+  - name: ({{ cluster_name }}) Remove share_dir
+    ansible.builtin.file:
+      name: '{{ share_dir }}'
+      state: absent
+    ignore_errors: True
+    when: remove_sharedir == true
 
   - block:
     - debug:
