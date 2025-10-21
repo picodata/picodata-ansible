@@ -64,8 +64,10 @@ cp -pr $BACKUP_DIR/share/* "{{ share_dir }}/{{ cluster_name }}"/
 echo "Start all instances of cluster $CLUSTER on hosts"
 {% if init_system == 'systemd' %}
 {% if autonames == false %}
+systemctl reset-failed --all $CLUSTER@*
 systemctl start --{{ systemd_scope }} --all $CLUSTER@*
 {% else %}
+systemctl reset-failed --all $CLUSTER-*
 systemctl start --{{ systemd_scope }} --all $CLUSTER-*
 {% endif %}
 {% elif init_system == 'supervisord' %}

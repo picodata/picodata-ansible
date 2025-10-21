@@ -177,6 +177,7 @@ instances_per_server = replicaset_count * replication_factor / SERVER_COUNT
 - name: Deploy picodata cluster
   hosts: all
   become: true
+  any_errors_fatal: true
 
   tasks:
 
