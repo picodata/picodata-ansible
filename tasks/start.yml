@@ -16,6 +16,13 @@
     instances_filtered: '{{ list_instance_names | select ("ansible.builtin.search", filter | default(".*")) | list }}'
 
 - block:
+  - name: Reset failed systemd service
+    ansible.builtin.command:
+      cmd: 'systemctl reset-failed --{{ systemd_scope }} {{ cluster_name }}* --all'
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    changed_when: false
+
   - name: ({{ cluster_name }}) Start systemd units without autonames
     become_user: '{{ systemd_user }}'
     throttle: '{{ serial_host_restart | default(100) }}'
