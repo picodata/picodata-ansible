@@ -43,6 +43,21 @@
     file: deploy_become.yml
   when: rootless == false
 
+- name: ({{ cluster_name }}) Get version of picodata from shell
+  ansible.builtin.shell:
+    cmd: 'picodata -V |head -1 | cut -f 1 -d "," | cut -f 2 -d " "'
+  register: result
+  changed_when: false
+
+- name: ({{ cluster_name }}) Put version of picodata in var
+  ansible.builtin.set_fact:
+    picodata_version: '{{ result.stdout }}'
+
+- name: ({{ cluster_name }}) Debug picodata_version
+  ansible.builtin.debug:
+    var: picodata_version
+  when: debug == true
+
 - name: ({{ cluster_name }}) Create dirs with cluster-name
   ansible.builtin.file:
     name: '{{ item }}'
@@ -57,7 +72,8 @@
     - '{{ share_dir }}/{{ cluster_name }}'
     - '{{ run_dir }}/{{ cluster_name }}'
     - '{{ cert_dir }}/{{ cluster_name }}'
-    - '{{ cert_dir }}/{{ cluster_name }}/tls/'
+    - '{{ cert_dir }}/{{ cluster_name }}/pg'
+    - '{{ cert_dir }}/{{ cluster_name }}/iproto'
 
 - name: ({{ cluster_name }}) Create dirs for cluster for rootless
   become_user: '{{ systemd_user }}'
@@ -155,23 +171,25 @@
   run_once: true
   when: debug == true
 
+# default добавлены для совместимости с предыдущей версией
+# TODO убрать default в 26.1
 - name: ({{ cluster_name }}) Copy certs for PG
   become: true
   ansible.builtin.copy:
     src: '{{ item.filename }}'
-    dest: '{{ cert_dir }}/{{ cluster_name }}/'
+    dest: '{{ cert_dir }}/{{ cluster_name }}/pg'
     mode: '{{ item.mode }}'
   loop:
-    - { filename: '{{ cert_file }}', mode: '0644' }
-    - { filename: '{{ key_file }}', mode: '0640' }
-    - { filename: '{{ ca_file }}', mode: '0644' }
+    - { filename: '{{ pg_cert_file | default(cert_file) }}', mode: '0644' }
+    - { filename: '{{ pg_key_file | default(key_file) }}', mode: '0640' }
+    - { filename: '{{ pg_ca_file | default(ca_file) }}', mode: '0644' }
   when: pg_ssl == true
 
 - name: ({{ cluster_name }}) Copy certs for iproto
   become: true
   ansible.builtin.copy:
     src: '{{ item.filename }}'
-    dest: '{{ cert_dir }}/{{ cluster_name }}/tls/'
+    dest: '{{ cert_dir }}/{{ cluster_name }}/iproto/'
     mode: '{{ item.mode }}'
   loop:
     - { filename: '{{ iproto_cert_file }}', mode: '0644' }

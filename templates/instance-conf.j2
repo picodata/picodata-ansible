@@ -39,13 +39,18 @@ instance:
     listen: '0.0.0.0:{{ list_pg[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
     advertise: '{{ list_pg[instance_index | int] }}'
     ssl: {{ pg_ssl }}
+{% if pg_ssl == true and picodata_version is version('25.4.3', '>=') %}
+    cert_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ iproto_cert_file | basename }}
+    key_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ iproto_key_file | basename }}
+    ca_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ iproto_ca_file | basename }}
+{% endif %}
 
 {% if iproto_tls == true %}
   iproto_tls:
     enabled: true
-    cert_file: {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_cert_file | basename }}
-    key_file: {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_key_file | basename }}
-    ca_file: {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
+    cert_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_cert_file | basename }}
+    key_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_key_file | basename }}
+    ca_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_ca_file | basename }}
 {% endif %}
 
   share_dir: '{{ share_dir }}/{{ cluster_name }}'
@@ -70,3 +75,5 @@ instance:
 {% if tier.value.config is defined %}
   {{ tier.value.config | to_nice_yaml(indent=2) | indent(width=2) }}
 {% endif %}
+
+  backup_dir: '{{ backup_dir }}/{{ cluster_name }}/{{ instance_name }}'

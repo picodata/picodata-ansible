@@ -101,3 +101,8 @@
   ansible.builtin.include_tasks:
     file: make_links.yml
   when: autonames|bool == true
+
+- name: ({{ cluster_name }}) Set flag for create report files
+  command: 'true'
+  notify:
+    - refactor
