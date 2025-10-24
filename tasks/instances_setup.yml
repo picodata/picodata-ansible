@@ -75,7 +75,7 @@
     - { filename: '{{ pg_cert_file | default(cert_file) }}', linkname: 'server.crt' }
     - { filename: '{{ pg_key_file | default(key_file) }}', linkname: 'server.key' }
     - { filename: '{{ pg_ca_file | default(ca_file) }}', linkname: 'ca.crt' }
-  when: pg_ssl == true and '{{picodata_version}}' is version('25.4.3', '<')
+  when: pg_ssl == true and picodata_version is version('25.4.3', '<')
 
 - name: ({{ cluster_name }}) Create config file for instances in tier {{ tier.key }}
   ansible.builtin.template:
