@@ -51,7 +51,7 @@
     state: directory
     owner: '{{ user }}'
     group: '{{ group }}'
-    mode: '{{ dir_mode }}'
+    mode: '0755'
 
 - name: ({{ cluster_name }}) Pack crashed dump for fetch
   ansible.builtin.shell:
@@ -59,7 +59,7 @@
     cmd: |
          tar --ignore-failed-read \
          --exclude={{ backup_dir }} \
-         -czf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz \
+         -czf {{ backup_dir }}/{{ cluster_name }}/crash_dumps/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz \
          {{ listdir }} \
          /usr/bin/picodata
   register: result
@@ -79,9 +79,10 @@
     path: '{{ conf_dir }}/{{ cluster_name }}/os-release'
     state: absent
 
+# `become: false` дабы не было OOM
 - name: ({{ cluster_name }}) Fetch crash dump from remote hosts
-  become: '{{ not rootless }}'
+  become: false
   ansible.builtin.fetch:
-    src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz'
-    dest: '{{ backup_fetch_dir }}/{{ cluster_name }}/'
+    src: '{{ backup_dir }}/{{ cluster_name }}/crash_dumps/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz'
+    dest: '{{ crash_dump_fetch_dir }}/{{ cluster_name }}/'
     flat: true

@@ -75,6 +75,16 @@
     - '{{ cert_dir }}/{{ cluster_name }}/pg'
     - '{{ cert_dir }}/{{ cluster_name }}/iproto'
 
+- name: ({{ cluster_name }}) Create dirs for crash_dumps
+  ansible.builtin.file:
+    name: '{{ item }}'
+    state: directory
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    mode: '0755'
+  loop:
+    - '{{ backup_dir }}/{{ cluster_name }}/crash_dumps'
+
 - name: ({{ cluster_name }}) Create dirs for cluster for rootless
   become_user: '{{ systemd_user }}'
   ansible.builtin.file:
@@ -318,7 +328,7 @@
 - name: Make links for instance name
   ansible.builtin.include_tasks:
     file: make_links.yml
-  when: autonames|bool == true and first_deploy == true
+  when: autonames|bool == true and first_deploy == true and "restore_full" not in ansible_run_tags
 
 - name: ({{ cluster_name }}) Install plugins
   ansible.builtin.include_tasks:

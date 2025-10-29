@@ -25,9 +25,13 @@ bin_dir: '/usr/bin'
 dir_mode: '0755'
 
 log_to: 'syslog'
+
 backup_dir: '{{ data_dir }}/backup'
-backup_fetch_dir: 'backup'
-backup_fetch: true
+backup_fetch: false
+backup_fetch_dir: './backups'
+force_copy_backup: false
+
+crash_dump_fetch_dir: './crash_dumps'
 
 first_bin_port: 13301
 first_http_port: 18001

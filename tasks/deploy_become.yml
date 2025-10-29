@@ -19,6 +19,23 @@
   when: install_packages
 
 - block:
+  - name: ({{ cluster_name }}) Create backup dirs for cluster
+    ansible.builtin.file:
+      name: '{{ item }}'
+      state: directory
+      owner: '{{ user }}'
+      group: '{{ group }}'
+      mode: '0755'
+    loop:
+      - '{{ conf_dir }}'
+      - '{{ data_dir }}'
+      - '{{ log_dir }}'
+      - '{{ run_dir }}'
+      - '{{ share_dir }}'
+      - '{{ cert_dir }}'
+      - '{{ backup_dir }}'
+      - '{{ backup_dir }}/{{ cluster_name }}'
+
   - name: ({{ cluster_name }}) Create dirs for cluster
     ansible.builtin.file:
       name: '{{ item }}'
@@ -27,19 +44,11 @@
       group: '{{ group }}'
       mode: '{{ dir_mode }}'
     loop:
-      - '{{ conf_dir }}'
-      - '{{ log_dir }}'
-      - '{{ data_dir }}'
-      - '{{ run_dir }}'
-      - '{{ share_dir }}'
-      - '{{ backup_dir }}'
-      - '{{ cert_dir }}'
       - '{{ conf_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
       - '{{ data_dir }}/{{ cluster_name }}'
       - '{{ share_dir }}/{{ cluster_name }}'
       - '{{ run_dir }}/{{ cluster_name }}'
-      - '{{ backup_dir }}/{{ cluster_name }}'
       - '{{ cert_dir }}/{{ cluster_name }}'
 
   - name: ({{ cluster_name }}) Create dirs for supervisord

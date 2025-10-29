@@ -1,51 +1,61 @@
 ---
 # tasks for backup
-
-- name: ({{ cluster_name }}) Copy utility files on remote hosts
-  ansible.builtin.template:
-    src: backup.sh.j2
-    dest: '{{ backup_dir }}/backup.sh'
-    mode: '0755'
-    owner: '{{ user }}'
-    group: '{{ group }}'
-    force: true
+#   - get list of instances
+#   - run BACKUP over sql on first instance any server
 
 - name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.import_tasks:
     file: genin.yml
 
-- name: ({{ cluster_name }}) Set current time
-  ansible.builtin.set_fact:
-    YYYYMMDDHHSS: '{{ "%Y%m%d%H%M%S" | strftime }}'
-  run_once: true
-  delegate_to: localhost
-
-- name: ({{ cluster_name }}) Set current time
-  ansible.builtin.set_fact:
-    DT: '{{ YYYYMMDDHHSS }}'
-
-- name: ({{ cluster_name }}) Debug
-  debug:
-    msg: 'BACKUP_DIR: {{ DT }}'
-  run_once: true
-
 - name: ({{ cluster_name }}) Backup instances
-  ansible.builtin.command:
-    cmd: '{{ backup_dir }}/backup.sh -s {{ run_dir }}/{{ cluster_name }}/{{ instance }}.sock -d {{ backup_dir }}/{{ cluster_name }}/{{ DT }}'
-  loop: '{{ instances_on_host }}'
-  loop_control:
-    loop_var: instance
+  ansible.builtin.shell:
+    cmd: >
+         echo "BACKUP;" | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+  register: backup_result
+  run_once: true
+
+- name: ({{ cluster_name }}) Debug backup_result
+  ansible.builtin.debug:
+    var: backup_result.stdout
+  run_once: true
+  when: debug == true
+
+- name: ({{ cluster_name }}) Get name of current backup
+  ansible.builtin.set_fact:
+    current_backup: "{{ backup_result.stdout | regex_search('.*([0-9]{8}T[0-9]{6})', '\\1', multiline=true) | last }}"
+
+- name: ({{ cluster_name }}) Check backup
+  ansible.builtin.fail:
+    msg: 'Ошибка при формировании бэкапа!'
+  when: current_backup == ''
+  delegate_to: localhost
+  run_once: true
+
+- name: ({{ cluster_name }}) Print current backup name
+  ansible.builtin.debug:
+    msg: 'Current backup is: {{ current_backup  }}'
+  run_once: true
+
+- name: ({{ cluster_name }}) Create backup_dir
+  ansible.builtin.file:
+    path: '{{ backup_dir }}/{{ cluster_name }}'
+    state: directory
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    mode: '0755'
 
 - block:
   - name: ({{ cluster_name }}) Pack backups for fetch
     ansible.builtin.shell:
-      chdir: '{{ backup_dir }}//{{ cluster_name }}/{{ DT }}'
-      cmd: 'tar -cf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}.tar *'
+      chdir: '{{ backup_dir }}//{{ cluster_name }}/'
+      cmd: 'tar -cf {{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}.tar */{{ current_backup }}'
 
+  # `become: false` дабы не было OOM
   - name: ({{ cluster_name }}) Fetch backups from remote hosts
+    become: false
     ansible.builtin.fetch:
       src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}.tar'
-      dest: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ DT }}/{{ inventory_hostname }}.tar'
+      dest: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ current_backup }}/{{ inventory_hostname }}.tar'
       flat: true
 
   - name: ({{ cluster_name }}) Remove archive on remote hosts
@@ -55,9 +65,3 @@
 
   when: backup_fetch == True
 # end block
-
-- name: ({{ cluster_name }}) Remove utility files on remote hosts
-  ansible.builtin.file:
-    path: '{{ backup_dir }}/backup.sh'
-    state: absent
-  when: debug != true

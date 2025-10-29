@@ -1,4 +1,13 @@
 ---
+# tasks for restore:
+#   - get list of instances
+#   - stop cluster
+#   - clean instance name for autonames
+#   - clean instance_dir
+#   - picodata restore for every instance
+#   - start cluster
+#   - make links for autonames
+
 # tasks for restore cluster
 - name: ({{ cluster_name }}) Set tag variable
   ansible.builtin.set_fact:
@@ -10,15 +19,6 @@
     file: genin.yml
   when: instances_on_host is not defined
 
-- name: ({{ cluster_name }}) Copy utility files
-  ansible.builtin.template:
-    src: restore.sh.j2
-    dest: '{{ backup_dir }}/restore.sh'
-    mode: '0755'
-    owner: '{{ user }}'
-    group: '{{ group }}'
-    force: true
-
 - block:
   - name: ({{ cluster_name }}) Get list of local backups
     become: false
@@ -27,7 +27,7 @@
       depth: 1
       file_type: directory
       use_regex: yes
-      patterns: ['^[0-9]{14}$']
+      patterns: ['^[0-9]{8}T[0-9]{6}$']
     register: restore_dirs
     run_once: true
     delegate_to: localhost
@@ -39,23 +39,44 @@
       backup_fetch: true
     when: restore_dir is undefined
 
-  - name: ({{ cluster_name }}) Debug
+  - name: ({{ cluster_name }}) Print restore_dir
     debug:
       msg: 'restore_dir: {{ restore_dir }}'
 
-  - name: ({{ cluster_name }}) Create dir on remote hosts
-    ansible.builtin.file:
-      path: '{{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
-      state: directory
+  - name: ({{ cluster_name }}) Check on backup is exists
+    ansible.builtin.stat:
+      path: '{{ backup_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/{{ restore_dir }}'
+    register: result
 
-  - name: ({{ cluster_name }}) Unpack backup
-    ansible.builtin.unarchive:
-      src: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ restore_dir }}/{{ inventory_hostname }}.tar'
-      dest: '{{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
-      owner: '{{ user }}'
-      group: '{{ group }}'
+  - block:
+    - name: ({{ cluster_name }}) Copy backup archive to remote host
+      ansible.builtin.copy:
+        src: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ restore_dir }}/{{ inventory_hostname }}.tar'
+        dest: '{{ backup_dir }}/{{ cluster_name }}'
+        owner: '{{ user }}'
+        group: '{{ group }}'
+
+    - name: ({{ cluster_name }}) Unpack backup
+      ansible.builtin.unarchive:
+        src: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}.tar'
+        dest: '{{ backup_dir }}/{{ cluster_name }}'
+        owner: '{{ user }}'
+        group: '{{ group }}'
+        remote_src: true
+
+    - name: ({{ cluster_name }}) Remove backup archive from remote host
+      ansible.builtin.file:
+        path: '{{ backup_dir }}/{{ cluster_name }}/{{ inventory_hostname }}.tar'
+        state: absent
+
+    when: not result.stat.exists or force_copy_backup == true
 
   when: backup_fetch == True
+
+# Stop cluster
+- name: ({{ cluster_name }}) Stop cluster
+  ansible.builtin.include_tasks:
+    file: stop.yml
 
 - name: ({{ cluster_name }}) Clear instance name in config file before restore
   ansible.builtin.replace:
@@ -69,20 +90,38 @@
     loop_var: instance
   when: autonames == true
 
+# Нужно удалить содержимое в каталоге, а не сам каталог, поэтому rm
+- name: ({{ cluster_name }}) Clean instance_dir
+  ansible.builtin.shell:
+    cmd: 'rm -rf {{ data_dir }}/{{ cluster_name }}/{{ instance }}/*'
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
+
 - name: ({{ cluster_name }}) Restore data
   become_user: '{{ systemd_user }}'
   ansible.builtin.command:
-    cmd: '{{ backup_dir }}/restore.sh -n {{ cluster_name }} -d {{ data_dir }} -b {{ backup_dir }}/{{ cluster_name }}/{{ restore_dir }}'
-  environment:
-    XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    cmd: '{{ bin_dir }}/picodata restore --path {{ backup_dir }}/{{ cluster_name }}/{{ instance }}/{{ restore_dir }} --config {{ conf_dir }}/{{ cluster_name }}/{{ instance }}.conf'
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
 
-- name: ({{ cluster_name }}) Remove utility files
+# picodata restore запускается под become-юзером, поэтому принудительно меняем владельца на файлы
+- name: ({{ cluster_name }}) Cange files ownership in instance_dir
   ansible.builtin.file:
-    path: '{{ backup_dir }}/{{ item }}'
-    state: absent
-  loop:
-    - restore.sh
-  when: debug != true
+    path: '{{ data_dir }}/{{ cluster_name }}/{{ instance }}'
+    state: directory
+    owner: '{{ user }}'
+    group: '{{ group }}'
+    recurse: true
+  loop: '{{ instances_on_host }}'
+  loop_control:
+    loop_var: instance
+
+# Start cluster
+- name: ({{ cluster_name }}) Start cluster
+  ansible.builtin.include_tasks:
+    file: start.yml
 
 - name: ({{ cluster_name }}) Wait 30s for build cluster
   ansible.builtin.pause:
