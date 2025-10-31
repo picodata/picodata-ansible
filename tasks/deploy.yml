@@ -189,6 +189,8 @@
     src: '{{ item.filename }}'
     dest: '{{ cert_dir }}/{{ cluster_name }}/pg'
     mode: '{{ item.mode }}'
+    owner: '{{ user }}'
+    group: '{{ group }}'
   loop:
     - { filename: '{{ pg_cert_file | default(cert_file) }}', mode: '0644' }
     - { filename: '{{ pg_key_file | default(key_file) }}', mode: '0640' }
@@ -201,6 +203,8 @@
     src: '{{ item.filename }}'
     dest: '{{ cert_dir }}/{{ cluster_name }}/iproto/'
     mode: '{{ item.mode }}'
+    owner: '{{ user }}'
+    group: '{{ group }}'
   loop:
     - { filename: '{{ iproto_cert_file }}', mode: '0644' }
     - { filename: '{{ iproto_key_file }}', mode: '0640' }

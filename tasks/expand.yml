@@ -22,6 +22,21 @@
   run_once: true
   delegate_to: localhost
 
+- name: ({{ cluster_name }}) Get version of picodata from shell
+  ansible.builtin.shell:
+    cmd: 'picodata -V |head -1 | cut -f 1 -d "," | cut -f 2 -d " "'
+  register: result
+  changed_when: false
+
+- name: ({{ cluster_name }}) Put version of picodata in var
+  ansible.builtin.set_fact:
+    picodata_version: '{{ result.stdout }}'
+
+- name: ({{ cluster_name }}) Debug picodata_version
+  ansible.builtin.debug:
+    var: picodata_version
+  when: debug == true
+
 - block:
   - name: ({{ cluster_name }}) Set actual failure domain
     ansible.builtin.set_fact:

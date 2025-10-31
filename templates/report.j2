@@ -19,6 +19,8 @@ properties:
   autonames: {{ autonames }}
   role_ver: {{ role_ver }}
   ver_fd: {{ ver_fd | default(2) }}
+  picodata_version: {{ picodata_version }}
+  peer_list: {{ peer_list }}
   tiers:
 {% for name, conf in tiers.items() %}
     {{ name }}:

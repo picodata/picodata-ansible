@@ -102,11 +102,22 @@
   ansible.builtin.set_fact:
     autonames: '{{ props_from_report.autonames | default(false) }}'
     ver_fd: '{{ props_from_report.ver_fd | default(2) }}'
+    peer_list: '{{ props_from_report.peer_list | default([]) }}'
   when: props_from_report is defined
 
 - name: ({{ cluster_name }}) genin Debug autoname values
   ansible.builtin.debug:
-    var: autonames
+    var: peer_list
+  when: debug == true
+
+- name: ({{ cluster_name }}) genin Set peer_list if undefined
+  ansible.builtin.set_fact:
+    peer_list: "[{% for host in all_hosts | difference([inventory_hostname ]) | sort %}'{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }}', {% endfor %}'{{ listen_address }}:{{ first_bin_port }}']"
+  when: not peer_list | default([])
+
+- name: ({{ cluster_name }}) genin Debug peer_list values
+  ansible.builtin.debug:
+    var: peer_list
   when: debug == true
 
 # if report file is not exist
