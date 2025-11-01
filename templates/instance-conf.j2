@@ -51,6 +51,9 @@ instance:
     cert_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_cert_file | basename }}
     key_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_key_file | basename }}
     ca_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_ca_file | basename }}
+{% elif picodata_version is version('25.4.1', '>=') %}
+  iproto_tls:
+    enabled: false
 {% endif %}
 
   share_dir: '{{ share_dir }}/{{ cluster_name }}'
