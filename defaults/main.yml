@@ -1,7 +1,7 @@
 ---
 # defaults file for picodata-ansible
 
-role_ver: 'master'
+role_ver: '25.4.3'
 
 repo: 'https://download.picodata.io' # value for nightly: https://download.binary.picodata.io
 install_packages: true
