@@ -51,6 +51,7 @@
 
   # with autonames
   - block:
+
     - name: ({{ cluster_name }}) Stop systemd service
       ansible.builtin.systemd:
         name: '{{ cluster_name }}-{{ instance }}.service'
@@ -81,6 +82,13 @@
       ignore_errors: True
 
     when: autonames|bool == true
+
+  - name: Reset failed systemd service
+    ansible.builtin.command:
+      cmd: 'systemctl reset-failed --{{ systemd_scope }} {{ cluster_name }}* --all'
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+    changed_when: false
 
   - name: ({{ cluster_name }}) Reload systemd services
     ansible.builtin.systemd:
