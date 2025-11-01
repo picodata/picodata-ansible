@@ -30,6 +30,21 @@ ansible-playbook -i hosts.yml picodata.yml -t remove
 
 > Если вы используете `rootless` режим, то убедитесь, что удаленному пользователю доступны на чтение каталоги бэкапа, в том числе и вышестоящие!
 
+> Внимание! В версии роли 25.4.4 [для исключения ошибки при восстановлении из бэкапа](https://git.picodata.io/core/picodata/-/issues/2299) для каждого тира нужно указать параметры (можно указать значения по умолчанию):
+
+```yml
+memtx:
+  memory: 256M
+  system_memory: 256M
+  max_tuple_size: 1M
+vinyl:
+  memory: 128M
+  cache: 128M
+  max_tuple_size: 1M
+  page_size: 8K
+  range_size: 1G
+```
+
 Пример команды для бэкапа кластера:
 ```bash
 ansible-playbook -i hosts.yml picodata.yml -t backup
