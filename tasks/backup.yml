@@ -36,7 +36,7 @@
     msg: 'Current backup is: {{ current_backup  }}'
   run_once: true
 
-- name: ({{ cluster_name }}) Create backup_dir
+- name: ({{ cluster_name }}) Change permission for backup_dir
   ansible.builtin.file:
     path: '{{ backup_dir }}/{{ cluster_name }}'
     state: directory
