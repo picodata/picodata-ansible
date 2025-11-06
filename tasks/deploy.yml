@@ -43,21 +43,6 @@
     file: deploy_become.yml
   when: rootless == false
 
-- name: ({{ cluster_name }}) Get version of picodata from shell
-  ansible.builtin.shell:
-    cmd: 'picodata -V |head -1 | cut -f 1 -d "," | cut -f 2 -d " "'
-  register: result
-  changed_when: false
-
-- name: ({{ cluster_name }}) Put version of picodata in var
-  ansible.builtin.set_fact:
-    picodata_version: '{{ result.stdout }}'
-
-- name: ({{ cluster_name }}) Debug picodata_version
-  ansible.builtin.debug:
-    var: picodata_version
-  when: debug == true
-
 - name: ({{ cluster_name }}) Create dirs with cluster-name
   ansible.builtin.file:
     name: '{{ item }}'
@@ -138,7 +123,6 @@
 - name: ({{ cluster_name }}) Merge systemd params
   ansible.builtin.set_fact:
     systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params|default({})) }}'
-  run_once: true
 
 - name: ({{ cluster_name }}) Debug systemd_params
   ansible.builtin.debug:

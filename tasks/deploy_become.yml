@@ -19,7 +19,7 @@
   when: install_packages
 
 - block:
-  - name: ({{ cluster_name }}) Create backup dirs for cluster
+  - name: ({{ cluster_name }}) Create top-level abd backup dirs for cluster
     ansible.builtin.file:
       name: '{{ item }}'
       state: directory
