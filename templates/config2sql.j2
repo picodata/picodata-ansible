@@ -1,3 +1,9 @@
+{% if plugin_old_version.stdout | default("") != "" %}
+DROP PLUGIN IF EXISTS {{ manifest.name }} {{ plugin_old_version.stdout }};
+{% endif %}
+{% if plugin_current_version.stdout | default("") != "" %}
+ALTER PLUGIN {{ manifest.name }} {{ plugin_current_version.stdout }} DISABLE;
+{% endif %}
 CREATE PLUGIN IF NOT EXISTS "{{ manifest.name }}" {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 
 {% if plugin.value.migration_context is defined %}

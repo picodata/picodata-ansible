@@ -70,7 +70,7 @@
     ansible.builtin.set_fact:
       services: '{{ manifest.services | map(attribute="name") | list }}'
 
-  - name: ({{ cluster_name }}) Checking for plugin has been installed {{ plugin.key }}
+  - name: ({{ cluster_name }}) Checking for plugin of this version has been installed {{ plugin.key }}
     ansible.builtin.shell:
       cmd: >
            echo "select enabled from _pico_plugin where name='{{ manifest.name }}' and version='{{ manifest.version }}'" |
@@ -94,30 +94,60 @@
     when: plugin.value.do_not_enable_plugin is defined
 
   - block:
-    - name: ({{ cluster_name }}) Generate install.sql file into plugin path {{ plugin.key }}
-      ansible.builtin.template:
-        src: config2sql.j2
-        dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql'
-        force: true
-        owner: '{{ user }}'
-        group: '{{ group }}'
 
-    - name: ({{ cluster_name }}) Set plugin_install_sql flag {{ plugin.key }}
-      ansible.builtin.set_fact:
-        plugin_install_sql: '{{ plugin.value.install_sql | default(true) }}'
-
-    # TODO (deprecated) убрать в версии 26.1
-    - name: ({{ cluster_name }}) Set plugin_install_sql flag for compability {{ plugin.key }}
-      ansible.builtin.set_fact:
-        plugin_install_sql: '{{ not (plugin.value.do_not_run_plugin_install_sql | bool) }}'
-      when: plugin.value.do_not_run_plugin_install_sql is defined
-
-    - name: ({{ cluster_name }}) Install plugin into cluster (run install.sql) {{ plugin.key }}
+    - name: ({{ cluster_name }}) Checking for plugin any version has been installed {{ plugin.key }}
       ansible.builtin.shell:
         cmd: >
-            { echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } |
-            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-      when: plugin_install_sql | bool == true
+            echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=true" |
+            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
+            grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
+      register: plugin_current_version
+
+    - name: ({{ cluster_name }}) Debug plugin_current_version {{ plugin.key }}
+      ansible.builtin.debug:
+        var: plugin_current_version
+      when: debug == true
+
+    - block:
+      - name: ({{ cluster_name }}) Count of already installed plugin {{ plugin.key }}
+        ansible.builtin.shell:
+          cmd: >
+              echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=false" |
+              {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
+              grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
+        register: plugin_old_version
+
+      - name: ({{ cluster_name }}) Debug plugin_old_version {{ plugin.key }}
+        ansible.builtin.debug:
+          var: plugin_old_version
+        when: debug == true
+
+      - name: ({{ cluster_name }}) Generate install.sql file into plugin path {{ plugin.key }}
+        ansible.builtin.template:
+          src: config2sql.j2
+          dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql'
+          force: true
+          owner: '{{ user }}'
+          group: '{{ group }}'
+
+      - name: ({{ cluster_name }}) Set plugin_install_sql flag {{ plugin.key }}
+        ansible.builtin.set_fact:
+          plugin_install_sql: '{{ plugin.value.install_sql | default(true) }}'
+
+      # TODO (deprecated) убрать в версии 26.1
+      - name: ({{ cluster_name }}) Set plugin_install_sql flag for compability {{ plugin.key }}
+        ansible.builtin.set_fact:
+          plugin_install_sql: '{{ not (plugin.value.do_not_run_plugin_install_sql | bool) }}'
+        when: plugin.value.do_not_run_plugin_install_sql is defined
+
+      - name: ({{ cluster_name }}) Install plugin into cluster (run install.sql) {{ plugin.key }}
+        ansible.builtin.shell:
+          cmd: >
+              { echo "\set d ;"; cat {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/install.sql; } |
+              {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+        when: plugin_install_sql | bool == true
+
+      when: plugin_current_version.stdout == '' or plugin_current_version.stdout is version(manifest.version, '<')
 
     when: plugin_status.stdout == "0"
 
