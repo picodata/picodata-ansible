@@ -40,9 +40,9 @@ instance:
     advertise: '{{ list_pg[instance_index | int] }}'
     ssl: {{ pg_ssl }}
 {% if pg_ssl == true and picodata_version is version('25.4.3', '>=') %}
-    cert_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ iproto_cert_file | basename }}
-    key_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ iproto_key_file | basename }}
-    ca_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ iproto_ca_file | basename }}
+    cert_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_cert_file | basename }}
+    key_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_key_file | basename }}
+    ca_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_ca_file | basename }}
 {% endif %}
 
 {% if iproto_tls == true %}
