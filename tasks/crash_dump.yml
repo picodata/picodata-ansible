@@ -39,6 +39,19 @@
     msg: 'DIRS TO BACKUP: {{ listdir }}'
   run_once: true
 
+- name: ({{ cluster_name }}) Get info about cluster if possible
+  ansible.builtin.shell:
+    cmd: >
+         echo "
+         SELECT * FROM _pico_instance;
+         SELECT * FROM _pico_peer_address;
+         \lua;
+         pico.raft_status();
+         pico.raft_log();
+         " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock > {{ conf_dir }}/{{ cluster_name }}/cluster_info.log
+  ignore_errors: True
+  run_once: true
+
 - name: ({{ cluster_name }}) Create os-release temp file to conf_dir
   ansible.builtin.copy:
     src: /etc/os-release
