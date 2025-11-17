@@ -46,7 +46,11 @@ ExecStartPre=/bin/sh -c 'mkdir -p {{ share_dir }}/{{ cluster_name }}'
 OOMScoreAdjust=-1000
 
 {% for param, val in systemd_params_tier| default({}) |dictsort %}
+{% if param == 'CPUAffinity' %}
+{{ param }}={{ val | replace ("<INSTANCE_NUM>", "%d"|format(instance_index|int) )}}
+{% else %}
 {{ param }}={{ val }}
+{% endif %}
 {% endfor %}
 
 [Install]
