@@ -1,3 +1,5 @@
+{{ ansible_managed | comment }}
+
 [unix_http_server]
 file={{ run_dir }}/supervisor-{{ cluster_name }}.sock           ; (the path to the socket file)
 chmod=0770                                                    ; sockef file mode (default 0700)

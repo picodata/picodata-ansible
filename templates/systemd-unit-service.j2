@@ -1,3 +1,5 @@
+{{ ansible_managed | comment }}
+
 [Unit]
 {% if autonames == true %}
 Description=Picodata cluster {{ cluster_name }}-{{ instance_name }}

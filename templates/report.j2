@@ -1,3 +1,5 @@
+{{ ansible_managed | comment }}
+
 instance_units:
 {{ instances_on_host | to_nice_yaml(sort_keys=false) }}
 
