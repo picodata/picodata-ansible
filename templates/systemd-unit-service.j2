@@ -50,6 +50,9 @@ ExecStartPre=/bin/sh -c 'mkdir -p {{ share_dir }}/{{ cluster_name }}'
 {% endif %}
 {% endfor %}
 
+# Swap off
+MemorySwapMax=0
+
 [Install]
 WantedBy={% if rootless == false %}multi-user.target{% else %}default.target{% endif %}
 
