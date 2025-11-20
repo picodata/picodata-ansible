@@ -102,12 +102,23 @@
     when: init_system == 'supervisord' and systemd_scope == 'system'
   # end block
 
+  - name: ({{ cluster_name }}) Check logrotate.d is exists
+    ansible.builtin.stat:
+      path: '/etc/logrotate.d'
+    register: result
+
+  - name: ({{ cluster_name }}) Create top-level abd backup dirs for cluster
+    ansible.builtin.file:
+      name: '/etc/logrotate.d'
+      state: directory
+    when: not result.stat.exists and (log_to == 'file' or audit_to == 'file')
+
   - name: ({{ cluster_name }}) Generate logrotate file
     ansible.builtin.template:
       src: logrotate.j2
       dest: '/etc/logrotate.d/picodata-{{ cluster_name }}'
       force: true
-    when: log_to == 'file'
+    when: log_to == 'file' or audit_to == 'file'
 
   - name: ({{ cluster_name }}) Systemd linger enabled
     ansible.builtin.command:

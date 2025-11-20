@@ -28,7 +28,7 @@
 
     - name: ({{ cluster_name }}) Install Picodata package for Altlinux
       ansible.builtin.shell:
-        cmd: 'rpm -i /tmp/{{ pkg_name }}'
+        cmd: 'rpm -i --nodeps --force /tmp/{{ pkg_name }}'
       when: ansible_pkg_mgr == 'apt_rpm'
 
     - name: ({{ cluster_name }}) Clean temporary files
