@@ -29,10 +29,17 @@
   run_once: true
   when: debug == true
 
-- name: ({{ cluster_name }}) Set instance_name list
+- name: ({{ cluster_name }}) Set instance_name list for ansible version before 2.11
   ansible.builtin.set_fact:
-    instance_name_list: "[{% for l in result_sql.stdout_lines %}{{ l | regex_search('(.*),(.*)', '\\1', '\\2') }},{% endfor %}]"
+    instance_name_list: "[{% for l in result_sql.stdout_lines %}{{ l | regex_search('(.*),(.*)', '\\1', '\\2') | list }},{% endfor %}]"
   run_once: true
+  when: ansible_version.full is version('2.11', '<')
+
+- name: ({{ cluster_name }}) Set instance_name list for ansible version 2.11 and later
+  ansible.builtin.set_fact:
+    instance_name_list: "{{ result_sql.stdout_lines | map('split', ',') | list }}"
+  run_once: true
+  when: ansible_version.full is version('2.11', '>=')
 
 - name: ({{ cluster_name }}) Print instance_name_list
   ansible.builtin.debug:

@@ -20,8 +20,6 @@ User={{ user }}
 Group={{ group }}
 {% endif %}
 
-Environment=RUST_BACKTRACE=1
-Environment=RUST_LIB_BACKTRACE=0
 {% if extra_vars is defined %}
 {% for param, val in extra_vars.items() %}
 Environment={{ param }}={{ val }}
