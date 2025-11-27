@@ -106,6 +106,39 @@
   loop_control:
     loop_var: instance
 
+- name: ({{ cluster_name }}) Process IP address replacements
+  block:
+    - name: ({{ cluster_name }}) Load IP replacements from file
+      ansible.builtin.include_vars:
+        file: "{{ ip_replacements_file }}"
+      changed_when: false
+
+    - name: ({{ cluster_name }}) Fill change-peer-addresses script template
+      ansible.builtin.template:
+        src: change-peer-addresses.lua.j2
+        dest: "{{ share_dir }}/{{ cluster_name }}/change-peer-addresses.lua"
+
+    - name: ({{ cluster_name }}) Run tarantool script after restore
+      become_user: '{{ systemd_user }}'
+      ansible.builtin.command:
+        cmd: '{{ bin_dir }}/picodata tarantool -- {{ share_dir }}/{{ cluster_name }}/change-peer-addresses.lua'
+      args:
+        chdir: '{{ data_dir }}/{{ cluster_name }}/{{ instance }}'
+      loop: '{{ instances_on_host }}'
+      loop_control:
+        loop_var: instance
+
+    - name: ({{ cluster_name }}) Replace IP addresses in instance configs
+      ansible.builtin.replace:
+        path: '{{ conf_dir }}/{{ cluster_name }}/{{ item.0 }}.conf'
+        regexp: '{{ item.1.old_ip }}'
+        replace: '{{ item.1.new_ip }}'
+      with_nested:
+        - "{{ instances_on_host }}"
+        - "{{ pd_restore_ip_replacements }}"
+
+  when: ip_replacements_file is defined
+
 # picodata restore запускается под become-юзером, поэтому принудительно меняем владельца на файлы
 - name: ({{ cluster_name }}) Cange files ownership in instance_dir
   ansible.builtin.file:

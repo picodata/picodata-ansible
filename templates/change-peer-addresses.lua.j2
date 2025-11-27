@@ -1,0 +1,68 @@
+local yaml = require 'yaml'
+
+box.cfg()
+
+local ip_replacements = {
+{% for item in pd_restore_ip_replacements %}
+    ["{{ item.old_ip }}"] = "{{ item.new_ip }}",
+{% endfor %}
+}
+
+{% raw %}
+print("=== СЛОВАРЬ ЗАМЕН АДРЕСОВ ===")
+for old_ip, new_ip in pairs(ip_replacements) do
+    print(string.format("  %s -> %s", old_ip, new_ip))
+end
+print("==============================")
+print("")
+
+local updated_count = 0
+local skipped_count = 0
+local error_count = 0
+
+for _, row in box.space._pico_peer_address:pairs() do
+    local current_ip, current_port = row.address:match("^([^:]+):(%d+)$")
+    
+    if not current_ip then
+        print(string.format("Некорректный формат адреса: %s", row.address))
+        error_count = error_count + 1
+    else
+        local new_ip = ip_replacements[current_ip]
+        
+        if new_ip then
+            local new_address = new_ip .. ":" .. current_port
+            box.space._pico_peer_address:update(
+                {row.raft_id, row.connection_type}, 
+                {{'=', 2, new_address}}
+            )
+            updated_count = updated_count + 1
+            print(string.format("✓ Обновлен адрес для raft_id %s: %s -> %s", 
+                  row.raft_id, row.address, new_address))
+        else
+            skipped_count = skipped_count + 1
+            print(string.format("✗ Пропущен адрес: %s (raft_id: %s) - нет замены", 
+                  row.address, row.raft_id))
+        end
+    end
+end
+
+print("")
+print("=== РЕЗУЛЬТАТЫ МИГРАЦИИ ===")
+print(string.format("Обновлено записей: %d", updated_count))
+print(string.format("Пропущено записей: %d", skipped_count))
+print(string.format("Ошибок формата: %d", error_count))
+print("===========================")
+
+local result = box.execute [[
+    SELECT "name", "connection_type", "address" FROM "_pico_instance"
+        JOIN "_pico_peer_address" ON "_pico_peer_address"."raft_id" = "_pico_instance"."raft_id"
+]]
+
+print("")
+print("###########################################")
+print("Миграция завершена успешно!")
+print("Текущие адреса в системе:")
+print(yaml.encode(result.rows))
+print("Отключаюсь...")
+os.exit(0)
+{% endraw %}
