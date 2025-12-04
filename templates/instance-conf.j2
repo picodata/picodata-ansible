@@ -81,4 +81,6 @@ instance:
   {{ tier.value.config | to_nice_yaml(indent=2) | indent(width=2) }}
 {% endif %}
 
+{% if picodata_version is version('25.4.1', '>=') %}
   backup_dir: '{{ backup_dir }}/{{ cluster_name }}/{{ instance_name }}'
+{% endif %}

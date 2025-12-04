@@ -45,6 +45,12 @@ vinyl:
   range_size: 1G
 ```
 
+а также настройки кластера:
+```yml
+pg_ssl: false
+iproto_tls: false
+```
+
 Пример команды для бэкапа кластера:
 ```bash
 ansible-playbook -i hosts.yml picodata.yml -t backup
