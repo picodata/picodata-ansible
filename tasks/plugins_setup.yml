@@ -29,32 +29,14 @@
     ansible.builtin.set_fact:
       manifest_file: "{{ archive.files | select('ansible.builtin.search', '.*/manifest.yaml$') | list | first }}"
 
-  - name: ({{ cluster_name }}) Create temporary directory {{ plugin.key }}
-    become: false
-    ansible.builtin.tempfile:
-      state: directory
-      suffix: build
-    delegate_to: localhost
-    register: tempdir
+  - name: ({{ cluster_name }}) Load manifest file {{ plugin.key }}
+    ansible.builtin.slurp:
+      src: '{{ plugins_dir }}/{{ manifest_file }}'
+    register: manifest_slurp
 
-  - name: ({{ cluster_name }}) Unarchive manifest file from package to temporary directory {{ plugin.key }}
-    become: false
-    ansible.builtin.command:
-      cmd: 'tar -C {{ tempdir.path }} -xvzf {{ plugin.value.path }} {{ manifest_file }}'
-    args:
-      creates: '{{ tempdir.path }}/{{ manifest_file }}'
-    delegate_to: localhost
-
-  - name: ({{ cluster_name }}) Load manifest file from temporary directory {{ plugin.key }}
+  - name: ({{ cluster_name }}) Set manifest variable {{ plugin.key }}
     ansible.builtin.set_fact:
-      manifest: "{{ lookup('file', '{{ tempdir.path }}/{{ manifest_file }}') | from_yaml }}"
-
-  - name: ({{ cluster_name }}) Remove temporary directory {{ plugin.key }}
-    become: false
-    ansible.builtin.file:
-      path: '{{ tempdir.path }}'
-      state: absent
-    delegate_to: localhost
+      manifest: '{{ manifest_slurp.content | b64decode | from_yaml }}'
 
   - name: ({{ cluster_name }}) Set empty value for conf variable if no config {{ plugin.key }}
     ansible.builtin.set_fact:
