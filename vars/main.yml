@@ -1,2 +1,47 @@
 ---
 # vars file for picodata-ansible
+
+# версия Failure Domain (FD) кластера - 1 или 2
+# в первой версии: "DC", "HOST"
+# во второй: "G", "H"
+ver_fd: '2'
+
+# пространство для управления службами systemd
+systemd_scope: 'system'
+# пользовать для управления службами systemd
+systemd_user: 'root'
+
+# создание ссылок с именами инстансов в случае автогенерации имен
+create_links: true
+
+# принудительно отправить сигнал SIGKILL во все процессы picodata
+sigkill: false
+
+# имя пакета picodata с версией для установки из репозитория
+package_with_version: picodata
+
+# стартовый номер тира при выполнении тега expand
+dict_start_num: {}
+
+# инициализация списков портов
+list_http: []
+list_pg: []
+list_bin: []
+
+# инициализация словаря с настройками systemd служб
+systemd_params: {}
+
+# инициализация словаря со списком количества инстансов на сервере для тиров
+dict_instances_per_server: {}
+
+# сбора информации для тега crash_dump без snap и xlog файлов
+skipdata: false
+
+# запускать инстансы после перезагрузки сервера при выполнении тега stop
+enable: true
+
+# инициализация словаря с плагинами
+plugins: {}
+
+# инициализация списка инстансов для создания ссылок на файлы
+instance_link: []

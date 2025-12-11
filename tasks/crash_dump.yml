@@ -7,7 +7,7 @@
 
 - name: ({{ cluster_name }}) Set list of directories to backup
   ansible.builtin.set_fact:
-    listdir: '{% if not skipdata | default(false) %}{{ data_dir }}/{{ cluster_name }} {% endif %}{{ conf_dir }}/{{ cluster_name }} {{ log_dir }}/{{ cluster_name }} {% if init_system == "supervisord" %}{{ supervisord_dir }}/{{ cluster_name }}{% else %}{{ systemd_dir }}/{{ cluster_name }}*  {{ systemd_dir }}/**/{{ cluster_name }}*{% endif %}'
+    listdir: '{% if not skipdata %}{{ data_dir }}/{{ cluster_name }} {% endif %}{{ conf_dir }}/{{ cluster_name }} {{ log_dir }}/{{ cluster_name }} {% if init_system == "supervisord" %}{{ supervisord_dir }}/{{ cluster_name }}{% else %}{{ systemd_dir }}/{{ cluster_name }}*  {{ systemd_dir }}/**/{{ cluster_name }}*{% endif %}'
   run_once: true
 
 - name: ({{ cluster_name }}) Set datetime for filename
@@ -93,6 +93,7 @@
     state: absent
 
 # `become: false` дабы не было OOM
+# https://github.com/ansible/ansible/issues/11702#issuecomment-224918570
 - name: ({{ cluster_name }}) Fetch crash dump from remote hosts
   become: false
   ansible.builtin.fetch:

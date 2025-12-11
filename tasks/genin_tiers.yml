@@ -54,7 +54,7 @@
 
 - name: ({{ cluster_name }}) genin Calculate instances_per_server for tier {{ tier.key }}
   ansible.builtin.set_fact:
-    dict_instances_per_server: '{{ dict_instances_per_server|default({}) | combine({tier.key: instances_per_server}) }}'
+    dict_instances_per_server: '{{ dict_instances_per_server | combine({tier.key: instances_per_server}) }}'
 
 # Check on shrink or expand of cluster
 - block:
@@ -88,7 +88,7 @@
 
   - name: ({{ cluster_name }}) genin Set start number from report file for tier {{ tier.key }}
     ansible.builtin.set_fact:
-     dict_start_num: '{{ dict_start_num|default({}) | combine({tier.key: start_num}) }}'
+     dict_start_num: '{{ dict_start_num | combine({tier.key: start_num}) }}'
 
   when: tag == 'expand' and props_from_report | default ({}) != {}
 # end block expand

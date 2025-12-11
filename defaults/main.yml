@@ -1,89 +1,140 @@
 ---
 # defaults file for picodata-ansible
 
-role_ver: 'master'
+# версия роли
+role_ver: '25.4.4-master'
 
+# репозиторий для установки пакетов
 repo: 'https://download.picodata.io' # value for nightly: https://download.binary.picodata.io
+# необходимость установки picodata из репозитория пакетов
 install_packages: true
+# путь до пакета Picodata, который нужно установить на серверах
 picodata_package_path: false
 
+# имя кластера
 cluster_name: 'demo'
+
+# аудит событий в кластере
 audit: true
+# место хранения аудит-файлов
 audit_to: 'syslog'
 
+# уровень логирования
 log_level: 'info'
+# формат отладочного журнала
 log_format: 'plain'
 
+# размещение настроечных файлов
 conf_dir: '/etc/picodata'
+# размещение данных
 data_dir: '/var/lib/picodata'
+# размещение служебных данных (плагинов)
 share_dir: '/usr/share/picodata'
+# размещение socket-файлов
 run_dir: '/var/run/picodata'
+# размещение файлов логирования и аудита
 log_dir: '/var/log/picodata'
+# корневой путь для размещения сертификатов
 cert_dir: '{{ conf_dir }}'
+# путь до исполняемого файла `picodata`
 bin_dir: '/usr/bin'
 
+# права, создаваемые на каталоги
 dir_mode: '0755'
 
+# место хранения лог-файлов
 log_to: 'syslog'
 
+# каталог для размещения бэкапов локально
 backup_dir: '{{ data_dir }}/backup'
+# необходимость скачивания бэкапов с серверов
 backup_fetch: false
+# каталог для размещения скачанных бэкапов на станции ansible с серверов кластера
 backup_fetch_dir: './backups'
+# копировать бэкап со станции бэкапа даже, если он есть на удаленных серверах
 force_copy_backup: false
 
+# размещение файлов с дампами на станции ansible при выполнении тега `crash_dump`
 crash_dump_fetch_dir: './crash_dumps'
 
+# начальные номера портов для бинарного, http и postgress-протокола инстансов кластера на каждом сервере
 first_bin_port: 13301
 first_http_port: 18001
 first_pg_port: 15001
 
+# признак использования протокола SSL при подключении к pgproto
 pg_ssl: false
+# признак использования mTLS внутри кластера
 iproto_tls: false
 
+# Jinja шаблон для определения адреса сервера
 listen_address: '{{ ansible_fqdn }}'
+# Jinja шаблон для определния адреса сервера для подключения по postgress-протоколу
 pg_address: '{{ ansible_fqdn }}'
 
-#Process Control System (systemd/supervisord)
+# система управления сервисами и процессами (systemd, supervisord)
 init_system: 'systemd'
 
-# for systemd
+# размещение systemd-файлов
 systemd_dir: '/etc/systemd/system'
-systemd_scope: 'system'
-systemd_user: 'root'
 
-# for supervisord
+# размещение кофигурационных файлов для supervisord
 supervisord_dir: '/etc/picodata/supervisord'
 
+# при выставлении этой переменной в `false` при удалении кластера будт оставлены файлы с данными, конфигурационные файлы и лог-файлы
 purge: true
+# режим безопасного удаления рабочих файлов инстанса путем многократной перезаписи специальными битовыми последовательностями
 shredding: false
 
+# имя пользователя и группы для файлов
 user: 'root'
 group: 'root'
 
-# for limited sudo rights. work only with init_system=supervisord!!!
+# установка кластера в режиме с ограниченными полномочиями (limited sudo rights)
 rootless: false
 
+# позволяет разворачивать репликасет из нескольких реплик на одном сервере
 # change this for test only!
 fd_uniq_per_instance: false
 
+# вывод отладочной информации
 debug: false
 
+# настройки systemd служб
 systemd_params_default:
   LimitNOFILE: '65535'        # Increase fd limit for Vinyl
   LimitCORE: 'infinity'       # Unlimited coredump file size
   TimeoutStartSec: '86400s'   # Systemd waits until all xlogs are recovered
   TimeoutStopSec: '20s'       # Give a reasonable amount of time to close xlogs
 
+# задеркжа между проверками доступности порта postgress-протокола в сек
 pg_port_delay: 5
 
+# размещение файла с отчетом об установленных инстансах
 report_dir: '..'
 
+# деплой кластера с автогенерацией имен инстансов
 autonames: true
-ver_fd: 2
 
+# рестартовать инстансы кластера после изменения конфигурации
 need_restart: true
 
+# время ожидания запуска инстанса в секундах
 timeout_admin_sock: 60
-retries_admin_sock: 1
+# количество попыток ожидания запуска инстанса
+retries_admin_sock: 2
 
+# удалять share_dir при удалении кластера
 remove_sharedir: true
+
+# количество серверов для одновременного рестарта
+serial_host_restart: 100
+
+# количество бакетов в каждом тире по умолчанию
+default_bucket_count: 30000
+
+# удаление пакета picodata с сервера вместе с кластером
+remove_pkg: false
+
+# пароль для сервисной учетной записи pico_service
+service_password: ''

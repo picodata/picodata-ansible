@@ -54,12 +54,12 @@
     - name: ({{ cluster_name }}) Install Picodata soft for rpm and deb based distrs
       ansible.builtin.package:
         name:
-          - '{{ package_with_version | default("picodata") }}'
+          - '{{ package_with_version }}'
       when: ansible_os_family != 'Altlinux'
 
     - name: ({{ cluster_name }}) Install Picodata soft for Altlinux based distrs
       ansible.builtin.shell:
-        cmd: 'apt-get update -f -m && apt-get install -y {{ package_with_version | default("picodata") }}'
+        cmd: 'apt-get update -f -m && apt-get install -y {{ package_with_version }}'
       when: ansible_os_family == 'Altlinux'
 
     - name: ({{ cluster_name }}) Clean temporary files

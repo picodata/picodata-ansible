@@ -38,12 +38,14 @@
 | ---      | ---      | ---      |
 | bin_dir | /usr/bin | путь до исполняемого файла `picodata` |
 | conf_dir | /etc/picodata | размещение настроечных файлов |
+| cert_dir | /etc/picodata | корневой путь для размещения сертификатов |
+| crash_dump_fetch_dir | ./crash_dumps | размещение файлов с дампами на станции ansible при выполнении тега `crash_dump` |
 | data_dir | /var/lib/picodata | размещение данных |
-| dir_mode | 0750 | права, создаваемые на каталоги |
+| dir_mode | 0755 | права, создаваемые на каталоги |
+| log_dir | /var/log/picodata | размещение файлов логирования и аудита |
 | report_dir | ../ | размещение файла с отчетом об установленных инстансах |
 | run_dir | /var/run/picodata | размещение socket-файлов |
 | share_dir | /usr/share/picodata | размещение служебных данных (плагинов) |
-cert_dir
 | supervisord_dir | /etc/picodata/supervisord | размещение кофигурационных файлов для supervisord |
 | systemd_dir | /etc/systemd/system | размещение systemd-файлов |
 
@@ -53,7 +55,6 @@ cert_dir
 | audit | true | аудит событий в кластере, при включении файлы будут размещаться в log_dir и начинаться с audit- |
 | audit_pipe_command | | перенаправление вывода сообщений аудита в подпроцесс через pipe |
 | audit_to | syslog | место хранения аудит-файлов. Возможные значения: syslog, file, pipe |
-| log_dir | /var/log/picodata | место для размещения файлов логирования и аудита |
 | log_format | plain | формат отладочного журнала (plain, json) |
 | log_level | info | уровень логирования. Возможные значения: fatal, system, error, crit, warn, info, verbose, debug |
 | log_pipe_command | | перенаправление вывода сообщений в подпроцесс через pipe |
@@ -65,7 +66,7 @@ cert_dir
 | first_bin_port | 13301 | начальный номер порта для бинарных портов инстансов кластера |
 | first_http_port | 18001 | начальный номер порта для http-портов инстансов кластера |
 | first_pg_port | 15001 | начальный номер порта для postgress-протокола инстансов кластера. Значение 0 выключает поддержку протокола postgress |
-| listen_address | `{{ansible_fqdn}}` | Jinja шаблон для определния адреса сервера. Для IP можно указать {{ansible_default_ipv4.address}} |
+| listen_address | `{{ansible_fqdn}}` | Jinja шаблон для определения адреса сервера. Для IP можно указать {{ansible_default_ipv4.address}} |
 | pg_address | `{{ansible_fqdn}}` | Jinja шаблон для определния адреса сервера для подключения по postgress-протоколу. Для IP можно указать {{ansible_default_ipv4.address}}. Обычно, совпадает с `listen_address`, используется, если вы хотите разнести внутренний и внешний траффик по разным сетевым интерфейсам |
 
 ## Бэкапы
@@ -73,7 +74,7 @@ cert_dir
 | ---      | ---      | ---      |
 | backup_dir | /var/lib/picodata/backups | каталог для размещения бэкапов локально |
 | backup_fetch | false | необходимость скачивания бэкапов с серверов, если выставлена в false, то бэкапы сохраняются только локально на серверах. Используется также и при восстановлении |
-| backup_fetch_dir | backups | каталог для размещения скачанных бэкапов с серверов кластера  |
+| backup_fetch_dir | backups | каталог для размещения скачанных бэкапов на станции ansible с серверов кластера  |
 | force_copy_backup | false | копировать бэкап со станции бэкапа даже, если он есть на удаленных серверах |
 | restore_dir | | указание каталога для восстановления кластера в формате YYYYMMDDhhmmss, если не указан, то будет браться последний из существующих |
 | ip_replacements_file | None | Путь к файлу со словарем замены старых ip-адресов на новые при восстановлении из резервной копии |

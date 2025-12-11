@@ -56,7 +56,7 @@
   ansible.builtin.copy:
     dest: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}/.picodata-cookie'
     content: |
-      {{ service_password | default("") }}
+      {{ service_password }}
 
     owner: '{{ user }}'
     group: '{{ group }}'

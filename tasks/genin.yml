@@ -89,7 +89,7 @@
 
   - name: ({{ cluster_name }}) genin Set dict_instances_per_server from props in report file
     ansible.builtin.set_fact:
-      dict_instances_per_server: '{{ dict_instances_per_server|default({}) | combine({tier.key: tier.value.instances_per_server}) }}'
+      dict_instances_per_server: '{{ dict_instances_per_server | combine({tier.key: tier.value.instances_per_server}) }}'
     loop: "{{ lookup('ansible.builtin.dict', props_from_report.tiers|default({}), wantlist=True) }}"
     loop_control:
       loop_var: tier
@@ -98,7 +98,7 @@
 
   - name: ({{ cluster_name }}) genin Set dict_instances_per_server from list_instance_names in report file
     ansible.builtin.set_fact:
-      dict_instances_per_server: '{{ dict_instances_per_server|default({}) | combine({tier.key: list_instance_names | select ("ansible.builtin.search", tier.key) | list | length}) }}'
+      dict_instances_per_server: '{{ dict_instances_per_server | combine({tier.key: list_instance_names | select ("ansible.builtin.search", tier.key) | list | length}) }}'
     loop: "{{ lookup('ansible.builtin.dict', tiers, wantlist=True) }}"
     loop_control:
       loop_var: tier
@@ -116,7 +116,7 @@
 - name: ({{ cluster_name }}) genin Set values from report file
   ansible.builtin.set_fact:
     autonames: '{{ props_from_report.autonames | default(false) }}'
-    ver_fd: '{{ props_from_report.ver_fd | default(2) }}'
+    ver_fd: '{{ props_from_report.ver_fd | default("2") }}'
     peer_list: '{{ props_from_report.peer_list | default([]) }}'
   when: props_from_report is defined
 
@@ -179,7 +179,7 @@
 
   - name: ({{ cluster_name }}) genin Set version of failure domain for compablility
     ansible.builtin.set_fact:
-      ver_fd: 1
+      ver_fd: '1'
     run_once: false
     when: '"DC" in config.instance.failure_domain | default({})'
 

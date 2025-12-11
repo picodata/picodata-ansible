@@ -26,12 +26,12 @@
   - name: ({{ cluster_name }}) Set actual failure domain
     ansible.builtin.set_fact:
       fd: '"G":"{{ group_names }}","H":"{{ inventory_hostname }}"'
-    when: ver_fd|int | default(2)   == 2
+    when: ver_fd == '2'
 
   - name: ({{ cluster_name }}) Set failure domain for previous version
     ansible.builtin.set_fact:
       fd: '"DC":"{{ group_names }}","HOST":"{{ inventory_hostname }}"'
-    when: ver_fd|int | default(2) == 1
+    when: ver_fd == '1'
 
   - name: ({{ cluster_name }}) Debug failure domain
     ansible.builtin.debug:
@@ -76,3 +76,13 @@
   ansible.builtin.include_tasks:
     file: make_links.yml
   when: autonames|bool == true
+
+- name: ({{ cluster_name }}) Print instances on hosts with autonames
+  ansible.builtin.debug:
+    var: list_instance_names | default(instances_on_host)
+  when: autonames|bool == true
+
+- name: ({{ cluster_name }}) Print instances on hosts without autonames
+  ansible.builtin.debug:
+    var: instances_on_host
+  when: autonames|bool == false

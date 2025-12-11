@@ -142,7 +142,7 @@
 - name: ({{ cluster_name }}) Send SIGKILL signals for all picodata processes on servers
   ansible.builtin.shell:
     cmd: '/usr/bin/pkill -9 picodata && sleep 10'
-  when: sigkill | default("false") == "true"
+  when: sigkill == "true"
   ignore_errors: True
 
 - block:

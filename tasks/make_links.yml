@@ -49,7 +49,7 @@
 
 - name: ({{ cluster_name }}) Set instance links
   ansible.builtin.set_fact:
-    instance_link: "{{ instance_link | default([]) + [[ instance_name_list | selectattr('1', 'equalto', item) | map(attribute='0') | list | last, instances_on_host[ansible_loop.index0] ]] }}"
+    instance_link: "{{ instance_link + [[ instance_name_list | selectattr('1', 'equalto', item) | map(attribute='0') | list | last, instances_on_host[ansible_loop.index0] ]] }}"
   loop: '{{ list_bin }}'
   loop_control:
     extended: true
@@ -152,4 +152,4 @@
 
     when: init_system == 'systemd'
 
-  when: create_links | default(true) == true
+  when: create_links == true

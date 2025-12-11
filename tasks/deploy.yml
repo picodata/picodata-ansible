@@ -122,7 +122,7 @@
 
 - name: ({{ cluster_name }}) Merge systemd params
   ansible.builtin.set_fact:
-    systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params|default({})) }}'
+    systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params) }}'
 
 - name: ({{ cluster_name }}) Debug systemd_params
   ansible.builtin.debug:
@@ -203,12 +203,12 @@
   - name: ({{ cluster_name }}) Set actual failure domain
     ansible.builtin.set_fact:
       fd: '"G":"{{ group_names }}","H":"{{ inventory_hostname }}"'
-    when: ver_fd|int | default(2) == 2
+    when: ver_fd == '2'
 
   - name: ({{ cluster_name }}) Set failure domain for previous version
     ansible.builtin.set_fact:
       fd: '"DC":"{{ group_names }}","HOST":"{{ inventory_hostname }}"'
-    when: ver_fd|int | default(2) == 1
+    when: ver_fd == '1'
 
   - name: ({{ cluster_name }}) Debug failure domain
     ansible.builtin.debug:

@@ -18,7 +18,7 @@
       name: '{{ cluster_name }}@{{ instance }}.service'
       state: stopped
       scope: '{{ systemd_scope }}'
-      enabled: '{{ enable | default(true) }}'
+      enabled: '{{ enable }}'
     loop: '{{ instances_filtered }}'
     loop_control:
       loop_var: instance
@@ -34,7 +34,7 @@
       name: '{{ cluster_name }}-{{ instance }}.service'
       state: stopped
       scope: '{{ systemd_scope }}'
-      enabled: '{{ enable | default(true) }}'
+      enabled: '{{ enable }}'
     loop: '{{ instances_filtered }}'
     loop_control:
       loop_var: instance

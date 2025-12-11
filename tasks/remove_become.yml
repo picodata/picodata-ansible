@@ -65,7 +65,7 @@
         cmd: 'apt-get remove -y picodata'
       when: ansible_pkg_mgr == 'apt_rpm'
 
-    when: remove_pkg | default('false') == 'true'
+    when: remove_pkg == 'true'
   # end block
 
   become: true
