@@ -122,7 +122,7 @@
 
 - name: ({{ cluster_name }}) Merge systemd params
   ansible.builtin.set_fact:
-    systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params) }}'
+    systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params | default({})) }}'
 
 - name: ({{ cluster_name }}) Debug systemd_params
   ansible.builtin.debug:
