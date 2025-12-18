@@ -40,6 +40,10 @@
   when: not fd_uniq_per_instance
 # end block
 
+- name: ({{ cluster_name }}) Merge systemd params
+  ansible.builtin.set_fact:
+    systemd_params: '{{ systemd_params_default | ansible.builtin.combine(systemd_params) }}'
+
 - name: ({{ cluster_name }}) Init start values
   ansible.builtin.set_fact:
     cnt: '{{ real_cnt | int }}'

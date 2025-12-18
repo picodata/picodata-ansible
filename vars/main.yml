@@ -28,9 +28,6 @@ list_http: []
 list_pg: []
 list_bin: []
 
-# инициализация словаря с настройками systemd служб
-systemd_params: {}
-
 # инициализация словаря со списком количества инстансов на сервере для тиров
 dict_instances_per_server: {}
 
