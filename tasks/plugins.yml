@@ -19,7 +19,7 @@
 - name: ({{ cluster_name }}) Plugins setup
   ansible.builtin.include_tasks:
     file: plugins_setup.yml
-  loop: "{{ lookup('ansible.builtin.dict', plugins, wantlist=True) }}"
+  loop: "{{ lookup('ansible.builtin.dict', plugins|default({}), wantlist=True) }}"
   loop_control:
     loop_var: plugin
     extended: true
