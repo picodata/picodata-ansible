@@ -8,6 +8,7 @@ ver_fd: '2'
 
 # пространство для управления службами systemd
 systemd_scope: 'system'
+
 # пользовать для управления службами systemd
 systemd_user: 'root'
 

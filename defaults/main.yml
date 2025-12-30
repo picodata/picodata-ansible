@@ -5,9 +5,11 @@
 role_ver: '25.4.4-master'
 
 # репозиторий для установки пакетов
-repo: 'https://download.picodata.io' # value for nightly: https://download.binary.picodata.io
+repo: 'https://download.picodata.io'
+
 # необходимость установки picodata из репозитория пакетов
 install_packages: true
+
 # путь до пакета Picodata, который нужно установить на серверах
 picodata_package_path: false
 
@@ -16,41 +18,52 @@ cluster_name: 'demo'
 
 # аудит событий в кластере
 audit: true
+
 # место хранения аудит-файлов
 audit_to: 'syslog'
 
 # уровень логирования
 log_level: 'info'
+
 # формат отладочного журнала
 log_format: 'plain'
 
+# место хранения лог-файлов
+log_to: 'syslog'
+
 # размещение настроечных файлов
 conf_dir: '/etc/picodata'
+
 # размещение данных
 data_dir: '/var/lib/picodata'
+
 # размещение служебных данных (плагинов)
 share_dir: '/usr/share/picodata'
+
 # размещение socket-файлов
 run_dir: '/var/run/picodata'
+
 # размещение файлов логирования и аудита
 log_dir: '/var/log/picodata'
+
 # корневой путь для размещения сертификатов
 cert_dir: '{{ conf_dir }}'
+
 # путь до исполняемого файла `picodata`
 bin_dir: '/usr/bin'
 
 # права, создаваемые на каталоги
 dir_mode: '0755'
 
-# место хранения лог-файлов
-log_to: 'syslog'
-
 # каталог для размещения бэкапов локально
 backup_dir: '{{ data_dir }}/backup'
-# необходимость скачивания бэкапов с серверов
+
+# сохранение резервных копий на управляющий хост (станцию ansible)
 backup_fetch: false
+
 # каталог для размещения скачанных бэкапов на станции ansible с серверов кластера
 backup_fetch_dir: './backups'
+
 # копировать бэкап со станции бэкапа даже, если он есть на удаленных серверах
 force_copy_backup: false
 
@@ -64,15 +77,17 @@ first_pg_port: 15001
 
 # признак использования протокола SSL при подключении к pgproto
 pg_ssl: false
+
 # признак использования mTLS внутри кластера
 iproto_tls: false
 
-# Jinja шаблон для определения адреса сервера
+# jinja шаблон для определения адреса сервера
 listen_address: '{{ ansible_fqdn }}'
+
 # Jinja шаблон для определния адреса сервера для подключения по postgress-протоколу
 pg_address: '{{ ansible_fqdn }}'
 
-# система управления сервисами и процессами (systemd, supervisord)
+# система управления сервисами и процессами
 init_system: 'systemd'
 
 # размещение systemd-файлов
@@ -83,6 +98,7 @@ supervisord_dir: '/etc/picodata/supervisord'
 
 # при выставлении этой переменной в `false` при удалении кластера будт оставлены файлы с данными, конфигурационные файлы и лог-файлы
 purge: true
+
 # режим безопасного удаления рабочих файлов инстанса путем многократной перезаписи специальными битовыми последовательностями
 shredding: false
 
@@ -97,7 +113,7 @@ rootless: false
 # change this for test only!
 fd_uniq_per_instance: false
 
-# вывод отладочной информации
+# вывод отладочной информации при выполнении роли
 debug: false
 
 # настройки systemd служб
@@ -121,6 +137,7 @@ need_restart: true
 
 # время ожидания запуска инстанса в секундах
 timeout_admin_sock: 60
+
 # количество попыток ожидания запуска инстанса
 retries_admin_sock: 2
 
