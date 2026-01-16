@@ -94,7 +94,7 @@
       - name: ({{ cluster_name }}) Count of already installed plugin {{ plugin.key }}
         ansible.builtin.shell:
           cmd: >
-              echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=false" |
+              echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=false order by version limit 1" |
               {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
               grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
         register: plugin_old_version
