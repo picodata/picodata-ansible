@@ -13,6 +13,9 @@ install_packages: true
 # путь до пакета Picodata, который нужно установить на серверах
 picodata_package_path: false
 
+# имя пакета picodata с версией для установки из репозитория
+package_with_version: picodata
+
 # имя кластера
 cluster_name: 'demo'
 

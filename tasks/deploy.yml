@@ -59,6 +59,7 @@
     - '{{ cert_dir }}/{{ cluster_name }}'
     - '{{ cert_dir }}/{{ cluster_name }}/pg'
     - '{{ cert_dir }}/{{ cluster_name }}/iproto'
+    - '{{ cert_dir }}/{{ cluster_name }}/https'
 
 - name: ({{ cluster_name }}) Create dirs for crash_dumps
   ansible.builtin.file:
@@ -194,6 +195,32 @@
     - { filename: '{{ iproto_key_file }}', mode: '0640' }
     - { filename: '{{ iproto_ca_file }}', mode: '0644' }
   when: iproto_tls == true
+
+- block:
+  - name: ({{ cluster_name }}) Copy certs for https
+    become: true
+    ansible.builtin.copy:
+      src: '{{ item.filename }}'
+      dest: '{{ cert_dir }}/{{ cluster_name }}/https/'
+      mode: '{{ item.mode }}'
+      owner: '{{ user }}'
+      group: '{{ group }}'
+    loop:
+      - { filename: '{{ https_cert_file }}', mode: '0644' }
+      - { filename: '{{ https_key_file }}', mode: '0640' }
+
+  - name: ({{ cluster_name }}) Copy password file for https key
+    become: true
+    ansible.builtin.copy:
+      src: '{{ https_password_file }}'
+      dest: '{{ cert_dir }}/{{ cluster_name }}/https/'
+      mode: '0600'
+      owner: '{{ user }}'
+      group: '{{ group }}'
+    when: https_password_file is defined and https_password_file != ''
+
+  when: https == true
+# end block
 
 - name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.include_tasks:

@@ -40,7 +40,7 @@ instance:
   pg:
     listen: '0.0.0.0:{{ list_pg[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
     advertise: '{{ list_pg[instance_index | int] }}'
-    ssl: {{ pg_ssl }}
+    ssl: {{ pg_ssl | tojson }}
 {% if pg_ssl == true and picodata_version is version('25.4.3', '>=') %}
     cert_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_cert_file | basename }}
     key_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_key_file | basename }}
@@ -56,6 +56,16 @@ instance:
 {% elif picodata_version is version('25.4.1', '>=') %}
   iproto_tls:
     enabled: false
+{% endif %}
+
+{% if https == true and picodata_version is version('25.5.1', '>=') %}
+  https:
+    enabled: true
+    cert_file: {{ cert_dir }}/{{ cluster_name }}/https/{{ https_cert_file | basename }}
+    key_file: {{ cert_dir }}/{{ cluster_name }}/https/{{ https_key_file | basename }}
+{% if https_password_file is defined and https_password_file != '' %}
+    password_file: {{ cert_dir }}/{{ cluster_name }}/https/{{ https_password_file | basename }}
+{% endif %}
 {% endif %}
 
   share_dir: '{{ share_dir }}/{{ cluster_name }}'

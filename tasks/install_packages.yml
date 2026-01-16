@@ -51,6 +51,10 @@
       ansible.builtin.command:
         cmd: 'sh -c ./install.sh'
 
+    - name: Print version of picodata for install
+      debug:
+        var: package_with_version
+
     - name: ({{ cluster_name }}) Install Picodata soft for rpm and deb based distrs
       ansible.builtin.package:
         name:

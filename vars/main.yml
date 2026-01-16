@@ -18,9 +18,6 @@ create_links: true
 # принудительно отправить сигнал SIGKILL во все процессы picodata
 sigkill: false
 
-# имя пакета picodata с версией для установки из репозитория
-package_with_version: picodata
-
 # стартовый номер тира при выполнении тега expand
 dict_start_num: {}
 
