@@ -58,7 +58,7 @@ instance:
     enabled: false
 {% endif %}
 
-{% if https == true and picodata_version is version('25.5.1', '>=') %}
+{% if https | bool == true and picodata_version is version('25.5.1', '>=') %}
   https:
     enabled: true
     cert_file: {{ cert_dir }}/{{ cluster_name }}/https/{{ https_cert_file | basename }}

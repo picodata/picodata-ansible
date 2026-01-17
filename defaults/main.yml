@@ -84,6 +84,9 @@ pg_ssl: false
 # признак использования mTLS внутри кластера
 iproto_tls: false
 
+# признак использования https для WebUI и метрик
+https: false
+
 # jinja шаблон для определения адреса сервера
 listen_address: '{{ ansible_fqdn }}'
 
