@@ -22,6 +22,8 @@
     loop: '{{ instances_on_host }}'
     loop_control:
       loop_var: instance
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
     when: autonames|bool == false
 
   - name: ({{ cluster_name }}) Unload log files from journald to log_dir
@@ -30,6 +32,8 @@
     loop: '{{ instances_on_host }}'
     loop_control:
       loop_var: instance
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
     when: autonames|bool == true
 
   when: init_system == 'systemd'
