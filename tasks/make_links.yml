@@ -75,7 +75,7 @@
 
   - name: ({{ cluster_name }}) Clean aliases for systemd
     ansible.builtin.command:
-      cmd: 'find "{{ systemd_dir }}" -name "{{ cluster_name }}-*.service" -maxdepth 1 -type l -delete'
+      cmd: 'find "{{ systemd_dir }}" -maxdepth 1 -name "{{ cluster_name }}-*.service" -type l -delete'
     when: init_system == 'systemd'
 
   - name: ({{ cluster_name }}) Make links on data
