@@ -2,7 +2,7 @@
 # defaults file for picodata-ansible
 
 # версия роли
-role_ver: '25.5.3-master'
+role_ver: '25.5.3'
 
 # репозиторий для установки пакетов
 repo: 'https://download.picodata.io'
