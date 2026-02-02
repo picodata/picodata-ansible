@@ -126,7 +126,7 @@
     ansible.builtin.replace:
       path: '{{ conf_dir }}/{{ cluster_name }}/{{ instance[1] | basename }}.conf'
       regexp: "^#  name: '.*'$"
-      replace: "  name: '{{ instance[0] }}'"
+      replace: "#  name: '{{ instance[0] }}'"
       after: 'instance:'
       before: '  peer: .*'
     loop: '{{ instance_link }}'

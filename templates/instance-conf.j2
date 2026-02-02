@@ -22,7 +22,7 @@ instance:
   name: '{{ instance_name }}'
 {% else %}
 {% if list_instance_names is defined and first_deploy == false and tag != 'expand' %}
-  name: '{{ list_instance_names[instance_index | int] }}'
+#  name: '{{ list_instance_names[instance_index | int] }}'
 {% else %}
 #  name: '{{ instance_name }}'
 {% endif %}
