@@ -3,7 +3,7 @@
 instance_units:
 {{ instances_on_host | to_nice_yaml(sort_keys=false) }}
 
-{% if autonames  == true %}
+{% if autonames  == true and list_instance_names %}
 instance_names:
 {{ list_instance_names | list | to_nice_yaml(sort_keys=false) }}
 {% endif %}

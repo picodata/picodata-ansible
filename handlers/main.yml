@@ -57,6 +57,7 @@
   ansible.builtin.template:
     src: report_all.j2
     dest: '{{ report_dir }}/report.yml'
+    mode: '0666'
   delegate_to: localhost
   run_once: true
   listen: refactor

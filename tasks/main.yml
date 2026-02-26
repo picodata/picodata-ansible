@@ -42,6 +42,11 @@
       var: all_hosts
     when: debug == true
 
+  - name: ({{ cluster_name }}) Set listen address for every host
+    ansible.builtin.set_fact:
+      listen_address: "{{ listen_address }}"
+    when: hostvars[inventory_hostname]['listen_address'] is undefined
+
   tags: [ always ]
 # end block
 

@@ -6,62 +6,82 @@
     file: genin.yml
   when: not instances_on_host | default([])
 
+- name: ({{ cluster_name }}) Set init variables
+  ansible.builtin.set_fact:
+    start_num: 1
+    instance_link_new: []
+
+- name: ({{ cluster_name }}) Set start number if expanded
+  ansible.builtin.set_fact:
+    start_num: '{{ real_cnt | int + 1 }}'
+  when: tag == 'expand'
+
+- name: ({{ cluster_name }}) Print start_num
+  ansible.builtin.debug:
+    var: start_num
+  when: debug == true
+
 - name: ({{ cluster_name }}) Get information from service tables
   ansible.builtin.shell:
     cmd: >
-         echo "SELECT i.name, p.address FROM _pico_instance AS i JOIN _pico_peer_address AS p ON i.raft_id=p.raft_id WHERE connection_type='iproto'" |
+         echo "
+         SELECT *
+         FROM ( SELECT i.name, p.address, substring(p.address, ':(.*)')::INT - {{ first_bin_port }} + 1 as num
+                FROM _pico_instance AS i
+                JOIN _pico_peer_address AS p ON i.raft_id=p.raft_id
+                WHERE connection_type='iproto' and substring(p.address, '(.*):.*') = '{{ listen_address }}' )
+         WHERE num>={{ start_num }}" |
          {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock  |
-         grep '|' | grep -v '+-' | grep -Ev 'name.* | address' | tr -d ' ' | cut -f 2-3 -d '|' | tr '|' ','
+         grep '|' | grep -v '+-' | grep -Ev 'name.* | address' | tr -d ' ' | cut -f 2-4 -d '|' | tr '|' ','
   register: result_sql
-  run_once: true
   changed_when: false
-
-- name: ({{ cluster_name }}) Check list of instances
-  ansible.builtin.fail:
-    msg: 'Ошибка! Список инстансов пуст!'
-  when: not result_sql.stdout
-  run_once: true
-  delegate_to: localhost
 
 - name: ({{ cluster_name }}) Print result_sql
   ansible.builtin.debug:
     var: result_sql
-  run_once: true
   when: debug == true
 
 - name: ({{ cluster_name }}) Set instance_name list for ansible version before 2.11
   ansible.builtin.set_fact:
-    instance_name_list: "[{% for l in result_sql.stdout_lines %}{{ l | regex_search('(.*),(.*)', '\\1', '\\2') | list }},{% endfor %}]"
-  run_once: true
+    instance_name_list: "[{% for l in result_sql.stdout_lines %}{{ l | regex_search('(.*),(.*),(.*)', '\\1', '\\2', '\\3') | list }},{% endfor %}]"
   when: ansible_version.full is version('2.11', '<')
 
 - name: ({{ cluster_name }}) Set instance_name list for ansible version 2.11 and later
   ansible.builtin.set_fact:
     instance_name_list: "{{ result_sql.stdout_lines | map('split', ',') | list }}"
-  run_once: true
   when: ansible_version.full is version('2.11', '>=')
 
 - name: ({{ cluster_name }}) Print instance_name_list
   ansible.builtin.debug:
     var: instance_name_list
-  run_once: true
   when: debug == true
 
 - name: ({{ cluster_name }}) Set instance links
   ansible.builtin.set_fact:
-    instance_link: "{{ instance_link + [[ instance_name_list | selectattr('1', 'equalto', item) | map(attribute='0') | list | last, instances_on_host[ansible_loop.index0] ]] }}"
-  loop: '{{ list_bin }}'
+    instance_link_new: "{{ instance_link_new | default([]) + [[ item.0 , '%03d' | format(item.2|int) ]] }}"
+  loop: '{{ instance_name_list }}'
   loop_control:
     extended: true
 
-- name: ({{ cluster_name }}) Print instance_link
+- name: ({{ cluster_name }}) Print list_instance_names
   ansible.builtin.debug:
-    msg: "{{ instance_link }}"
+    msg: "{{ list_instance_names }}"
   when: debug == true
 
-- name: ({{ cluster_name }}) Set list_instance_names
+- name: ({{ cluster_name }}) Print instance_link_new
+  ansible.builtin.debug:
+    msg: "{{ instance_link_new }}"
+  when: debug == true
+
+- name: ({{ cluster_name }}) Set list_instance_names for default
   ansible.builtin.set_fact:
-    list_instance_names: "{{ instance_link | map(attribute='0') | list }}"
+    list_instance_names: "{{ instance_link_new | map(attribute='0') | list }}"
+  when: start_num|int == 1
+
+- name: ({{ cluster_name }}) Set list_instance_names when expand
+  ansible.builtin.set_fact:
+    list_instance_names: "{{ list_instance_names + instance_link_new | map(attribute='0') | list }}"
+  when: start_num|int > 1
 
 - block:
   - name: ({{ cluster_name }}) Clean all links
@@ -72,17 +92,18 @@
       - '{{ conf_dir }}/{{ cluster_name }}'
       - '{{ run_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
+    when: start_num|int == 1
 
   - name: ({{ cluster_name }}) Clean aliases for systemd
     ansible.builtin.command:
       cmd: 'find "{{ systemd_dir }}" -maxdepth 1 -name "{{ cluster_name }}-*.service" -type l -delete'
-    when: init_system == 'systemd'
+    when: init_system == 'systemd' and start_num == 1
 
   - name: ({{ cluster_name }}) Make links on data
     ansible.builtin.command:
       chdir: '{{ data_dir }}/{{ cluster_name }}'
       cmd: 'ln -f -s {{ instance[1] | basename }} {{ instance[0] }}'
-    loop: '{{ instance_link }}'
+    loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
     notify:
@@ -92,7 +113,7 @@
     ansible.builtin.command:
       chdir: '{{ conf_dir }}/{{ cluster_name }}'
       cmd: 'ln -f -s {{ instance[1] | basename }}.conf {{ instance[0] }}.conf'
-    loop: '{{ instance_link }}'
+    loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
 
@@ -100,7 +121,7 @@
     ansible.builtin.command:
       chdir: '{{ run_dir }}/{{ cluster_name }}'
       cmd: 'ln -f -s {{ instance[1] | basename }}.sock {{ instance[0] }}.sock'
-    loop: '{{ instance_link }}'
+    loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
 
@@ -108,7 +129,7 @@
     ansible.builtin.command:
       chdir: '{{ log_dir }}/{{ cluster_name }}'
       cmd: 'ln -f -s {{ instance[1] | basename }}.log {{ instance[0] }}.log'
-    loop: '{{ instance_link }}'
+    loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
     when: log_to == 'file'
@@ -117,10 +138,10 @@
     ansible.builtin.command:
       chdir: '{{ log_dir }}/{{ cluster_name }}'
       cmd: 'ln -f -s audit-{{ instance[1] | basename }}.log audit-{{ instance[0] }}.log'
-    loop: '{{ instance_link }}'
+    loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
-    when: audit == True
+    when: audit == True and audit_to == 'file'
 
   - name: ({{ cluster_name }}) Patch instance name in config file
     ansible.builtin.replace:
@@ -129,7 +150,7 @@
       replace: "#  name: '{{ instance[0] }}'"
       after: 'instance:'
       before: '  peer: .*'
-    loop: '{{ instance_link }}'
+    loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
 
@@ -139,7 +160,7 @@
       ansible.builtin.command:
         chdir: '{{ systemd_dir }}'
         cmd: 'ln -f -s {{ cluster_name }}-{{ instance[1] | basename }}.service {{ cluster_name }}-{{ instance[0] }}.service'
-      loop: '{{ instance_link }}'
+      loop: '{{ instance_link_new }}'
       loop_control:
         loop_var: instance
 
