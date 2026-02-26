@@ -2,9 +2,9 @@
 
 [Unit]
 {% if autonames == true %}
-Description=Picodata cluster {{ cluster_name }}-{{ instance_name }}
+Description=Picodata instance {{ cluster_name }}-{{ instance_name }}
 {% else %}
-Description=Picodata cluster {{ cluster_name }}@%i
+Description=Picodata instance {{ cluster_name }}@%i
 {% endif %}
 After=network.target
 StartLimitIntervalSec=600
