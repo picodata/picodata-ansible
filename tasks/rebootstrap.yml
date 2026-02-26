@@ -187,13 +187,21 @@
            find {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }} -name "*.run" -delete;
 
 # - start unit (systemctl or supervisord)
-  - name: ({{ cluster_name }}) Start intsance {{ instance }} systemd service
-    ansible.builtin.systemd:
-      name: '{% set delim = "@" %}{% if autonames == true %}{% set delim = "-" %}{% endif %}{{ cluster_name }}{{ delim }}{{ instances_on_host[ instance_index|int ] }}'
-      state: started
-      scope: '{{ systemd_scope }}'
-    environment:
-      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+  - block:
+    - name: Reset failed systemd service for intsance {{ instance }}
+      ansible.builtin.command:
+        cmd: 'systemctl reset-failed --{{ systemd_scope }} {% set delim = "@" %}{% if autonames == true %}{% set delim = "-" %}{% endif %}{{ cluster_name }}{{ delim }}{{ instances_on_host[ instance_index|int ] }}'
+      environment:
+        XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+      changed_when: false
+
+    - name: ({{ cluster_name }}) Start intsance {{ instance }} systemd service
+      ansible.builtin.systemd:
+        name: '{% set delim = "@" %}{% if autonames == true %}{% set delim = "-" %}{% endif %}{{ cluster_name }}{{ delim }}{{ instances_on_host[ instance_index|int ] }}'
+        state: started
+        scope: '{{ systemd_scope }}'
+      environment:
+        XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
     when: init_system == 'systemd'
 
   - name: ({{ cluster_name }}) Start intsance {{ instance }} supervisord service
