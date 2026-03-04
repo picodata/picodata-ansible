@@ -1,6 +1,11 @@
 ---
 # tasks for create report files
 
+- name: ({{ cluster_name }}) Remove report.yml
+  ansible.builtin.file:
+    name: '{{ report_dir }}/report.yml'
+    state: absent
+
 # Set variables for work
 - name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.include_tasks:
