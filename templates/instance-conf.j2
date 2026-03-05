@@ -80,7 +80,7 @@ instance:
 {% endif %}
 
   log:
-    level: {{ log_level }}
+    level: {{ tier.value.log_level | default(log_level) }}
 {% if log_to == "file" %}
     destination: '{{ log_dir }}/{{ cluster_name }}/{{ instance_name }}.log'
 {% elif log_to == "pipe" and log_pipe_command is defined %}

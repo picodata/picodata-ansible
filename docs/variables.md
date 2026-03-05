@@ -114,6 +114,7 @@
 | db_config | {} | словарь с [параметрами конфигурации кластера](https://docs.picodata.io/picodata/stable/reference/db_config/) для тира |
 | extra_vars | {} | словарь с дополнительными переменными окружения для конкретного тира |
 | instances_per_server | 1 | количество инстансов тира на каждом сервере. Данный параметр более приоритетен, чем `replicaset_count` |
+| log_level | info | уровень журналирования для инстансов тира. Возможные значения: `fatal`, `system`, `error`, `crit`, `warn`, `info`, `verbose`, `debug` |
 | replicaset_count | 1 | количество репликасетов в тире |
 | replication_factor | 1 | фактор репликации |
 | systemd_params | {} | словарь с [настройками для Systemd](systemd.md) |
