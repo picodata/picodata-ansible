@@ -5,8 +5,8 @@
     rotate 10
     compress
     create 0640 {{ user }} {{ group }}
-    postrotate
     sharedscripts
+    postrotate
 {% if init_system == 'supervisord' %}
         /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf signal HUP all
 {% else %}

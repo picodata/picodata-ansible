@@ -1,4 +1,6 @@
 galaxy_info:
+  role_name: picodata-ansible
+
   author: Dmitry Kibirev
   description: Ansible role for deploy Picodata cluster
   company: Picodata
