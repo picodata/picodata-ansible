@@ -13,11 +13,6 @@
   run_once: true
   delegate_to: localhost
 
-- name: ({{ cluster_name }}) Set listen address for every host
-  ansible.builtin.set_fact:
-    listen_address: "{{ listen_address }}"
-  when: hostvars[inventory_hostname]['listen_address'] is undefined
-
 - name: ({{ cluster_name }}) Check picodata is installed
   ansible.builtin.stat:
     path: '{{ bin_dir }}/picodata'
@@ -141,6 +136,39 @@
   when: init_system == 'systemd' and autonames|bool == false
   notify:
     - restart
+
+- block:
+
+  - name: ({{ cluster_name }}) Generate logrotate timer for rootless
+    ansible.builtin.template:
+      src: logrotate.timer.j2
+      dest: '{{ systemd_dir }}/logrotate-{{ cluster_name }}.timer'
+
+  - name: ({{ cluster_name }}) Generate logrotate service for rootless
+    ansible.builtin.template:
+      src: 'logrotate.service.j2'
+      dest: '{{ systemd_dir }}/logrotate-{{ cluster_name }}.service'
+
+  - name: ({{ cluster_name }}) Generate logrotate file for rootless
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: '{{ ansible_user_dir }}/.config/logrotate-{{ cluster_name }}.conf'
+      force: true
+
+  - name: ({{ cluster_name }}) Enable logrotate systemd services for rootless
+    ansible.builtin.systemd:
+      name: 'logrotate-{{ cluster_name }}.timer'
+      enabled: true
+      state: started
+      daemon_reload: true
+      scope: '{{ systemd_scope }}'
+      force: true
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+
+  become: true
+  become_user: '{{ systemd_user }}'
+  when: (log_to == 'file' or audit_to == 'file') and (rootless == true or init_system == 'systemd')
 
 - name: ({{ cluster_name }}) Debug db_config
   debug:

@@ -1,0 +1,7 @@
+[Unit]
+Description=Daily User Logrotate for Picodata {{ cluster_name }}
+[Timer]
+OnCalendar=daily
+Persistent=true
+[Install]
+WantedBy=timers.target

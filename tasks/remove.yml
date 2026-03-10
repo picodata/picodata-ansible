@@ -83,6 +83,16 @@
 
     when: autonames|bool == true
 
+  - name: ({{ cluster_name }}) Remove logrotate systemd timer
+    ansible.builtin.systemd:
+      name: 'logrotate-{{ cluster_name }}.timer'
+      enabled: false
+      state: stopped
+      scope: '{{ systemd_scope }}'
+    ignore_errors: True
+    environment:
+      XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
+
   - name: Reset failed systemd service
     ansible.builtin.command:
       cmd: 'systemctl reset-failed --{{ systemd_scope }} {{ cluster_name }}* --all'
@@ -96,6 +106,16 @@
       scope: '{{ systemd_scope }}'
     environment:
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+
+  - name: ({{ cluster_name }}) Remove logrotate files for rootless
+    ansible.builtin.file:
+      name: '{{ item }}'
+      state: absent
+    loop:
+      - '{{ systemd_dir }}/logrotate-{{ cluster_name }}.service'
+      - '{{ systemd_dir }}/logrotate-{{ cluster_name }}.timer'
+      - '{{ ansible_user_dir }}/.config/logrotate-{{ cluster_name }}.conf'
+    when: rootless == true
 
   become: true
   become_user: '{{ systemd_user }}'

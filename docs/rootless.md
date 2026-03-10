@@ -62,6 +62,7 @@ rootless: true
 - name: Deploy picodata cluster
   hosts: all
   become: true
+  any_errors_fatal: true
 
   tasks:
 

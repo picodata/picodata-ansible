@@ -10,9 +10,9 @@
         /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf signal HUP all
 {% else %}
 {% if autonames == false %}
-        /usr/bin/systemctl kill -s HUP {{ cluster_name }}@*
+        /usr/bin/systemctl kill {% if rootless == true %}--user{% endif %} --all -s HUP {{ cluster_name }}@*
 {% else %}
-        /usr/bin/systemctl kill -s HUP {{ cluster_name }}-*
+        /usr/bin/systemctl kill {% if rootless == true %}--user{% endif %} --all -s HUP {{ cluster_name }}-???
 {% endif %}
 {% endif %}
     endscript
