@@ -1,7 +1,6 @@
 {{ ansible_managed | comment }}
-
 [Unit]
 Description=User Logrotate Service for picodata {{ cluster_name }}
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/logrotate -s %h/.config/logrotate-{{ cluster_name }}.status %h/.config/logrotate-{{ cluster_name }}.conf
+ExecStart=/usr/sbin/logrotate -s %h/.local/state/logrotate-{{ cluster_name }}.status %h/.config/logrotate-{{ cluster_name }}.conf

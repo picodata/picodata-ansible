@@ -73,6 +73,7 @@
     state: directory
   loop:
     - '{{ systemd_dir }}'
+    - '{{ ansible_user_dir }}/.local/state'
   when: systemd_scope == 'user'
 
 - block:
