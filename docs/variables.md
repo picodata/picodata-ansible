@@ -63,6 +63,9 @@
 | log_level | info | уровень журналирования. Возможные значения: `fatal`, `system`, `error`, `crit`, `warn`, `info`, `verbose`, `debug` |
 | log_pipe_command | | перенаправление вывода сообщений в подпроцесс через `pipe` |
 | log_to | syslog | место хранения файлов журнала. Возможные значения: `file`, `syslog`, `pipe` |
+| logrotate_keepfiles | 10 | количество хранимых ротированных копий журналов |
+| logrotate_shedule | daily | расписание для запуска службы logrotate в формате `systemd.time` (только для режима rootless) |
+| logrotate_size | 10M | размер файла журнала, при котором производить ротацию |
 
 ### Адреса и порты
 | Имя | Значение по умолчанию | Описание |

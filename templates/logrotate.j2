@@ -2,10 +2,9 @@
 {% if rootless == false %}
     su picodata picodata
 {% endif %}
-    daily
-    size 1M
+    size {{ logrotate_size }}
     missingok
-    rotate 10
+    rotate {{ logrotate_keepfiles }}
     compress
     create 0640 {{ user }} {{ group }}
     sharedscripts

@@ -34,6 +34,15 @@ log_format: 'plain'
 # место хранения лог-файлов
 log_to: 'syslog'
 
+# расписание для запуска службы logrotate в формате systemd.time (только для режима rootless)
+logrotate_shedule: 'daily'
+
+# размер файла, при котором производить ротацию
+logrotate_size: '10M'
+
+# количество хранимых ротированных копий журналов
+logrotate_keepfiles: 10
+
 # размещение настроечных файлов
 conf_dir: '/etc/picodata'
 
