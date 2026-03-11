@@ -9,10 +9,12 @@
   ansible.builtin.import_tasks:
     file: genin.yml
 
-- block:
+- name: Proccessing remove for systemd
+  block:
 
-  # without autonames
-  - block:
+  - name: Proccessing remove without autonames
+    block:
+
     - name: ({{ cluster_name }}) Remove systemd unit files
       ansible.builtin.systemd:
         name: '{{ cluster_name }}@{{ instance }}.service'
@@ -48,9 +50,10 @@
       ignore_errors: True
 
     when: autonames|bool == false
+  # end block
 
-  # with autonames
-  - block:
+  - name: Proccessing remove with autonames
+    block:
 
     - name: ({{ cluster_name }}) Stop systemd service
       ansible.builtin.systemd:
@@ -82,8 +85,9 @@
       ignore_errors: True
 
     when: autonames|bool == true
+  # end block
 
-  - name: ({{ cluster_name }}) Remove logrotate systemd timer
+  - name: ({{ cluster_name }}) Remove logrotate systemd timer for rootless
     ansible.builtin.systemd:
       name: 'logrotate-{{ cluster_name }}.timer'
       enabled: false
@@ -92,8 +96,9 @@
     ignore_errors: True
     environment:
       XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
+    when: rootless == true
 
-  - name: Reset failed systemd service
+  - name: ({{ cluster_name }}) Reset failed systemd service
     ansible.builtin.command:
       cmd: 'systemctl reset-failed --{{ systemd_scope }} {{ cluster_name }}* --all'
     environment:
@@ -122,7 +127,9 @@
   when: init_system == 'systemd'
 # end block
 
-- block:
+- name: Proccessing remove for supervisord
+  block:
+
   - name: ({{ cluster_name }}) Remove supervisord configs
     ansible.builtin.file:
       name: '{{ supervisord_dir }}/{{ cluster_name }}'
@@ -165,7 +172,9 @@
   when: sigkill == "true"
   ignore_errors: True
 
-- block:
+- name: Proccessing remove for purge
+  block:
+
   - name: ({{ cluster_name }}) Remove dirs if set purge variable when rootless is unset
     ansible.builtin.file:
       name: '{{ item }}'
