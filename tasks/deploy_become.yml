@@ -124,6 +124,7 @@
       src: logrotate.j2
       dest: '/etc/logrotate.d/picodata-{{ cluster_name }}'
       force: true
+      validate: '/usr/sbin/logrotate -d %s'
     when: (log_to == 'file' or audit_to == 'file') and (rootless == false or init_system == 'supervisord')
 
   - name: ({{ cluster_name }}) Systemd linger enabled

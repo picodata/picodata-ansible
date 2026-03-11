@@ -1,4 +1,4 @@
-{{ log_dir }}/{{ cluster_name }}/*.log {
+{{ log_dir }}/{{ cluster_name }}/???.log {{ log_dir }}/{{ cluster_name }}/audit-???.log {
 {% if rootless == false %}
     su picodata picodata
 {% endif %}
@@ -15,7 +15,7 @@
 {% if autonames == false %}
         /usr/bin/systemctl kill {% if rootless == true %}--user{% endif %} --all -s HUP {{ cluster_name }}@*
 {% else %}
-        /usr/bin/systemctl kill {% if rootless == true %}--user{% endif %} --all -s HUP {{ cluster_name }}-???
+        /usr/bin/systemctl kill {% if rootless == true %}--user{% endif %} --all -s HUP {{ cluster_name }}-*
 {% endif %}
 {% endif %}
     endscript

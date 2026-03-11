@@ -159,6 +159,7 @@
       src: logrotate.j2
       dest: '{{ ansible_user_dir }}/.config/logrotate-{{ cluster_name }}.conf'
       force: true
+      validate: '/usr/sbin/logrotate -s {{ ansible_user_dir }}/.local/state/logrotate-{{ cluster_name }}.status -d %s'
 
   - name: ({{ cluster_name }}) Enable logrotate systemd services for rootless
     ansible.builtin.systemd:
