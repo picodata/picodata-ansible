@@ -173,7 +173,7 @@
 
   become: true
   become_user: '{{ systemd_user }}'
-  when: (log_to == 'file' or audit_to == 'file') and (rootless == true or init_system == 'systemd')
+  when: (log_to == 'file' or audit_to == 'file') and rootless == true and init_system == 'systemd'
 # end block
 
 - name: ({{ cluster_name }}) Debug db_config

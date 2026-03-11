@@ -1,6 +1,8 @@
 ---
 
-- block:
+- name: Proccessing for install picodata
+  block:
+
   - name: ({{ cluster_name }}) Check picodata is installed
     ansible.builtin.stat:
       path: '{{ bin_dir }}/picodata'
@@ -18,7 +20,9 @@
     file: install_packages.yml
   when: install_packages
 
-- block:
+- name: Proccessing with force become
+  block:
+
   - name: ({{ cluster_name }}) Create top-level abd backup dirs for cluster
     ansible.builtin.file:
       name: '{{ item }}'
@@ -71,7 +75,9 @@
       dest: '/etc/tmpfiles.d/picodata.conf'
       mode: 0644
 
-  - block:
+  - name: Proccessing for supervisord
+    block:
+
     - name: ({{ cluster_name }}) Generate service unit for supervisord
       ansible.builtin.template:
         src: supervisord-unit-service.j2
@@ -126,5 +132,5 @@
       creates: '/var/lib/systemd/linger/{{ user }}'
     when: rootless == true and systemd_scope == 'user'
 
-    become: true
+  become: true
 # end block

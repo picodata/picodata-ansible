@@ -1,4 +1,7 @@
 {{ log_dir }}/{{ cluster_name }}/*.log {
+{% if rootless == false %}
+    su picodata picodata
+{% endif %}
     daily
     size 1M
     missingok
