@@ -25,8 +25,3 @@ ALTER PLUGIN "{{ manifest.name }}" MIGRATE TO {{ manifest.version }} OPTION (TIM
 ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ADD SERVICE "{{ servicename }}" TO TIER "{{ service_tier }}" OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 {% endfor %}
 {% endfor %}
-
-{% if (plugin_enable | bool ) == true %}
-ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ENABLE OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
-{% endif %}
-
