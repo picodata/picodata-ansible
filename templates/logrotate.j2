@@ -1,6 +1,6 @@
 {{ log_dir }}/{{ cluster_name }}/???.log {{ log_dir }}/{{ cluster_name }}/audit-???.log {
 {% if rootless == false %}
-    su picodata picodata
+    su {{ user }} {{ group }}
 {% endif %}
     size {{ logrotate_size }}
     missingok
