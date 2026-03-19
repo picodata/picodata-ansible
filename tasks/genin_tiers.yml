@@ -6,7 +6,8 @@
     tier_server_cnt: 0
     start_num: 1
 
-- block:
+- name: Processing if instances_per_server is undefined
+  block:
   - name: ({{ cluster_name }}) genin Set count of host groups for servers if host_groups is defined for tier {{ tier.key }}
     ansible.builtin.set_fact:
       tier_server_cnt: '{{ tier_server_cnt|int  + all_host_groups | select("equalto", item) | list| length }}'
@@ -57,7 +58,8 @@
     dict_instances_per_server: '{{ dict_instances_per_server | combine({tier.key: instances_per_server}) }}'
 
 # Check on shrink or expand of cluster
-- block:
+- name: Processing check on shrink or expand of cluster
+  block:
 
   - name: ({{ cluster_name }}) genin Set instances_per_server_from_report for tier {{ tier.key }}
     ansible.builtin.set_fact:
@@ -79,8 +81,8 @@
   run_once: true
 # end block of Check on shrink or expand of cluster
 
-# block expand
-- block:
+- name: Processing expand
+  block:
 
   - name: ({{ cluster_name }}) genin Set start number from report file for tier {{ tier.key }}
     ansible.builtin.set_fact:

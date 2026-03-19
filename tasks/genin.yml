@@ -30,8 +30,8 @@
     var: picodata_version
   when: debug == true
 
-# if report file is exist
-- block:
+- name: Processing if report file is exist
+  block:
   - name: ({{ cluster_name }}) genin Read a file from a remote host
     ansible.builtin.slurp:
       src: '{{ conf_dir }}/{{ cluster_name }}/report.yml'
@@ -135,8 +135,8 @@
     var: peer_list
   when: debug == true
 
-# if report file is not exist
-- block:
+- name: Processing if report file is not exist
+  block:
 
   - name: ({{ cluster_name }}) genin Get configs on all hosts
     ansible.builtin.find:
@@ -145,7 +145,8 @@
       file_type: file
     register: check_install
 
-  - block:
+  - name: Processing if format of files is 1 (default-1000)
+    block:
     - name: ({{ cluster_name }}) genin Print check_install
       ansible.builtin.debug:
         msg: '{{ check_install.files[0].path }}'
@@ -162,11 +163,22 @@
 
     when: check_install.matched > 0
 
+  - name: ({{ cluster_name }}) genin Check first config exists for incremental autonames
+    ansible.builtin.stat:
+      path: '{{ conf_dir }}/{{ cluster_name }}/001.conf'
+    register: check_filename_format_is_inc
+
+  - name: ({{ cluster_name }}) genin Set file format for incremental
+    ansible.builtin.set_fact:
+      filename_format: "inc"
+    when: check_filename_format_is_inc.stat.exists == true
+
   when: check_report.stat.exists == false
 
 ###################################
-# start: failure domain check version
-- block:
+# start
+- name: Processing failure domain check version
+  block:
 
   - name: ({{ cluster_name }}) genin Load config file from host
     ansible.builtin.set_fact:

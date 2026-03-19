@@ -170,3 +170,6 @@ remove_pkg: false
 
 # пароль для сервисной учетной записи pico_service
 service_password: ''
+
+# формат файла для юнит-файлов, логов и т.п.
+filename_format: 'binport'

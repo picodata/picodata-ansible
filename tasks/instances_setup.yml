@@ -10,8 +10,11 @@
   ansible.builtin.set_fact:
     instance_index: '{{ cnt|int }}'
 
-- block:
-  - block:
+- name: Processing if not first_deploy and tag not 'expand'
+  block:
+
+  - name: Processing without autonames
+    block:
     - name: ({{ cluster_name }}) Set existing instance name without autonames in {{ tier.key }}
       ansible.builtin.set_fact:
         instance_name: '{{ (instances_on_host | select ("ansible.builtin.search", tier.key) | list)[instance_id-1] }}'
@@ -22,7 +25,8 @@
 
     when: autonames == false
 
-  - block:
+  - name: Processing with autonames
+    block:
     - name: ({{ cluster_name }}) Set existing instance with autonames name in {{ tier.key }}
       ansible.builtin.set_fact:
         iname: '{{ (list_instance_names | select ("ansible.builtin.search", tier.key) | list)[instance_id-1] }}'
@@ -36,7 +40,9 @@
         instance_name: '{{ instances_on_host[instance_index|int] }}'
 
     when: autonames == true
+
   when: first_deploy == false and tag != 'expand'
+# end block
 
 - name: ({{ cluster_name }}) Print instance_id and cnt in tier {{ tier.key }}
   ansible.builtin.debug:
@@ -97,11 +103,11 @@
     - restart
     - refactor
 
-# systemd block
-- block:
+- name: Processing for systemd
+  block:
 
-  # autonames is off
-  - block:
+  - name: Processing without autonames
+    block:
     - name: ({{ cluster_name }}) Create dirs for instances in tier {{ tier.key }}
       ansible.builtin.file:
         path: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance_name }}.service.d'
@@ -128,9 +134,10 @@
       register: result
 
     when: autonames|bool == false
+  # end block
 
-  # autonames is on
-  - block:
+  - name: Processing with autonames
+    block:
     - name: ({{ cluster_name }}) Generate template file for systemd
       become: true
       become_user: '{{ systemd_user }}'
@@ -154,6 +161,7 @@
       register: result
 
     when: autonames|bool == true
+  # end block
 
   - name: ({{ cluster_name }}) Check restart if needed
     ansible.builtin.set_fact:

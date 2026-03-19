@@ -6,10 +6,15 @@
     instance_name: '{{ tier.key }}-{{ "%d%03d" % (server_id|int, cnt|int) }}'
   when: autonames|bool == false
 
-- name: ({{ cluster_name }}) genin Set instance name with autonames in {{ tier.key }}
+- name: ({{ cluster_name }}) genin Set incremental instance name with autonames in {{ tier.key }}
   ansible.builtin.set_fact:
     instance_name: '{{ "%03d" % (cnt|int + 1) }}'
-  when: autonames|bool == true
+  when: autonames|bool == true and filename_format == 'inc'
+
+- name: ({{ cluster_name }}) genin Set binport instance name with autonames in {{ tier.key }}
+  ansible.builtin.set_fact:
+    instance_name: '{{ "{0:d}".format(first_bin_port+cnt|int) }}'
+  when: autonames|bool == true and filename_format == 'binport'
 
 - name: ({{ cluster_name }}) genin Add instance info to lists in tier {{ tier.key }}
   ansible.builtin.set_fact:

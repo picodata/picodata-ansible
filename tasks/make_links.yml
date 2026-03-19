@@ -26,11 +26,11 @@
     cmd: >
          echo "
          SELECT *
-         FROM ( SELECT i.name, p.address, substring(p.address, ':(.*)')::INT - {{ first_bin_port }} + 1 as num
+         FROM ( SELECT i.name, p.address, substring(p.address, ':(.*)')::INT {% if filename_format != 'binport' %} - {{ first_bin_port }} + 1{% endif %} as num
                 FROM _pico_instance AS i
                 JOIN _pico_peer_address AS p ON i.raft_id=p.raft_id
                 WHERE connection_type='iproto' and substring(p.address, '(.*):.*') = '{{ listen_address }}' )
-         WHERE num>={{ start_num }}" |
+         WHERE num>={{ start_num }}{% if filename_format == 'binport' %} + {{ first_bin_port }} - 1{% endif %}" |
          {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock  |
          grep '|' | grep -v '+-' | grep -Ev 'name.* | address' | tr -d ' ' | cut -f 2-4 -d '|' | tr '|' ','
   register: result_sql
@@ -83,7 +83,9 @@
     list_instance_names: "{{ list_instance_names + instance_link_new | map(attribute='0') | list }}"
   when: start_num|int > 1
 
-- block:
+- name: Processing for create_links
+  block:
+
   - name: ({{ cluster_name }}) Clean all links
     ansible.builtin.command:
       cmd: 'find "{{ item }}" -maxdepth 1 -type l -delete'
@@ -155,7 +157,9 @@
       loop_var: instance
 
   # for systemd
-  - block:
+  - name: Processing for systemd
+    block:
+
     - name: ({{ cluster_name }}) Make links on systemd unit (alias)
       ansible.builtin.command:
         chdir: '{{ systemd_dir }}'
@@ -172,5 +176,7 @@
         XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
 
     when: init_system == 'systemd'
+  # end block
 
   when: create_links == true
+# end block

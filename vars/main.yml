@@ -37,3 +37,6 @@ enable: true
 
 # инициализация списка инстансов для создания ссылок на файлы
 instance_link: []
+
+# имя файла = номер bin-порта
+filename_format: 'binport'
