@@ -76,6 +76,16 @@
       plugin_enable: '{{ not (plugin.value.do_not_enable_plugin | bool) }}'
     when: plugin.value.do_not_enable_plugin is defined
 
+  - name: ({{ cluster_name }}) Set plugin_install_sql flag {{ plugin.key }}
+    ansible.builtin.set_fact:
+      plugin_install_sql: '{{ plugin.value.install_sql | default(true) }}'
+
+  # TODO (deprecated) убрать в версии 26.1
+  - name: ({{ cluster_name }}) Set plugin_install_sql flag for compability {{ plugin.key }}
+    ansible.builtin.set_fact:
+      plugin_install_sql: '{{ not (plugin.value.do_not_run_plugin_install_sql | bool) }}'
+    when: plugin.value.do_not_run_plugin_install_sql is defined
+
   - name: Processing if no plugin already exists
     block:
 
@@ -115,16 +125,6 @@
           force: true
           owner: '{{ user }}'
           group: '{{ group }}'
-
-      - name: ({{ cluster_name }}) Set plugin_install_sql flag {{ plugin.key }}
-        ansible.builtin.set_fact:
-          plugin_install_sql: '{{ plugin.value.install_sql | default(true) }}'
-
-      # TODO (deprecated) убрать в версии 26.1
-      - name: ({{ cluster_name }}) Set plugin_install_sql flag for compability {{ plugin.key }}
-        ansible.builtin.set_fact:
-          plugin_install_sql: '{{ not (plugin.value.do_not_run_plugin_install_sql | bool) }}'
-        when: plugin.value.do_not_run_plugin_install_sql is defined
 
       - name: ({{ cluster_name }}) Install plugin into cluster (run install.sql) {{ plugin.key }}
         ansible.builtin.shell:
