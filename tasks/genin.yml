@@ -118,6 +118,7 @@
     autonames: '{{ props_from_report.autonames | default(false) }}'
     ver_fd: '{{ props_from_report.ver_fd | default("2") }}'
     peer_list: '{{ props_from_report.peer_list | default([]) }}'
+    filename_format: '{{ props_from_report.filename_format | default("inc") }}'
   when: props_from_report is defined
 
 - name: ({{ cluster_name }}) genin Debug autoname values

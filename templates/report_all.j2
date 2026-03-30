@@ -29,6 +29,15 @@ prometheus:
 {% endfor %}
 {% endfor %}
 
+simurg:
+  scrape_configs:
+    - job_name: {{ cluster_name }}
+      static_configs:
+        - targets:
+{% for host in ansible_play_hosts | sort %}
+          - '{{ hostvars[host].list_http[0] }}'
+{% endfor %}
+
 http:
 {% for host in ansible_play_hosts | sort %}{{ hostvars[host].list_http | to_nice_yaml(sort_keys=false) }}{% endfor %}
 
