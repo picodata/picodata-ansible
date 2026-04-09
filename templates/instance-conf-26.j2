@@ -1,0 +1,99 @@
+{{ ansible_managed | comment }}
+
+cluster:
+  name: '{{ cluster_name }}'
+  default_bucket_count: {{ default_bucket_count | default(30000) }}
+  shredding: {% if shredding | bool == true  %}true{% else %}false{% endif %}
+
+  tier:
+{% for name, params in tiers.items() %}
+    {{ name }}:
+      replication_factor: {{ params.replication_factor | default(1) }}
+      can_vote: {% if params.can_vote | default(true) == true %}true{% else %}false{% endif %}
+
+{% if params.bucket_count is defined %}
+      bucket_count: {{ params.bucket_count }}
+{% endif %}
+{% endfor %}
+
+instance:
+  admin_socket: '{{ run_dir }}/{{ cluster_name }}/{{ instance_name }}.sock'
+  instance_dir: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}'
+  backup_dir: '{{ backup_dir }}/{{ cluster_name }}/{{ instance_name }}'
+  share_dir: '{{ share_dir }}/{{ cluster_name }}'
+
+{% if autonames |bool == false %}
+  name: '{{ instance_name }}'
+{% endif %}
+
+  tier: '{{ tier.key }}'
+  peer: {{ peer_list }}
+  failure_domain: { {% if fd_uniq_per_instance| bool == true %}'I': '{{ instance_name }}'{% else %}{{ fd }}{% endif %} }
+
+  iproto:
+    enabled: true
+    listen: '0.0.0.0:{{ list_bin[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
+    advertise: '{{ list_bin[instance_index | int] }}'
+    tls:
+{% if iproto_tls | bool == true %}
+      enabled: true
+      cert_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_cert_file | basename }}
+      key_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_key_file | basename }}
+      ca_file: {{ cert_dir }}/{{ cluster_name }}/iproto/{{ iproto_ca_file | basename }}
+{% else %}
+      enabled: false
+{% endif %}
+
+  pgproto:
+    enabled: true
+    listen: '0.0.0.0:{{ list_pg[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
+    advertise: '{{ list_pg[instance_index | int] }}'
+    tls:
+{% if pg_ssl | bool == true %}
+      enabled: true
+      cert_file: '{{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_cert_file | basename }}'
+      key_file: '{{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_key_file | basename }}'
+      ca_file: '{{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_ca_file | basename }}'
+{% else %}
+      enabled: false
+{% endif %}
+
+  http:
+    enabled: true
+    listen: '0.0.0.0:{{ list_http[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
+    advertise: '{{ list_http[instance_index | int] }}'
+    tls:
+{% if https | bool == true %}
+      enabled: true
+      cert_file: {{ cert_dir }}/{{ cluster_name }}/https/{{ https_cert_file | basename }}
+      key_file: {{ cert_dir }}/{{ cluster_name }}/https/{{ https_key_file | basename }}
+{% if https_password_file is defined and https_password_file != '' %}
+      password_file: '{{ cert_dir }}/{{ cluster_name }}/https/{{ https_password_file | basename }}'
+{% endif %}
+{% else %}
+      enabled: false
+{% endif %}
+    kubernetes_probes: true
+
+  log:
+    level: {{ tier.value.log_level | default(log_level) }}
+{% if log_to == "file" %}
+    destination: '{{ log_dir }}/{{ cluster_name }}/{{ instance_name }}.log'
+{% elif log_to == "pipe" and log_pipe_command is defined %}
+    destination: 'pipe:{{ log_pipe_command }}'
+{% endif %}
+    format: '{{ log_format }}'
+
+{% if audit | bool == true %}
+{% if audit_to == "file" %}
+  audit: '{{ log_dir }}/{{ cluster_name }}/audit-{{ instance_name }}.log'
+{% elif audit_to == "pipe" and audit_pipe_command is defined %}
+  audit: 'pipe:{{ audit_pipe_command }}'
+{% else %}
+  audit: '{{ audit_to }}:'
+{% endif %}
+{% endif %}
+
+{% if tier.value.config is defined %}
+  {{ tier.value.config | to_nice_yaml(indent=2) | indent(width=2) }}
+{% endif %}

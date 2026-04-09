@@ -68,8 +68,6 @@
     group: '{{ group }}'
     mode: '0400'
 
-# deprecated!
-# TODO убрать в 26.1 default и сравнение версии
 - name: ({{ cluster_name }}) Create links for PG-certs in tier {{ tier.key }}
   ansible.builtin.file:
     src: '{{ cert_dir }}/{{ cluster_name }}/pg/{{ item.filename | basename }}'
@@ -93,15 +91,27 @@
   run_once: true
   when: debug == true
 
-- name: ({{ cluster_name }}) Create config file for instances in tier {{ tier.key }}
+- name: ({{ cluster_name }}) Create config file ver 26.X for instances in tier {{ tier.key }}
   ansible.builtin.template:
-    src: instance-conf.j2
+    src: instance-conf-26.j2
     dest: '{{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf'
     owner: '{{ user }}'
     group: '{{ group }}'
   notify:
     - restart
     - refactor
+  when: picodata_version is version('26.1.1', '>=')
+
+- name: ({{ cluster_name }}) Create config file ver 25.X and previous for instances in tier {{ tier.key }}
+  ansible.builtin.template:
+    src: instance-conf-25.j2
+    dest: '{{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf'
+    owner: '{{ user }}'
+    group: '{{ group }}'
+  notify:
+    - restart
+    - refactor
+  when: picodata_version is version('26.1.1', '<')
 
 - name: Processing for systemd
   block:
