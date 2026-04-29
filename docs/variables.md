@@ -205,3 +205,12 @@ plugins:
     migration_timeout: 600
     plugin_timeout: 900
 ```
+
+> Внимание! Внутри конфигурацинного файла плагина, можно использовать переменные из инвентарного файла, например:
+
+```yaml
+  param: {{ plugin.value.migration_timeout }}
+  param2: {{ cluster_name }}
+```
+
+Таким образом можно скрывать секреты из файла

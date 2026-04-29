@@ -201,8 +201,6 @@
   run_once: true
   when: debug == true
 
-# default добавлены для совместимости с предыдущей версией
-# TODO убрать default в 26.1
 - name: ({{ cluster_name }}) Copy certs for PG
   become: true
   ansible.builtin.copy:
@@ -212,9 +210,9 @@
     owner: '{{ user }}'
     group: '{{ group }}'
   loop:
-    - { filename: '{{ pg_cert_file | default(cert_file) }}', mode: '0644' }
-    - { filename: '{{ pg_key_file | default(key_file) }}', mode: '0640' }
-    - { filename: '{{ pg_ca_file | default(ca_file) }}', mode: '0644' }
+    - { filename: '{{ pg_cert_file }}', mode: '0644' }
+    - { filename: '{{ pg_key_file }}', mode: '0640' }
+    - { filename: '{{ pg_ca_file }}', mode: '0644' }
   when: pg_ssl == true
 
 - name: ({{ cluster_name }}) Copy certs for iproto

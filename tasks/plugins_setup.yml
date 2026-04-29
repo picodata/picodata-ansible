@@ -39,16 +39,6 @@
     ansible.builtin.set_fact:
       manifest: '{{ manifest_slurp.content | b64decode | from_yaml }}'
 
-  - name: ({{ cluster_name }}) Set empty value for conf variable if no config {{ plugin.key }}
-    ansible.builtin.set_fact:
-      conf: ""
-    when: plugin.value.config is undefined
-
-  - name: ({{ cluster_name }}) Load config file {{ plugin.key }}
-    ansible.builtin.set_fact:
-      conf: "{{ lookup('file', '{{ plugin.value.config }}') | from_yaml }}"
-    when: plugin.value.config is defined
-
   - name: ({{ cluster_name }}) Get services from manifest {{ plugin.key }}
     ansible.builtin.set_fact:
       services: '{{ manifest.services | map(attribute="name") | list }}'
@@ -70,21 +60,9 @@
     ansible.builtin.set_fact:
       plugin_enable: '{{ plugin.value.enable | default(true) }}'
 
-  # TODO (deprecated) убрать в версии 26.1
-  - name: ({{ cluster_name }}) Set plugin_enable flag for compability {{ plugin.key }}
-    ansible.builtin.set_fact:
-      plugin_enable: '{{ not (plugin.value.do_not_enable_plugin | bool) }}'
-    when: plugin.value.do_not_enable_plugin is defined
-
   - name: ({{ cluster_name }}) Set plugin_install_sql flag {{ plugin.key }}
     ansible.builtin.set_fact:
       plugin_install_sql: '{{ plugin.value.install_sql | default(true) }}'
-
-  # TODO (deprecated) убрать в версии 26.1
-  - name: ({{ cluster_name }}) Set plugin_install_sql flag for compability {{ plugin.key }}
-    ansible.builtin.set_fact:
-      plugin_install_sql: '{{ not (plugin.value.do_not_run_plugin_install_sql | bool) }}'
-    when: plugin.value.do_not_run_plugin_install_sql is defined
 
   - name: Processing if no plugin already exists
     block:
@@ -143,7 +121,7 @@
     block:
 
     - name: ({{ cluster_name }}) Copy plugin config on server {{ plugin.key }}
-      ansible.builtin.copy:
+      ansible.builtin.template:
         src: '{{ plugin.value.config }}'
         dest: '{{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/config.yaml'
         owner: '{{ user }}'
