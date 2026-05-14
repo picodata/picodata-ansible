@@ -128,7 +128,7 @@ all:
 
     plugins:
       example:                                                  # плагин
-        path: '../plugins/weather_0.1.0-ubuntu-focal.tar.gz'    # путь до пакета плагина
+        path: '../plugins/weather_0.1.0-ubuntu-jammy.tar.gz'    # путь до пакета плагина
         config: '../plugins/weather-config.yml'                 # путь до файла с настройками плагина
         services:
           weather_service:

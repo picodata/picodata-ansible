@@ -6,6 +6,19 @@ ALTER PLUGIN {{ manifest.name }} {{ plugin_current_version.stdout }} DISABLE;
 {% endif %}
 CREATE PLUGIN IF NOT EXISTS "{{ manifest.name }}" {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
 
+{% for servicename in services %}
+{% set ns = namespace(service_tiers=['default']) %}
+{% if plugin.value.services is defined %}
+{% for sname, serviceconf in plugin.value.services.items() if sname == servicename %}
+{% set ns.service_tiers = serviceconf.tiers | default(ns.service_tiers) %}
+{% endfor %}
+{% endif %}
+{% for service_tier in ns.service_tiers %}
+{% if service_tier is mapping %}{% set tier_name = (service_tier | dict2items)[0].key %}{% else %}{% set tier_name = service_tier %}{% endif %}
+ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ADD SERVICE "{{ servicename }}" TO TIER "{{ tier_name }}" OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
+{% endfor %}
+{% endfor %}
+
 {% if plugin.value.migration_context is defined %}
 {% for param, val in plugin.value.migration_context.items() %}
 ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET migration_context."{{ param }}" = '{{ val }}' OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
@@ -13,15 +26,3 @@ ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} SET migration_context.
 {% endif %}
 
 ALTER PLUGIN "{{ manifest.name }}" MIGRATE TO {{ manifest.version }} OPTION (TIMEOUT = {{ plugin.value.migration_timeout | default(300) }});
-
-{% for servicename in services %}
-{% set ns = namespace(service_tiers=['default']) %}
-{% if plugin.value.services is defined %}
-{% for sname, serviceconf in plugin.value.services.items() if sname == servicename %}
-{% set ns.service_tiers = serviceconf.tiers %}
-{% endfor %}
-{% endif %}
-{% for service_tier in ns.service_tiers %}
-ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ADD SERVICE "{{ servicename }}" TO TIER "{{ service_tier }}" OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});
-{% endfor %}
-{% endfor %}

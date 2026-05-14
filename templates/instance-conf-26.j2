@@ -97,3 +97,39 @@ instance:
 {% if tier.value.config is defined %}
   {{ tier.value.config | to_nice_yaml(indent=2) | indent(width=2) }}
 {% endif %}
+
+{% if picodata_version is version('26.1', '>=') %}
+{% set ns = namespace() %}
+{% for plugin in plugins | dict2items %}
+{% set ns.plugin_name = plugin.key %}
+{% if plugin.value.services is mapping %}
+{% for plugin_service in plugin.value.services | dict2items %}
+{% set ns.plugin_service_name = plugin_service.key %}
+{% if plugin_service.value.tiers is defined %}
+{% for plugin_service_tier in plugin_service.value.tiers %}
+{% if plugin_service_tier is mapping %}
+{% set ns.plugin_tier_name = (plugin_service_tier| dict2items)[0].key %}
+{% else %}
+{% set ns.plugin_tier_name = plugin_service_tier %}
+{% endif %}
+{% if tier.key == ns.plugin_tier_name %}
+{% if plugin_service_tier is mapping and (plugin_service_tier | dict2items)[0].value %}
+  plugin:
+    {{ ns.plugin_name }}:
+      service:
+        {{ ns.plugin_service_name }}:
+          {{ (plugin_service_tier | dict2items)[0].value
+            | to_nice_yaml(indent=2)
+            | indent(width=10)
+            | replace ("<INSTANCE_NUM>", "%02d"|format(instance_index|int ))
+            | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_index|int))
+            | replace ("<INSTANCE_ADDR>", "%s"|format(listen_address))
+          }}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}

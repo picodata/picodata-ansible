@@ -35,6 +35,8 @@
       loop: '{{ instances_on_host }}'
       loop_control:
         loop_var: instance
+      async: 100
+      poll: 0
 
     - name: ({{ cluster_name }}) Remove systemd template file
       ansible.builtin.file:
@@ -75,6 +77,8 @@
       loop: '{{ instances_on_host }}'
       loop_control:
         loop_var: instance
+      async: 100
+      poll: 0
 
     - name: ({{ cluster_name }}) Remove systemd unit file for all picodata processes
       ansible.builtin.shell:
@@ -185,6 +189,8 @@
       - '{{ run_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
       - '{{ cert_dir }}/{{ cluster_name }}'
+    async: 100
+    poll: 0
     when: rootless == false
 
   - name: ({{ cluster_name }}) Remove data from dirs if set purge variable and rootless
@@ -196,6 +202,8 @@
       - '{{ run_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
       - '{{ cert_dir }}/{{ cluster_name }}'
+    async: 100
+    poll: 0
     when: rootless == true
 
   - name: ({{ cluster_name }}) Remove share_dir if set purge variable when rootless is unset

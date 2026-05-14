@@ -108,6 +108,8 @@
     loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
+    async: 100
+    poll: 0
     notify:
       - refactor
 
@@ -118,6 +120,8 @@
     loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
+    async: 100
+    poll: 0
 
   - name: ({{ cluster_name }}) Make links on sock
     ansible.builtin.command:
@@ -126,6 +130,8 @@
     loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
+    async: 100
+    poll: 0
 
   - name: ({{ cluster_name }}) Make links on log
     ansible.builtin.command:
@@ -134,6 +140,8 @@
     loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
+    async: 100
+    poll: 0
     when: log_to == 'file'
 
   - name: ({{ cluster_name }}) Make links on audit
@@ -143,6 +151,8 @@
     loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
+    async: 100
+    poll: 0
     when: audit == True and audit_to == 'file'
 
   - name: ({{ cluster_name }}) Patch instance name in config file
@@ -155,6 +165,8 @@
     loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
+    async: 100
+    poll: 0
 
   # for systemd
   - name: Processing for systemd
@@ -167,6 +179,8 @@
       loop: '{{ instance_link_new }}'
       loop_control:
         loop_var: instance
+      async: 100
+      poll: 0
 
     - name: ({{ cluster_name }}) Reload systemd
       ansible.builtin.systemd:
@@ -174,6 +188,8 @@
         scope: '{{ systemd_scope }}'
       environment:
         XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
+      async: 100
+      poll: 0
 
     when: init_system == 'systemd'
   # end block
