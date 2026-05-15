@@ -100,6 +100,7 @@ instance:
 
 {% if picodata_version is version('26.1', '>=') %}
 {% set ns = namespace() %}
+{% if plugins is mapping %}
 {% for plugin in plugins | dict2items %}
 {% set ns.plugin_name = plugin.key %}
 {% if plugin.value.services is mapping %}
@@ -132,4 +133,5 @@ instance:
 {% endfor %}
 {% endif %}
 {% endfor %}
+{% endif %}
 {% endif %}
