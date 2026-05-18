@@ -5,38 +5,17 @@
   ansible.builtin.set_fact:
     tag: 'remove'
 
-- name: ({{ cluster_name }}) Generate list of instances per server
-  ansible.builtin.import_tasks:
-    file: genin.yml
-
 - name: Proccessing remove for systemd
   block:
 
   - name: Proccessing remove without autonames
     block:
 
-    - name: ({{ cluster_name }}) Remove systemd unit files
-      ansible.builtin.systemd:
-        name: '{{ cluster_name }}@{{ instance }}.service'
-        enabled: false
-        state: stopped
-        scope: '{{ systemd_scope }}'
-      loop: '{{ instances_on_host }}'
-      loop_control:
-        loop_var: instance
-      ignore_errors: True
+    - name: ({{ cluster_name }}) Disable systemd services
+      ansible.builtin.shell:
+        cmd: 'systemctl disable --now $(systemctl show -P Id "{{ cluster_name }}@*")'
       environment:
         XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
-
-    - name: ({{ cluster_name }}) Remove systemd env dirs
-      ansible.builtin.file:
-        name: '{{ systemd_dir }}/{{ cluster_name }}@{{ instance }}.service.d'
-        state: absent
-      loop: '{{ instances_on_host }}'
-      loop_control:
-        loop_var: instance
-      async: 100
-      poll: 0
 
     - name: ({{ cluster_name }}) Remove systemd template file
       ansible.builtin.file:
@@ -57,28 +36,15 @@
   - name: Proccessing remove with autonames
     block:
 
-    - name: ({{ cluster_name }}) Stop systemd service
-      ansible.builtin.systemd:
-        name: '{{ cluster_name }}-{{ instance }}.service'
-        enabled: false
-        state: stopped
-        scope: '{{ systemd_scope }}'
-      loop: '{{ instances_on_host }}'
-      loop_control:
-        loop_var: instance
-      ignore_errors: True
+    - name: ({{ cluster_name }}) Disable systemd services
+      ansible.builtin.shell:
+        cmd: 'systemctl disable --now $(systemctl show -P Id "{{ cluster_name }}-*")'
       environment:
         XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
-    - name: ({{ cluster_name }}) Remove systemd unit file
-      ansible.builtin.file:
-        name: '{{ systemd_dir }}/{{ cluster_name }}-{{ instance }}.service'
-        state: absent
-      loop: '{{ instances_on_host }}'
-      loop_control:
-        loop_var: instance
-      async: 100
-      poll: 0
+    - name: ({{ cluster_name }}) Remove systemd services
+      ansible.builtin.shell:
+        cmd: 'rm {{ systemd_dir }}/{{ cluster_name }}-*.service'
 
     - name: ({{ cluster_name }}) Remove systemd unit file for all picodata processes
       ansible.builtin.shell:
@@ -86,8 +52,8 @@
       loop:
         - '{{ systemd_dir }}/{{ cluster_name }}-*'
         - '{{ systemd_dir }}/*/{{ cluster_name }}-*'
-      ignore_errors: True
 
+    ignore_errors: True
     when: autonames|bool == true
   # end block
 

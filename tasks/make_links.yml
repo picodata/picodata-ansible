@@ -87,73 +87,32 @@
   block:
 
   - name: ({{ cluster_name }}) Clean all links
-    ansible.builtin.command:
-      cmd: 'find "{{ item }}" -maxdepth 1 -type l -delete'
-    loop:
-      - '{{ data_dir }}/{{ cluster_name }}'
-      - '{{ conf_dir }}/{{ cluster_name }}'
-      - '{{ run_dir }}/{{ cluster_name }}'
-      - '{{ log_dir }}/{{ cluster_name }}'
+    ansible.builtin.shell:
+      cmd: >
+        find "{{ data_dir }}/{{ cluster_name }}" -maxdepth 1 -type l -delete &
+        find "{{ conf_dir }}/{{ cluster_name }}" -maxdepth 1 -type l -delete &
+        find "{{ run_dir }}/{{ cluster_name }}" -maxdepth 1 -type l -delete &
+        find "{{ log_dir }}/{{ cluster_name }}" -maxdepth 1 -type l -delete &
+        {% if init_system == 'systemd' and start_num == 1 %}find "{{ systemd_dir }}" -maxdepth 1 -name "{{ cluster_name }}-*.service" -type l -delete &{% endif %}
+        wait
     when: start_num|int == 1
 
-  - name: ({{ cluster_name }}) Clean aliases for systemd
-    ansible.builtin.command:
-      cmd: 'find "{{ systemd_dir }}" -maxdepth 1 -name "{{ cluster_name }}-*.service" -type l -delete'
-    when: init_system == 'systemd' and start_num == 1
-
-  - name: ({{ cluster_name }}) Make links on data
-    ansible.builtin.command:
-      chdir: '{{ data_dir }}/{{ cluster_name }}'
-      cmd: 'ln -f -s {{ instance[1] | basename }} {{ instance[0] }}'
+  - name: ({{ cluster_name }}) Make links
+    ansible.builtin.shell:
+      chdir: ''
+      cmd: >
+        (cd {{ data_dir }}/{{ cluster_name }} && ln -f -s {{ instance[1] | basename }} {{ instance[0] }}) &
+        (cd {{ conf_dir }}/{{ cluster_name }} && ln -f -s {{ instance[1] | basename }}.conf {{ instance[0] }}.conf) &
+        (cd {{ run_dir }}/{{ cluster_name }} && ln -f -s {{ instance[1] | basename }}.sock {{ instance[0] }}.sock) &
+        {% if log_to == 'file' %}(cd {{ log_dir }}/{{ cluster_name }} && ln -f -s {{ instance[1] | basename }}.log {{ instance[0] }}.log) &{% endif %}
+        {% if audit == True and audit_to == 'file' %}(cd {{ log_dir }}/{{ cluster_name }} && ln -f -s audit-{{ instance[1] | basename }}.log audit-{{ instance[0] }}.log) &{% endif %}
+        {% if init_system == 'systemd' %}(cd {{ systemd_dir }} && ln -f -s {{ cluster_name }}-{{ instance[1] | basename }}.service {{ cluster_name }}-{{ instance[0] }}.service) &{% endif %}
+        wait
     loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
-    async: 100
-    poll: 0
     notify:
       - refactor
-
-  - name: ({{ cluster_name }}) Make links on conf
-    ansible.builtin.command:
-      chdir: '{{ conf_dir }}/{{ cluster_name }}'
-      cmd: 'ln -f -s {{ instance[1] | basename }}.conf {{ instance[0] }}.conf'
-    loop: '{{ instance_link_new }}'
-    loop_control:
-      loop_var: instance
-    async: 100
-    poll: 0
-
-  - name: ({{ cluster_name }}) Make links on sock
-    ansible.builtin.command:
-      chdir: '{{ run_dir }}/{{ cluster_name }}'
-      cmd: 'ln -f -s {{ instance[1] | basename }}.sock {{ instance[0] }}.sock'
-    loop: '{{ instance_link_new }}'
-    loop_control:
-      loop_var: instance
-    async: 100
-    poll: 0
-
-  - name: ({{ cluster_name }}) Make links on log
-    ansible.builtin.command:
-      chdir: '{{ log_dir }}/{{ cluster_name }}'
-      cmd: 'ln -f -s {{ instance[1] | basename }}.log {{ instance[0] }}.log'
-    loop: '{{ instance_link_new }}'
-    loop_control:
-      loop_var: instance
-    async: 100
-    poll: 0
-    when: log_to == 'file'
-
-  - name: ({{ cluster_name }}) Make links on audit
-    ansible.builtin.command:
-      chdir: '{{ log_dir }}/{{ cluster_name }}'
-      cmd: 'ln -f -s audit-{{ instance[1] | basename }}.log audit-{{ instance[0] }}.log'
-    loop: '{{ instance_link_new }}'
-    loop_control:
-      loop_var: instance
-    async: 100
-    poll: 0
-    when: audit == True and audit_to == 'file'
 
   - name: ({{ cluster_name }}) Patch instance name in config file
     ansible.builtin.replace:
@@ -165,34 +124,17 @@
     loop: '{{ instance_link_new }}'
     loop_control:
       loop_var: instance
-    async: 100
+    async: 900
     poll: 0
+    when: role_ver is version('26.1.2', '<')
 
-  # for systemd
-  - name: Processing for systemd
-    block:
-
-    - name: ({{ cluster_name }}) Make links on systemd unit (alias)
-      ansible.builtin.command:
-        chdir: '{{ systemd_dir }}'
-        cmd: 'ln -f -s {{ cluster_name }}-{{ instance[1] | basename }}.service {{ cluster_name }}-{{ instance[0] }}.service'
-      loop: '{{ instance_link_new }}'
-      loop_control:
-        loop_var: instance
-      async: 100
-      poll: 0
-
-    - name: ({{ cluster_name }}) Reload systemd
-      ansible.builtin.systemd:
-        daemon_reload: true
-        scope: '{{ systemd_scope }}'
-      environment:
-        XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
-      async: 100
-      poll: 0
-
+  - name: ({{ cluster_name }}) Reload systemd
+    ansible.builtin.systemd:
+      daemon_reload: true
+      scope: '{{ systemd_scope }}'
+    environment:
+      XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
     when: init_system == 'systemd'
-  # end block
 
   when: create_links == true
 # end block

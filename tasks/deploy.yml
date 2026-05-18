@@ -55,16 +55,16 @@
     - '{{ cert_dir }}/{{ cluster_name }}/pg'
     - '{{ cert_dir }}/{{ cluster_name }}/iproto'
     - '{{ cert_dir }}/{{ cluster_name }}/https'
+  async: 60
+  poll: 0
 
 - name: ({{ cluster_name }}) Create dirs for crash_dumps
   ansible.builtin.file:
-    name: '{{ item }}'
+    name: '{{ backup_dir }}/{{ cluster_name }}/crash_dumps'
     state: directory
     owner: '{{ user }}'
     group: '{{ group }}'
     mode: '0755'
-  loop:
-    - '{{ backup_dir }}/{{ cluster_name }}/crash_dumps'
 
 - name: ({{ cluster_name }}) Create dirs for cluster for rootless
   become_user: '{{ systemd_user }}'
@@ -213,6 +213,8 @@
     - { filename: '{{ pg_cert_file }}', mode: '0644' }
     - { filename: '{{ pg_key_file }}', mode: '0640' }
     - { filename: '{{ pg_ca_file }}', mode: '0644' }
+  async: 60
+  poll: 0
   when: pg_ssl == true
 
 - name: ({{ cluster_name }}) Copy certs for iproto
@@ -227,6 +229,8 @@
     - { filename: '{{ iproto_cert_file }}', mode: '0644' }
     - { filename: '{{ iproto_key_file }}', mode: '0640' }
     - { filename: '{{ iproto_ca_file }}', mode: '0644' }
+  async: 60
+  poll: 0
   when: iproto_tls == true
 
 - name: Proccessing for https
@@ -243,6 +247,8 @@
     loop:
       - { filename: '{{ https_cert_file }}', mode: '0644' }
       - { filename: '{{ https_key_file }}', mode: '0640' }
+    async: 60
+    poll: 0
 
   - name: ({{ cluster_name }}) Copy password file for https key
     become: true

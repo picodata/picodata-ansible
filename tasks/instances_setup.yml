@@ -63,7 +63,6 @@
     dest: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}/.picodata-cookie'
     content: |
       {{ service_password }}
-
     owner: '{{ user }}'
     group: '{{ group }}'
     mode: '0400'
@@ -136,9 +135,9 @@
         name: '{{ cluster_name }}@{{ instance_name }}'
         enabled: true
         state: started
-        daemon_reload: true
         scope: '{{ systemd_scope }}'
         force: true
+        no_block: true
       environment:
         XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
       register: result
@@ -163,9 +162,9 @@
         name: '{{ cluster_name }}-{{ instance_name }}'
         enabled: true
         state: started
-        daemon_reload: true
         scope: '{{ systemd_scope }}'
         force: true
+        no_block: true
       environment:
         XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
       register: result

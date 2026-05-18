@@ -30,6 +30,7 @@
       name: '{{ cluster_name }}@{{ instance }}.service'
       state: restarted
       scope: '{{ systemd_scope }}'
+      no_block: true
     loop: '{{ instances_filtered }}'
     loop_control:
       loop_var: instance
@@ -45,6 +46,7 @@
       name: '{{ cluster_name }}-{{ instance }}.service'
       state: restarted
       scope: '{{ systemd_scope }}'
+      no_block: true
     loop: '{{ instances_filtered }}'
     loop_control:
       loop_var: instance
@@ -62,4 +64,6 @@
   loop: '{{ instances_filtered }}'
   loop_control:
     loop_var: instance
+  async: 900
+  poll: 0
   when: init_system == 'supervisord'

@@ -19,6 +19,7 @@
       state: stopped
       scope: '{{ systemd_scope }}'
       enabled: '{{ enable }}'
+      no_block: true
     loop: '{{ instances_filtered }}'
     loop_control:
       loop_var: instance
@@ -35,6 +36,7 @@
       state: stopped
       scope: '{{ systemd_scope }}'
       enabled: '{{ enable }}'
+      no_block: true
     loop: '{{ instances_filtered }}'
     loop_control:
       loop_var: instance
