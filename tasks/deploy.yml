@@ -402,6 +402,9 @@
     file: make_links.yml
   when: autonames|bool == true and first_deploy == true and "restore_full" not in ansible_run_tags
 
+- name: Force all notified handlers before install plugins
+  ansible.builtin.meta: flush_handlers
+
 - name: ({{ cluster_name }}) Install plugins
   ansible.builtin.include_tasks:
     file: plugins.yml

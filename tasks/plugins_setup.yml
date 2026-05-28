@@ -64,21 +64,25 @@
     ansible.builtin.set_fact:
       plugin_install_sql: '{{ plugin.value.install_sql | default(true) }}'
 
+  - name: ({{ cluster_name }}) Checking for plugin any version has been installed {{ plugin.key }}
+    ansible.builtin.shell:
+      cmd: >
+          echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=true" |
+          {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
+          grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
+    register: plugin_current_version
+
+  - name: ({{ cluster_name }}) Debug plugin_current_version {{ plugin.key }}
+    ansible.builtin.set_fact:
+      plugin_current_version: '{% if plugin_current_version.stdout == "" %}0.0.0{% else %}{{ plugin_current_version.stdout }}{% endif %}'
+
+  - name: ({{ cluster_name }}) Debug versions {{ plugin.key }}
+    ansible.builtin.debug:
+      msg: 'manifest.version = {{ manifest.version }}     current_version = {{ plugin_current_version }}'
+    when: debug == true
+
   - name: Processing if no plugin already exists
     block:
-
-    - name: ({{ cluster_name }}) Checking for plugin any version has been installed {{ plugin.key }}
-      ansible.builtin.shell:
-        cmd: >
-            echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=true" |
-            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
-            grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
-      register: plugin_current_version
-
-    - name: ({{ cluster_name }}) Debug plugin_current_version {{ plugin.key }}
-      ansible.builtin.debug:
-        var: plugin_current_version
-      when: debug == true
 
     - name: Processing for install plugin
       block:
@@ -86,7 +90,7 @@
       - name: ({{ cluster_name }}) Count of already installed plugin {{ plugin.key }}
         ansible.builtin.shell:
           cmd: >
-              echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=false order by version limit 1" |
+              echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=false and version != '{{ manifest.version }}' order by version limit 1" |
               {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
               grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
         register: plugin_old_version
@@ -111,7 +115,7 @@
               {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
         when: plugin_install_sql | bool == true
 
-      when: plugin_current_version.stdout == '' or plugin_current_version.stdout is version(manifest.version, '<')
+      when: plugin_current_version is version(manifest.version, '<')
     # end block
 
     when: plugin_status.stdout == "0"
@@ -144,8 +148,6 @@
              --timeout {{ plugin.value.plugin_timeout | default(300) }}
       when: res.changed is defined and res.changed == true
 
-      ignore_errors: True
-
     when: plugin.value.config is defined and plugin.value.config != '' and plugin_install_sql | bool == true
   # end block
 
@@ -154,7 +156,12 @@
       cmd: >
           echo 'ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ENABLE OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});' |
           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-    when: plugin_enable | bool == true and plugin_install_sql | bool == true and plugin_status.stdout == "0"
+    when: plugin_enable | bool == true and plugin_install_sql | bool == true and plugin_status.stdout == "0" and plugin_current_version is version(manifest.version, '<')
+
+  - name: ({{ cluster_name }}) If downgrade version {{ plugin.key }}
+    ansible.builtin.debug:
+      msg: 'Внимание! Откат на предыдущую версию с помощью роли не возможен, для этого используйте SQL-команды из инструкции плагина!'
+    when: plugin_current_version is version(manifest.version, '>')
 
   run_once: true
 # end block
