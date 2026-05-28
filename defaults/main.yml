@@ -137,6 +137,7 @@ systemd_params_default:
   LimitCORE: 'infinity'       # Unlimited coredump file size
   TimeoutStartSec: '86400s'   # Systemd waits until all xlogs are recovered
   TimeoutStopSec: '20s'       # Give a reasonable amount of time to close xlogs
+  LimitNPROC: 'infinity'      # Unlimited number of tasks (processes and threads) a unit can create
 
 # задеркжа между проверками доступности порта postgress-протокола в сек
 pg_port_delay: 5
