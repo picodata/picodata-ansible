@@ -55,8 +55,6 @@
     - '{{ cert_dir }}/{{ cluster_name }}/pg'
     - '{{ cert_dir }}/{{ cluster_name }}/iproto'
     - '{{ cert_dir }}/{{ cluster_name }}/https'
-  async: 60
-  poll: 0
 
 - name: ({{ cluster_name }}) Create dirs for crash_dumps
   ansible.builtin.file:
@@ -191,9 +189,22 @@
   ansible.builtin.set_fact:
     db_config_all: |
       {% for key, value in db_config.items() %}
-      alter system set "{{ key }}" = {{ value }} for all tiers;
+      ALTER SYSTEM SET "{{ key }}" = {{ value }} FOR ALL TIERS WAIT APPLIED LOCALLY;
       {% endfor %}
   when: db_config is defined
+
+- name: ({{ cluster_name }}) Debug db_config_all
+  debug:
+    var: db_config_all
+  run_once: true
+  when: debug == true
+
+- name: ({{ cluster_name }}) Generate sql-file for db_config on cluster
+  ansible.builtin.copy:
+    content: '{{ db_config_all }}'
+    dest: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
+  run_once: true
+  when: db_config_all != ""
 
 - name: ({{ cluster_name }}) Debug all host group
   debug:
@@ -323,63 +334,14 @@
   retries: '{{ retries_admin_sock }}'
   loop: '{{ instances_on_host }}'
 
-- name: ({{ cluster_name }}) Debug db_config_all
-  debug:
-    var: db_config_all
-  run_once: true
-  when: debug == true
-
-- name: ({{ cluster_name }}) Generate sql-file for db_config
+- name: ({{ cluster_name }}) Generate sql-file for db_config tiers
   ansible.builtin.copy:
-    content: '{{ db_config_all }}'
-    dest: '{{ conf_dir }}/{{ cluster_name }}/dbconfig.sql'
+    content: '{{ db_config_tiers }}'
+    dest: '{{ conf_dir }}/{{ cluster_name }}/dbconfig_tiers.sql'
   run_once: true
-  when: db_config_all != ""
+  when: db_config_tiers != ""
   notify:
     - apply_db_config
-
-- name: ({{ cluster_name }}) Set admin password
-  ansible.builtin.shell:
-    cmd: >
-         echo "
-         ALTER USER \"admin\" password '{{ admin_password }}' USING md5;
-         ALTER USER \"admin\" WITH LOGIN;
-         " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-  register: cluster_status
-  until: cluster_status.rc == 0
-  retries: 3
-  delay: 5
-  run_once: true
-
-- name: ({{ cluster_name }}) Set default tier for picodata 26
-  ansible.builtin.shell:
-    cmd: >
-         echo "
-         update _pico_tier set is_default=false where name != 'default' and (select count(*) from _pico_tier where name = 'default') = 1;
-         UPDATE _pico_tier SET is_default=true WHERE name = 'default';
-         " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-  register: cluster_status
-  until: cluster_status.rc == 0
-  retries: 3
-  delay: 5
-  run_once: true
-  when: picodata_version is version('26.1.0', '>')
-
-- name: ({{ cluster_name }}) Setup auth in WebUI
-  ansible.builtin.shell:
-    cmd: >
-         echo "
-         ALTER SYSTEM RESET jwt_secret;
-         {% if auth_webui == false %}
-         ALTER SYSTEM SET jwt_secret = '';
-         {% endif %}
-         " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-  register: cluster_status
-  until: cluster_status.rc == 0
-  retries: 3
-  delay: 5
-  run_once: true
-  when: auth_webui is defined
 
 - name: ({{ cluster_name }}) Copy sql-file on server
   ansible.builtin.copy:
@@ -408,7 +370,7 @@
 - name: ({{ cluster_name }}) Install plugins
   ansible.builtin.include_tasks:
     file: plugins.yml
-  when: plugins is defined
+  when: plugins is defined and plugins
 
 - name: ({{ cluster_name }}) Print instances on hosts
   ansible.builtin.debug:

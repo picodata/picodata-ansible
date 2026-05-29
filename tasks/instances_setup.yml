@@ -194,3 +194,81 @@
 - name: ({{ cluster_name }}) Calculate next port number on server for all tiers
   ansible.builtin.set_fact:
     cnt: '{{ cnt|int + 1}}'
+
+- name: Processing parameters for cluster on begin
+  block:
+
+    - name: ({{ cluster_name }}) Update cluster in supervisord
+      ansible.builtin.command:
+        cmd: '/usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf update'
+      register: supervisord_update
+      when: init_system == 'supervisord'
+      run_once: false
+      changed_when: false
+
+    - name: ({{ cluster_name }}) Wait creating admin-sock files for instances
+      ansible.builtin.wait_for:
+        path: '{{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock'
+        state: present
+        msg: 'Ошибка ожидания сокет-файла: {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock! Проверьте логи инстанса!'
+        timeout: '{{ timeout_admin_sock }}'
+      retries: '{{ retries_admin_sock }}'
+
+    - name: Wait 1 sec and apply db_config
+    # 1 секунда нужна для исключения ошибки 'raft: proposal dropped'
+      ansible.builtin.shell:
+        cmd: >
+            sleep 1 &&
+            cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql |
+              {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      retries: 3
+      delay: 5
+      changed_when: false
+      when: db_config_all != ""
+
+    - name: ({{ cluster_name }}) Set admin password
+      ansible.builtin.shell:
+        cmd: >
+            echo "
+            ALTER USER \"admin\" password '{{ admin_password }}' USING md5 WAIT APPLIED LOCALLY;
+            ALTER USER \"admin\" WITH LOGIN WAIT APPLIED LOCALLY;
+            " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: result
+      until: result.rc == 0
+      retries: 3
+      delay: 5
+      changed_when: result.stdout_lines[0] != "0"
+
+    - name: ({{ cluster_name }}) Setup auth in WebUI
+      ansible.builtin.shell:
+        cmd: >
+            echo "
+            ALTER SYSTEM RESET jwt_secret WAIT APPLIED LOCALLY;
+            {% if auth_webui == false %}
+            ALTER SYSTEM SET jwt_secret = '' WAIT APPLIED LOCALLY;
+            {% endif %}
+            " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: result
+      until: result.rc == 0
+      retries: 3
+      delay: 5
+      when: picodata_version is version('25.4.2', '>=')
+      changed_when: false
+
+    - name: ({{ cluster_name }}) Set default tier for picodata 26
+      ansible.builtin.shell:
+        cmd: >
+            echo "
+            UPDATE _pico_tier SET is_default=false WHERE name != 'default' AND (SELECT count(*) FROM _pico_tier WHERE name = 'default') = 1 AND is_default = true;
+            UPDATE _pico_tier SET is_default=true WHERE name = 'default' AND is_default = false;
+            " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: result
+      until: result.rc == 0
+      retries: 3
+      delay: 5
+      run_once: true
+      when: picodata_version is version('26.1', '>=')
+      changed_when: result.stdout_lines[1] != "0"
+
+  run_once: true
+  when: cnt | int == 1

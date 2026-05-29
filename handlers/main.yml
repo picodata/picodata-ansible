@@ -20,12 +20,13 @@
   ansible.builtin.shell:
     cmd: >
          sleep 10 &&
-         cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql |
+         cat {{ conf_dir }}/{{ cluster_name }}/dbconfig_tiers.sql |
            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   retries: 3
   delay: 5
   run_once: true
   listen: apply_db_config
+  changed_when: false
   when: tag != 'restore'
 
 - name: Apply sql_file
@@ -35,6 +36,7 @@
            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   run_once: true
   listen: apply_sql_file
+  changed_when: false
   when: tag != 'restore'
 
 - name: Message about targets for Prometheus

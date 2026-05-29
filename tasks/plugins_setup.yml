@@ -46,7 +46,7 @@
   - name: ({{ cluster_name }}) Checking for plugin of this version has been installed {{ plugin.key }}
     ansible.builtin.shell:
       cmd: >
-           echo "select enabled from _pico_plugin where name='{{ manifest.name }}' and version='{{ manifest.version }}'" |
+           echo "SELECT enabled FROM _pico_plugin WHERE name='{{ manifest.name }}' AND version='{{ manifest.version }}'" |
            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
            grep true | wc -l
     register: plugin_status
@@ -67,7 +67,7 @@
   - name: ({{ cluster_name }}) Checking for plugin any version has been installed {{ plugin.key }}
     ansible.builtin.shell:
       cmd: >
-          echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=true" |
+          echo "SELECT version FROM _pico_plugin WHERE name='{{ manifest.name }}' AND enabled=true" |
           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
           grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
     register: plugin_current_version
@@ -90,7 +90,7 @@
       - name: ({{ cluster_name }}) Count of already installed plugin {{ plugin.key }}
         ansible.builtin.shell:
           cmd: >
-              echo "select version from _pico_plugin where name='{{ manifest.name }}' and enabled=false and version != '{{ manifest.version }}' order by version limit 1" |
+              echo "SELECT version FROM _pico_plugin WHERE name='{{ manifest.name }}' AND enabled=false AND version != '{{ manifest.version }}' ORDER BY VERSION LIMIT 1" |
               {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
               grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
         register: plugin_old_version
