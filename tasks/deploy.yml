@@ -181,9 +181,10 @@
   run_once: true
   when: debug == true
 
-- name: ({{ cluster_name }}) init db_config_all
+- name: ({{ cluster_name }}) init db_config
   ansible.builtin.set_fact:
     db_config_all: ""
+    db_config_tiers: ""
 
 - name: ({{ cluster_name }}) Fill db_config_all with parameters
   ansible.builtin.set_fact:

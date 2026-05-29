@@ -38,7 +38,7 @@
   - name: ({{ cluster_name }}) Fill db_config_all with parameters for tier {{ tier.key }}
     ansible.builtin.set_fact:
       db_config_tiers: |
-        {{ db_config_tiers | default('') }}
+        {{ db_config_tiers }}
         {% for key, value in tier.value.db_config.items() %}
         ALTER SYSTEM SET "{{ key }}" = {{ value }} FOR TIER {{ tier.key }} WAIT APPLIED LOCALLY;
         {% endfor %}
