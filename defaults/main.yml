@@ -174,3 +174,6 @@ service_password: ''
 
 # формат файла для юнит-файлов, логов и т.п.
 filename_format: 'binport'
+
+# авторизация в Web-UI
+auth_webui: false
