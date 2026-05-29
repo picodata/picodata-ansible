@@ -126,7 +126,7 @@
       loop_var: instance
     async: 900
     poll: 0
-    when: role_ver is version('26.1.2', '<')
+    when: role_ver is version('26.1.2', '<') or picodata_version is version('26.1', '<')
 
   - name: ({{ cluster_name }}) Reload systemd
     ansible.builtin.systemd:
