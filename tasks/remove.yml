@@ -13,7 +13,7 @@
 
     - name: ({{ cluster_name }}) Disable systemd services
       ansible.builtin.shell:
-        cmd: 'systemctl disable --now $(systemctl show -P Id "{{ cluster_name }}@*")'
+        cmd: 'systemctl disable --{{ systemd_scope }} --now $(systemctl show --{{ systemd_scope }} -P Id "{{ cluster_name }}@*")'
       environment:
         XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
@@ -24,10 +24,9 @@
 
     - name: ({{ cluster_name }}) Remove systemd unit file for all picodata processes
       ansible.builtin.shell:
-        cmd: 'rm -rf {{ item }}'
-      loop:
-        - '{{ systemd_dir }}/{{ cluster_name }}@*'
-        - '{{ systemd_dir }}/*/{{ cluster_name }}@*'
+        cmd: >
+          rm -rf {{ systemd_dir }}/{{ cluster_name }}@* &
+          rm -rf {{ systemd_dir }}/*/{{ cluster_name }}@* &
       ignore_errors: True
 
     when: autonames|bool == false
@@ -38,7 +37,7 @@
 
     - name: ({{ cluster_name }}) Disable systemd services
       ansible.builtin.shell:
-        cmd: 'systemctl disable --now $(systemctl show -P Id "{{ cluster_name }}-*")'
+        cmd: 'systemctl disable --{{ systemd_scope }} --now $(systemctl show --{{ systemd_scope }} -P Id "{{ cluster_name }}-*")'
       environment:
         XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
@@ -48,11 +47,9 @@
 
     - name: ({{ cluster_name }}) Remove systemd unit file for all picodata processes
       ansible.builtin.shell:
-        cmd: 'rm -rf {{ item }}'
-      loop:
-        - '{{ systemd_dir }}/{{ cluster_name }}-*'
-        - '{{ systemd_dir }}/*/{{ cluster_name }}-*'
-
+        cmd: >
+          rm -rf {{ systemd_dir }}/{{ cluster_name }}-* &
+          rm -rf {{ systemd_dir }}/*/{{ cluster_name }}-* &
     ignore_errors: True
     when: autonames|bool == true
   # end block
@@ -161,15 +158,12 @@
 
   - name: ({{ cluster_name }}) Remove data from dirs if set purge variable and rootless
     ansible.builtin.shell:
-      cmd: 'rm -rf {{ item }}/*'
-    loop:
-      - '{{ conf_dir }}/{{ cluster_name }}'
-      - '{{ data_dir }}/{{ cluster_name }}'
-      - '{{ run_dir }}/{{ cluster_name }}'
-      - '{{ log_dir }}/{{ cluster_name }}'
-      - '{{ cert_dir }}/{{ cluster_name }}'
-    async: 100
-    poll: 0
+      cmd: >
+        rm -rf {{ conf_dir }}/{{ cluster_name }}/* &
+        rm -rf {{ data_dir }}/{{ cluster_name }}/* &
+        rm -rf {{ run_dir }}/{{ cluster_name }}/* &
+        rm -rf {{ log_dir }}/{{ cluster_name }}/* &
+        rm -rf {{ cert_dir }}/{{ cluster_name }}/* &
     when: rootless == true
 
   - name: ({{ cluster_name }}) Remove share_dir if set purge variable when rootless is unset
@@ -180,7 +174,7 @@
 
   - name: ({{ cluster_name }}) Remove share_dir from dirs if set purge variable and rootless
     ansible.builtin.shell:
-      cmd: 'rm -rf {{ share_dir }}/{{ cluster_name }}/*'
+      cmd: 'rm -rf {{ share_dir }}/{{ cluster_name }}/* &'
     when: rootless == true and remove_sharedir == true
 
   when: purge
