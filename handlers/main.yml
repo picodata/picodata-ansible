@@ -15,7 +15,7 @@
   run_once: true
   listen: apply_db_config
 
-- name: Wait 10 sec and apply db_config
+- name: Wait 10 sec and apply db_config for tiers
 # 10 секунд нужны для исключения ошибки 'raft: proposal dropped'
   ansible.builtin.shell:
     cmd: >
