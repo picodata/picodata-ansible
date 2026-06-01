@@ -6,7 +6,7 @@
 | Имя | Значение по умолчанию | Описание |
 | ---      | ---      | ---      |
 | admin_password | | пароль для учетной записи admin ([требования к паролю](https://docs.picodata.io/picodata/24.4/tutorial/access_control/#allowed_passwords)) |
-| auth_webui | true | авторизация в WebUI, работает с Пикодатой версии 25.4.2 и выше; если версия меньше, то не выставляйте эту переменную |
+| auth_webui | false | авторизация в WebUI, работает с Пикодатой версии 25.4.2 и выше |
 | autonames | true | развертывание кластера с автогенерацией имен инстансов |
 | cluster_name | demo | имя кластера |
 | db_config | | словарь с [параметрами конфигурации кластера](https://docs.picodata.io/picodata/stable/reference/db_config/) |
