@@ -40,7 +40,7 @@
       db_config_tiers: |
         {{ db_config_tiers }}
         {% for key, value in tier.value.db_config.items() %}
-        ALTER SYSTEM SET "{{ key }}" = {{ value }} FOR TIER {{ tier.key }} WAIT APPLIED LOCALLY;
+        ALTER SYSTEM SET "{{ key }}" = {{ value }} FOR TIER {{ tier.key }};
         {% endfor %}
     when: tier.value.db_config is defined and tag != 'expand'
 

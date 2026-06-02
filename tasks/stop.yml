@@ -20,7 +20,7 @@
       scope: '{{ systemd_scope }}'
       enabled: '{{ enable }}'
       no_block: true
-    loop: '{{ instances_filtered }}'
+    loop: '{{ instances_filtered | reverse }}'
     loop_control:
       loop_var: instance
     ignore_errors: True
@@ -37,7 +37,7 @@
       scope: '{{ systemd_scope }}'
       enabled: '{{ enable }}'
       no_block: true
-    loop: '{{ instances_filtered }}'
+    loop: '{{ instances_filtered | reverse }}'
     loop_control:
       loop_var: instance
     ignore_errors: True
@@ -51,7 +51,7 @@
   throttle: '{{ serial_host_restart | default(100) }}'
   ansible.builtin.shell:
     cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf stop {{ instance }}
-  loop: '{{ instances_filtered }}'
+  loop: '{{ instances_filtered | reverse }}'
   loop_control:
     loop_var: instance
   when: init_system == 'supervisord'

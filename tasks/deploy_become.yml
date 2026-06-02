@@ -23,7 +23,7 @@
 - name: Proccessing with force become
   block:
 
-  - name: ({{ cluster_name }}) Create top-level abd backup dirs for cluster
+  - name: ({{ cluster_name }}) Create top-level and backup dirs for cluster
     ansible.builtin.file:
       name: '{{ item }}'
       state: directory

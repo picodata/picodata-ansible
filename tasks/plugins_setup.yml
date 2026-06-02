@@ -50,6 +50,7 @@
            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
            grep true | wc -l
     register: plugin_status
+    changed_when: plugin_status.stdout != "1"
 
   - name: ({{ cluster_name }}) Debug plugin_status {{ plugin.key }}
     ansible.builtin.debug:
@@ -70,6 +71,7 @@
           echo "SELECT version FROM _pico_plugin WHERE name='{{ manifest.name }}' AND enabled=true" |
           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock |
           grep ' [[:digit:]]*\.[[:digit:]]*\.[[:digit:]]* ' | tr -d '| '
+    changed_when: false
     register: plugin_current_version
 
   - name: ({{ cluster_name }}) Debug plugin_current_version {{ plugin.key }}
@@ -158,7 +160,7 @@
           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
     when: plugin_enable | bool == true and plugin_install_sql | bool == true and plugin_status.stdout == "0" and plugin_current_version is version(manifest.version, '<')
 
-  - name: ({{ cluster_name }}) If downgrade version {{ plugin.key }}
+  - name: ({{ cluster_name }}) Check on downgrade version {{ plugin.key }}
     ansible.builtin.debug:
       msg: 'Внимание! Откат на предыдущую версию с помощью роли не возможен, для этого используйте SQL-команды из инструкции плагина!'
     when: plugin_current_version is version(manifest.version, '>')

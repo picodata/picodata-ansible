@@ -230,8 +230,8 @@
       ansible.builtin.shell:
         cmd: >
             echo "
-            ALTER USER \"admin\" password '{{ admin_password }}' USING md5 WAIT APPLIED LOCALLY;
-            ALTER USER \"admin\" WITH LOGIN WAIT APPLIED LOCALLY;
+            ALTER USER \"admin\" password '{{ admin_password }}' USING md5;
+            ALTER USER \"admin\" WITH LOGIN;
             " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
       register: result
       until: result.rc == 0
@@ -243,9 +243,9 @@
       ansible.builtin.shell:
         cmd: >
             echo "
-            ALTER SYSTEM RESET jwt_secret WAIT APPLIED LOCALLY;
+            ALTER SYSTEM RESET jwt_secret;
             {% if auth_webui == false %}
-            ALTER SYSTEM SET jwt_secret = '' WAIT APPLIED LOCALLY;
+            ALTER SYSTEM SET jwt_secret = '';
             {% endif %}
             " | {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
       register: result

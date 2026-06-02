@@ -190,7 +190,7 @@
   ansible.builtin.set_fact:
     db_config_all: |
       {% for key, value in db_config.items() %}
-      ALTER SYSTEM SET "{{ key }}" = {{ value }} FOR ALL TIERS WAIT APPLIED LOCALLY;
+      ALTER SYSTEM SET "{{ key }}" = {{ value }} FOR ALL TIERS;
       {% endfor %}
   when: db_config is defined
 
@@ -367,6 +367,7 @@
 
 - name: Force all notified handlers before install plugins
   ansible.builtin.meta: flush_handlers
+  when: '"restore_full" not in ansible_run_tags'
 
 - name: ({{ cluster_name }}) Install plugins
   ansible.builtin.include_tasks:

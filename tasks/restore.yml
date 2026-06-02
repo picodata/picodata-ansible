@@ -78,6 +78,15 @@
   ansible.builtin.include_tasks:
     file: stop.yml
 
+- name: Wait until the cluster is stopped
+  ansible.builtin.wait_for:
+    host: '{{ listen_address }}'
+    port: '{{ item | int }}'
+    state: drained
+    delay: 10
+    sleep: 2
+  loop: '{{ list_bin | reverse }}'
+
 - name: ({{ cluster_name }}) Clear instance name in config file before restore
   ansible.builtin.replace:
     path: '{{ conf_dir }}/{{ cluster_name }}/{{ instance }}.conf'
@@ -88,7 +97,7 @@
   loop: '{{ instances_on_host }}'
   loop_control:
     loop_var: instance
-  when: autonames == true
+  when: autonames == true and role_ver is version('26.1.2', '<') or picodata_version is version('26.1', '<')
 
 # Нужно удалить содержимое в каталоге, а не сам каталог, поэтому rm
 - name: ({{ cluster_name }}) Clean instance_dir
