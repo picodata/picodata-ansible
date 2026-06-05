@@ -167,6 +167,8 @@ ansible-playbook -i hosts.yml picodata.yml -t start -l host
 ansible-playbook -i hosts.yml picodata.yml -t plugins
 ```
 
+> **Внимание!** Если в настройках плагина использутся параметры, которые должны быть указаны в конфигурационном файле инстанса, например параметр `listener` в [Radix](https://docs.picodata.io/picodata/stable/plugins/radix/#picodata_config), то плагин нужно устанавливать через тег `deploy`!
+
 ### Обновление версии плагина
 
 Для обновления версии плагина нужно указать путь до новой версии плагина в инвентарном файле, далее запустите роль с тегом `plugins`:
