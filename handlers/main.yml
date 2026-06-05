@@ -7,6 +7,13 @@
   when: need_restart | bool == true
   listen: restart
 
+- name: Sleep for 10 seconds and continue with play
+  ansible.builtin.wait_for:
+    timeout: 10
+  run_once: true
+  when: need_restart | bool == true
+  listen: restart
+
 - name: Wait for PG-port and continue with play
   ansible.builtin.wait_for:
     host: '{{ pg_address }}'
@@ -15,7 +22,7 @@
   run_once: true
   listen: apply_db_config
 
-- name: Wait 10 sec and apply db_config for tiers
+- name: Apply db_config for tiers
 # 10 секунд нужны для исключения ошибки 'raft: proposal dropped'
   ansible.builtin.shell:
     cmd: >

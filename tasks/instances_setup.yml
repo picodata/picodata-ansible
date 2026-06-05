@@ -214,11 +214,16 @@
         timeout: '{{ timeout_admin_sock }}'
       retries: '{{ retries_admin_sock }}'
 
-    - name: Wait 10 sec and apply db_config
-    # 1 секунда нужна для исключения ошибки 'raft: proposal dropped'
+    # 10 секунд нужно для исключения ошибки 'raft: proposal dropped'
+    - name: Sleep for 10 seconds and continue with play
+      ansible.builtin.wait_for:
+        timeout: 10
+      run_once: true
+      when: db_config_all != "" and result.changed | default(false) == true
+
+    - name: Apply db_config
       ansible.builtin.shell:
         cmd: >
-            sleep 10 &&
             cat {{ conf_dir }}/{{ cluster_name }}/dbconfig.sql |
               {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
       retries: 3
