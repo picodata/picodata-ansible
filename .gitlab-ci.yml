@@ -34,6 +34,7 @@ default:
     # Оставьте пустым чтобы пропустить этот тест.
     MOLECULE_PLUGIN_PATH: ""
   before_script:
+    - chmod -R o-w $CI_PROJECT_DIR
     - apt-get update -qq && apt-get install -y -qq docker.io
     - pip install --quiet
         "molecule==6.*"
