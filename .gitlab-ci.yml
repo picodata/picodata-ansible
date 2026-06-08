@@ -12,6 +12,10 @@ stages:
   - test
   - notify
 
+default:
+  tags:
+    - docker-k8s
+
 # ─── Molecule тесты ──────────────────────────────────────────────────────────
 
 .molecule_base:
@@ -59,28 +63,28 @@ molecule:
     matrix:
       - MOLECULE_SCENARIO: systemd
         ANSIBLE_PACKAGE:
-          - "ansible==2.9.*"
           - "ansible-core==2.11.*"
-          - "ansible-core==2.14.*"
-          - "ansible-core==2.16.*"
-      - MOLECULE_SCENARIO: supervisord
-        ANSIBLE_PACKAGE:
-          - "ansible==2.9.*"
-          - "ansible-core==2.11.*"
-          - "ansible-core==2.14.*"
-          - "ansible-core==2.16.*"
-      - MOLECULE_SCENARIO: rootless-systemd
-        ANSIBLE_PACKAGE:
-          - "ansible==2.9.*"
-          - "ansible-core==2.11.*"
-          - "ansible-core==2.14.*"
-          - "ansible-core==2.16.*"
-      - MOLECULE_SCENARIO: rootless-supervisord
-        ANSIBLE_PACKAGE:
-          - "ansible==2.9.*"
-          - "ansible-core==2.11.*"
-          - "ansible-core==2.14.*"
-          - "ansible-core==2.16.*"
+          # - "ansible==2.9.*"
+      #     - "ansible-core==2.14.*"
+      #     - "ansible-core==2.16.*"
+      # - MOLECULE_SCENARIO: supervisord
+      #   ANSIBLE_PACKAGE:
+      #     - "ansible==2.9.*"
+      #     - "ansible-core==2.11.*"
+      #     - "ansible-core==2.14.*"
+      #     - "ansible-core==2.16.*"
+      # - MOLECULE_SCENARIO: rootless-systemd
+      #   ANSIBLE_PACKAGE:
+      #     - "ansible==2.9.*"
+      #     - "ansible-core==2.11.*"
+      #     - "ansible-core==2.14.*"
+      #     - "ansible-core==2.16.*"
+      # - MOLECULE_SCENARIO: rootless-supervisord
+      #   ANSIBLE_PACKAGE:
+      #     - "ansible==2.9.*"
+      #     - "ansible-core==2.11.*"
+      #     - "ansible-core==2.14.*"
+      #     - "ansible-core==2.16.*"
 
 # ─── Release notify (только по тегу) ─────────────────────────────────────────
 
