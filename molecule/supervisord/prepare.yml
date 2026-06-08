@@ -1,0 +1,17 @@
+---
+- name: Prepare | Install picodata and supervisord
+  hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Install picodata package
+      ansible.builtin.include_role:
+        name: picodata-ansible
+        tasks_from: install_packages.yml
+      vars:
+        install_packages: true
+
+    - name: Install supervisor (supervisord)
+      ansible.builtin.package:
+        name: supervisor
+        state: present

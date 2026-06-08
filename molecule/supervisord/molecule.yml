@@ -1,0 +1,62 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: picodata-node
+    image: registry.gitlab.com/picodata/dockers/molecule-ubuntu
+    command: /sbin/init
+    security_opts:
+      - seccomp=unconfined
+    capabilities:
+      - SYS_ADMIN
+    tmpfs:
+      - /run
+      - /tmp
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    pre_build_image: true
+
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
+  playbooks:
+    prepare: prepare.yml
+    converge: ../default/converge.yml
+    verify: ../default/verify.yml
+  inventory:
+    group_vars:
+      all:
+        cluster_name: testcluster
+        admin_password: "TestPass123!"
+        service_password: "ServicePass123!"
+        tiers:
+          default:
+            replicaset_count: 2
+            replication_factor: 1
+        init_system: supervisord
+        rootless: false
+        user: root
+        group: root
+        log_to: file
+        audit_to: file
+        backup_fetch: false
+        report_dir: /tmp
+        crash_dump_fetch_dir: /tmp
+
+scenario:
+  name: supervisord
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy
+
+verifier:
+  name: ansible

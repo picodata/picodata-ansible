@@ -6,9 +6,83 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
 
 stages:
+  - test
   - notify
+
+# ─── Molecule тесты ──────────────────────────────────────────────────────────
+
+.molecule_base:
+  stage: test
+  image: python:3.11-slim
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    # Путь к пакету picodata (deb/rpm). Оставьте пустым для установки из репо.
+    MOLECULE_PICODATA_PACKAGE: ""
+    # Путь к архиву плагина для теста plugin config apply.
+    # Оставьте пустым чтобы пропустить этот тест.
+    MOLECULE_PLUGIN_PATH: ""
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq docker.io
+    - pip install --quiet
+        "molecule==6.*"
+        "molecule-docker"
+        "docker"
+        "${ANSIBLE_PACKAGE}"
+    # Для ansible-core < 2.12 нужны отдельные коллекции
+    - |
+      if python -c "import ansible; v=tuple(int(x) for x in ansible.__version__.split('.')[:2]); exit(0 if v >= (2,12) else 1)" 2>/dev/null; then
+        echo "ansible-core >= 2.12, collections not needed"
+      else
+        pip install --quiet ansible-core || true
+        ansible-galaxy collection install community.general community.docker || true
+      fi
+  script:
+    - cd "$CI_PROJECT_DIR"
+    - molecule test -s "$MOLECULE_SCENARIO"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+  # Не блокируем пайплайн при первых неудачах — собираем все результаты
+  allow_failure: false
+
+# Матрица: 4 сценария × 4 версии Ansible = 16 джобов
+molecule:
+  extends: .molecule_base
+  parallel:
+    matrix:
+      - MOLECULE_SCENARIO: systemd
+        ANSIBLE_PACKAGE:
+          - "ansible==2.9.*"
+          - "ansible-core==2.11.*"
+          - "ansible-core==2.14.*"
+          - "ansible-core==2.16.*"
+      - MOLECULE_SCENARIO: supervisord
+        ANSIBLE_PACKAGE:
+          - "ansible==2.9.*"
+          - "ansible-core==2.11.*"
+          - "ansible-core==2.14.*"
+          - "ansible-core==2.16.*"
+      - MOLECULE_SCENARIO: rootless-systemd
+        ANSIBLE_PACKAGE:
+          - "ansible==2.9.*"
+          - "ansible-core==2.11.*"
+          - "ansible-core==2.14.*"
+          - "ansible-core==2.16.*"
+      - MOLECULE_SCENARIO: rootless-supervisord
+        ANSIBLE_PACKAGE:
+          - "ansible==2.9.*"
+          - "ansible-core==2.11.*"
+          - "ansible-core==2.14.*"
+          - "ansible-core==2.16.*"
+
+# ─── Release notify (только по тегу) ─────────────────────────────────────────
 
 release:
   stage: notify
@@ -21,5 +95,5 @@ release:
   trigger:
     project: picodata/devops/builder-ansible
     strategy: mirror
-
-
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/

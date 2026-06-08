@@ -1,0 +1,38 @@
+---
+- name: Prepare | Privileged setup for rootless+supervisord
+  hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Create picodata group
+      ansible.builtin.group:
+        name: picodata
+        system: true
+
+    - name: Create picodata user with home
+      ansible.builtin.user:
+        name: picodata
+        group: picodata
+        system: true
+        shell: /bin/bash
+        create_home: true
+
+    - name: Install supervisor (supervisord)
+      ansible.builtin.package:
+        name: supervisor
+        state: present
+
+    - name: Install picodata package
+      ansible.builtin.include_role:
+        name: picodata-ansible
+        tasks_from: install_packages.yml
+      vars:
+        install_packages: true
+
+    - name: Run privileged deploy tasks (dirs, tmpfiles.d, supervisord system unit)
+      ansible.builtin.include_role:
+        name: picodata-ansible
+        tasks_from: deploy_become.yml
+      vars:
+        skip_check_install: true
+        install_packages: false

@@ -1,0 +1,72 @@
+---
+# Для rootless-деплоя нужно:
+#   1. Создать пользователя picodata
+#   2. Установить picodata (роль запрещает установку в rootless-режиме сама)
+#   3. Выполнить привилегированные таски deploy_become.yml (директории,
+#      logrotate, tmpfiles.d) — в продакшне это делается отдельным запуском
+#      с тегом deploy_become от имени root/sudo
+#   4. Включить systemd linger для picodata-пользователя
+
+- name: Prepare | Privileged setup for rootless+systemd
+  hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Create picodata group
+      ansible.builtin.group:
+        name: picodata
+        system: true
+
+    - name: Create picodata user with home
+      ansible.builtin.user:
+        name: picodata
+        group: picodata
+        system: true
+        shell: /bin/bash
+        create_home: true
+
+    - name: Create XDG_RUNTIME_DIR for picodata user
+      ansible.builtin.file:
+        path: '/run/user/{{ item }}'
+        state: directory
+        owner: picodata
+        group: picodata
+        mode: '0700'
+      loop:
+        - '{{ ansible_facts.getent_passwd.picodata[1] | default("") }}'
+      when: ansible_facts.getent_passwd is defined and
+            ansible_facts.getent_passwd.picodata is defined
+
+    - name: Get picodata UID
+      ansible.builtin.command: 'id -u picodata'
+      register: picodata_uid
+      changed_when: false
+
+    - name: Ensure XDG_RUNTIME_DIR exists for picodata
+      ansible.builtin.file:
+        path: '/run/user/{{ picodata_uid.stdout }}'
+        state: directory
+        owner: picodata
+        group: picodata
+        mode: '0700'
+
+    - name: Install picodata package
+      ansible.builtin.include_role:
+        name: picodata-ansible
+        tasks_from: install_packages.yml
+      vars:
+        install_packages: true
+
+    - name: Run privileged deploy tasks (dirs, tmpfiles.d, logrotate system)
+      ansible.builtin.include_role:
+        name: picodata-ansible
+        tasks_from: deploy_become.yml
+      vars:
+        # Пропускаем проверку и установку picodata — уже сделано выше
+        skip_check_install: true
+        install_packages: false
+
+    - name: Enable systemd linger for picodata user
+      ansible.builtin.command:
+        cmd: 'loginctl enable-linger picodata'
+        creates: '/var/lib/systemd/linger/picodata'
