@@ -63,7 +63,7 @@ molecule:
     matrix:
       - MOLECULE_SCENARIO: systemd
         ANSIBLE_PACKAGE:
-          - "ansible-core==2.11.*"
+          - "ansible-core==2.15.*"
           # - "ansible==2.9.*"
       #     - "ansible-core==2.14.*"
       #     - "ansible-core==2.16.*"
