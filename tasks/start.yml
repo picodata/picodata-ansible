@@ -1,5 +1,5 @@
 ---
-# tasks for stop cluster
+# tasks for start cluster
 
 - name: ({{ cluster_name }}) Set server failure domain
   ansible.builtin.set_fact:

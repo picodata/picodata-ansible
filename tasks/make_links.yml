@@ -1,5 +1,5 @@
 ---
-# tasks for execute lua command on instances
+# tasks for make links
 
 - name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.include_tasks:

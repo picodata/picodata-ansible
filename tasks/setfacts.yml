@@ -1,0 +1,48 @@
+---
+# tasks for set initial variables
+
+- name: ({{ cluster_name }}) setfacts Set scope for systemd
+  ansible.builtin.set_fact:
+    systemd_scope: 'user'
+    systemd_user: '{{ user }}'
+    systemd_dir: '{{ ansible_user_dir }}/.config/systemd/user/'
+  run_once: true
+  when: rootless == true and init_system == 'systemd'
+
+- name: ({{ cluster_name }}) setfacts Register uid of {{ systemd_user }}
+  command: 'id -u {{ systemd_user }}'
+  register: uid
+  changed_when: false
+
+- name: ({{ cluster_name }}) setfacts Debug uid
+  ansible.builtin.debug:
+    var: uid
+  run_once: true
+  when: debug == true
+
+- name: ({{ cluster_name }}) setfacts Set server failure domain
+  ansible.builtin.set_fact:
+    host_group: "none"
+  when: host_group is undefined
+
+- name: ({{ cluster_name }}) setfacts Set all host groups for servers
+  ansible.builtin.set_fact:
+    all_host_groups: "{{ all_host_groups|default([])  + [ hostvars[item]['host_group']|default([]) ]  }}"
+  loop: "{{ groups['all'] }}"
+  run_once: true
+
+- name: ({{ cluster_name }}) setfacts Init variables
+  ansible.builtin.set_fact:
+    all_hosts: '{{ groups["all"] }}'
+    tag: ''
+
+- name: ({{ cluster_name }}) setfacts Debug all_hosts
+  ansible.builtin.debug:
+    var: all_hosts
+  when: debug == true
+
+- name: ({{ cluster_name }}) setfacts Set listen address for every host
+  ansible.builtin.set_fact:
+    listen_address: "{{ listen_address }}"
+  when: hostvars[inventory_hostname]['listen_address'] is undefined
+

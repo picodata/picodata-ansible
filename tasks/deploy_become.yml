@@ -1,4 +1,5 @@
 ---
+# tasks for setup servers of cluster
 
 - name: Proccessing for install picodata
   block:
