@@ -1,0 +1,24 @@
+---
+- name: Destroy Proxmox LXC
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Load Molecule configuration vars
+      ansible.builtin.include_vars:
+        file: "{{ molecule_file }}"
+        name: molecule_config
+
+    - name: Stop and remove LXC container
+      community.proxmox.proxmox:
+        api_host: "{{ hostvars[item].api_host }}"
+        api_user: "{{ hostvars[item].api_user }}"
+        api_password: "{{ hostvars[item].api_password }}"
+        validate_certs: false
+        vmid: "{{ hostvars[item].vmid }}"
+        node: "{{ hostvars[item].node }}"
+        state: absent
+        force: true
+        cmode: shell
+      loop: "{{ groups['all'] }}"
+      when: 
+        - hostvars[item] is defined

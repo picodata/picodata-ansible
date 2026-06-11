@@ -1,0 +1,36 @@
+---
+scenario:
+  converge_sequence:
+    - destroy
+    - create
+    - converge
+    - verify
+    - destroy
+dependency:
+  name: galaxy
+driver:
+  name: default
+platforms:
+  - name: molecule-lxc-test
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
+  config_options:
+    defaults:
+      callbacks_enabled: profile_tasks
+    ssh_connection:
+      pipelining: True
+  inventory:
+    host_vars:
+      molecule-lxc-test:
+        ansible_python_interpreter: /usr/bin/python3
+        template: templates:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst
+        vmid: 9000
+        node: big2
+        api_host: 10.5.1.15
+        api_user: "${API_USER}"
+        api_password: "${API_PASSWORD}"
+
+  ansible_args:
+    - --inventory=../molecule.inventory.yml

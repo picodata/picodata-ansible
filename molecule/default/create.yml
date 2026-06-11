@@ -1,0 +1,61 @@
+---
+- name: Create Proxmox LXC with DHCP
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Load Molecule configuration vars
+      ansible.builtin.include_vars:
+        file: "{{ molecule_file }}"
+        name: molecule_config
+
+    - name: Ensure local SSH directory exists for temporary keys
+      ansible.builtin.file:
+        path: "{{ lookup('env', 'HOME') }}/.ssh"
+        state: directory
+        mode: '0700'
+
+    - name: Generate temporary SSH key pair for Molecule
+      community.crypto.openssh_keypair:
+        path: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519"
+        type: ed25519
+        force: false
+      register: temp_ssh_key
+
+    - name: Create LXC container
+      community.proxmox.proxmox:
+        api_host: "{{ hostvars[item].api_host }}"
+        api_user: "{{ hostvars[item].api_user }}"
+        api_password: "{{ hostvars[item].api_password }}"
+        validate_certs: false
+        vmid: "{{ hostvars[item].vmid | int }}"
+        node: "{{ hostvars[item].node }}"
+        ostemplate: "{{ hostvars[item].template }}"
+        hostname: "{{ item }}"
+        password: "TemporarySecurePassword123"
+        cores: 1
+        memory: 1024
+        storage: local
+        netif: '{"net0":"name=eth0,bridge=vmbr0,ip=dhcp"}'
+        pubkey: "{{ temp_ssh_key.public_key }}"
+        cmode: shell
+        state: present
+      loop: "{{ groups['all'] }}"
+
+    - name: Start the created LXC container
+      community.proxmox.proxmox:
+        api_host: "{{ hostvars[item].api_host }}"
+        api_user: "{{ hostvars[item].api_user }}"
+        api_password: "{{ hostvars[item].api_password }}"
+        validate_certs: false
+        vmid: "{{ hostvars[item].vmid | int }}"
+        node: "{{ hostvars[item].node }}"
+        state: started
+      loop: "{{ groups['all'] }}"
+
+    - name: Check SSH TCP port availability
+      ansible.builtin.wait_for:
+        host: molecule-lxc-test
+        port: 22
+        state: started
+        timeout: 100
+        delay: 10
