@@ -1,5 +1,5 @@
 ---
-  # tasks for crash dump
+# tasks for crash dump
 
 - name: ({{ cluster_name }}) Generate list of instances per server
   ansible.builtin.import_tasks:

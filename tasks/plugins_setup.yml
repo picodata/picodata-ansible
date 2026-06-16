@@ -137,9 +137,11 @@
     - name: ({{ cluster_name }}) Configure plugin {{ plugin.key }}
       ansible.builtin.shell:
         cmd: >
-             {{ bin_dir }}/picodata plugin configure {{ manifest.name }} {{ manifest.version }}
-             {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/config.yaml
+             {{ bin_dir }}/picodata plugin configure
+             {% if picodata_version is version('25.3.3', '>=') %}
              --peer {{ listen_address }}:{{ first_bin_port }}
+             --timeout {{ plugin.value.plugin_timeout | default(300) }}
+             {% endif %}
              {% if iproto_tls == true %}
              --tls-auth
              --tls-cert {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_cert_file | basename }}
@@ -147,7 +149,11 @@
              --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
              {% endif %}
              --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie
-             --timeout {{ plugin.value.plugin_timeout | default(300) }}
+             {% if picodata_version is version('25.3.3', '<') %}
+             {{ listen_address }}:{{ first_bin_port }}
+             {% endif %}
+             {{ manifest.name }} {{ manifest.version }}
+             {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/config.yaml
       when: res.changed is defined and res.changed == true
 
     when: plugin.value.config is defined and plugin.value.config != '' and plugin_install_sql | bool == true

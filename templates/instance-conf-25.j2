@@ -39,8 +39,10 @@ instance:
 
   pg:
     listen: '0.0.0.0:{{ list_pg[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
-    advertise: '{{ list_pg[instance_index | int] }}'
     ssl: {{ pg_ssl | tojson }}
+{% if picodata_version is version('25.3.1', '>=') %}
+    advertise: '{{ list_pg[instance_index | int] }}'
+{% endif %}
 {% if pg_ssl == true and picodata_version is version('25.4.3', '>=') %}
     cert_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_cert_file | basename }}
     key_file: {{ cert_dir }}/{{ cluster_name }}/pg/{{ pg_key_file | basename }}
