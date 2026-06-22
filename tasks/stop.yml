@@ -18,7 +18,6 @@
       name: '{{ cluster_name }}@{{ instance }}.service'
       state: stopped
       scope: '{{ systemd_scope }}'
-      enabled: '{{ enable }}'
       no_block: true
     loop: '{{ instances_filtered | reverse }}'
     loop_control:
@@ -35,12 +34,11 @@
       name: '{{ cluster_name }}-{{ instance }}.service'
       state: stopped
       scope: '{{ systemd_scope }}'
-      enabled: '{{ enable }}'
       no_block: true
     loop: '{{ instances_filtered | reverse }}'
     loop_control:
       loop_var: instance
-    ignore_errors: True
+    ignore_errors: '{% if tag | default("") != "restore" %}True{% else %}False{% endif %}'
     environment:
       XDG_RUNTIME_DIR: /run/user/{{uid.stdout}}
     when: autonames|bool == true

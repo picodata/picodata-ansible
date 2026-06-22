@@ -30,7 +30,8 @@
                 FROM _pico_instance AS i
                 JOIN _pico_peer_address AS p ON i.raft_id=p.raft_id
                 WHERE connection_type='iproto' and substring(p.address, '(.*):.*') = '{{ listen_address }}' )
-         WHERE num>={{ start_num }}{% if filename_format == 'binport' %} + {{ first_bin_port }} - 1{% endif %}" |
+         WHERE num>={{ start_num }}{% if filename_format == 'binport' %} + {{ first_bin_port }} - 1{% endif %}
+         ORDER BY num" |
          {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock  |
          grep '|' | grep -v '+-' | grep -Ev 'name.* | address' | tr -d ' ' | cut -f 2-4 -d '|' | tr '|' ','
   register: result_sql
