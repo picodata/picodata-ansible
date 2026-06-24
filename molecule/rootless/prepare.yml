@@ -1,0 +1,122 @@
+- name: Pre install playbook for Picodata rootless
+  hosts: all
+  become: yes
+  vars: 
+    ansible_user: root
+  tasks:
+    
+    - name: Install setfacl
+      apt:
+        name: acl
+        state: present
+        update_cache: yes
+
+    - name: Create user sysadm (Administrator OS)
+      ansible.builtin.user:
+        name: "{{ sysadm_user }}"
+        shell: /bin/bash
+        create_home: yes
+        groups: sudo
+        append: yes
+
+    - name: Create .ssh for "{{ sysadm_user }}"
+      ansible.builtin.file:
+        path: "/home/{{ sysadm_user }}/.ssh"
+        state: directory
+        owner: "{{ sysadm_user }}"
+        group: "{{ sysadm_user }}"
+        mode: '0700'
+
+    - name: Add ssh key
+      ansible.posix.authorized_key:
+        user: "{{ sysadm_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+    - name: Create user dbadm (Administrator DB)
+      ansible.builtin.user:
+        name: "{{ dbadm_user }}"
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Create .ssh for "{{ dbadm_user }}"
+      ansible.builtin.file:
+        path: /home/"{{ dbadm_user }}"/.ssh
+        state: directory
+        owner: "{{ dbadm_user }}"
+        group: "{{ dbadm_user }}"
+        mode: '0700'
+
+    - name: Add ssh key
+      ansible.posix.authorized_key:
+        user: "{{ dbadm_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+    - name: Create picodata group
+      ansible.builtin.group:
+        name: picodata
+        state: present
+  
+    - name: Create picodata user
+      ansible.builtin.user:
+        name: picodata
+        shell: /sbin/nologin
+        groups: picodata,systemd-journal
+        append: yes
+        comment: "Системный пользователь для приложения Picodata"
+    
+    - name: Add dbadm to picodata group
+      ansible.builtin.user:
+        name: "{{ dbadm_user }}"
+        groups: picodata
+        append: true
+    
+    - name: Sudo for sysadm
+      community.general.sudoers:
+        name: "{{ sysadm_user }}"
+        user: "{{ sysadm_user }}"
+        commands: ALL
+        nopassword: true
+        runas: ALL
+        setenv: true
+        state: present
+    
+    - name: Sudo for dbadm
+      community.general.sudoers:
+        name: "{{ dbadm_user }}"
+        user: "{{ dbadm_user }}"
+        commands:
+          - /bin/bash
+          - /bin/sh
+        nopassword: true
+        runas: picodata
+        setenv: true
+        state: present
+
+    - name: Install picodata package
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: install_packages.yml
+      vars:
+        install_packages: true
+
+- name: Pre install playbook for Picodata rootless
+  hosts: all
+  become: yes
+  vars:
+    ansible_user: sysadm
+  tasks:
+
+    - name: Set facts
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: setfacts.yml
+
+    - name: Run privileged deploy tasks (dirs, tmpfiles.d, logrotate system)
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: deploy_become.yml
+      vars:
+        skip_check_install: true
+        install_packages: false

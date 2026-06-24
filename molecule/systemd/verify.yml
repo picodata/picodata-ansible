@@ -1,0 +1,272 @@
+---
+- name: Verify | Init role facts
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Load shared vars
+      ansible.builtin.include_vars:
+        file: ../shared/vars.yml
+
+    - name: Set role facts
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: setfacts.yml
+
+    - name: Fill instance list from report.yml
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: genin.yml
+
+    - name: Set WAIT clause based on version
+      ansible.builtin.set_fact:
+        wait_clause: "{{ ' WAIT APPLIED GLOBALLY' if picodata_version is version('26.0', '>=') else '' }}"
+
+    - name: Create memtx test table and insert 3 rows
+      ansible.builtin.shell:
+        cmd: |
+          echo "
+          CREATE TABLE IF NOT EXISTS t_test (
+            id  INTEGER NOT NULL,
+            val TEXT    NOT NULL,
+            PRIMARY KEY (id)
+          ) {{ wait_clause }};
+          INSERT INTO t_test VALUES (1, 'alpha');
+          INSERT INTO t_test VALUES (2, 'beta');
+          INSERT INTO t_test VALUES (3, 'gamma');
+          " | {{ bin_dir }}/picodata admin \
+              {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: sql_result
+      until: sql_result.rc == 0
+      retries: 5
+      delay: 3
+      failed_when: sql_result.rc != 0 and sql_result.attempts | default(1) >= 5
+
+    - name: Create vinyl test table and insert 3 rows
+      ansible.builtin.shell:
+        cmd: |
+          echo "
+          CREATE TABLE IF NOT EXISTS t_vinyl (
+            id  INTEGER NOT NULL,
+            val TEXT    NOT NULL,
+            PRIMARY KEY (id)
+          ) USING vinyl {{ wait_clause }};
+          INSERT INTO t_vinyl VALUES (1, 'x');
+          INSERT INTO t_vinyl VALUES (2, 'y');
+          INSERT INTO t_vinyl VALUES (3, 'z');
+          " | {{ bin_dir }}/picodata admin \
+              {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: vinyl_sql
+      failed_when: "'ERROR' in (vinyl_sql.stdout | default(''))"
+
+    - name: Count memtx rows before backup
+      ansible.builtin.shell:
+        cmd: >
+          echo "SELECT count(*) FROM t_test;" |
+          {{ bin_dir }}/picodata admin
+          {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: count_before_raw
+
+    - name: Save pre-backup row count as persistent fact
+      ansible.builtin.set_fact:
+        pre_backup_count: "{{ count_before_raw.stdout | regex_search('\\d+') }}"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ТЕСТ 1: Создание бэкапа
+# ═══════════════════════════════════════════════════════════════════════════════
+- name: Verify | [1/8] Backup
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run backup task
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: backup.yml
+
+    # current_backup устанавливается set_fact внутри backup.yml и сохраняется
+    # в кэше фактов — доступен во всех последующих plays того же запуска
+    - name: Assert backup name is non-empty
+      ansible.builtin.assert:
+        that: current_backup is defined and current_backup | length > 0
+        fail_msg: "Backup task did not produce a timestamp (current_backup is empty)"
+      run_once: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ТЕСТ 2: Рестарт кластера
+# ═══════════════════════════════════════════════════════════════════════════════
+- name: Verify | [2/8] Restart
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run restart task
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: restart.yml
+      vars:
+        need_restart: true
+
+    - name: Wait for admin sockets after restart
+      ansible.builtin.wait_for:
+        path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
+        state: present
+        timeout: 60
+      loop: '{{ instances_on_host }}'
+
+    - name: Assert cluster responds after restart
+      ansible.builtin.shell:
+        cmd: >
+          echo "CREATE INDEX idx_t_test_val ON t_test(val) {{ wait_clause }};" |
+          {{ bin_dir }}/picodata admin
+          {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: ping_result
+      failed_when: ping_result.rc != 0
+      run_once: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ТЕСТ 3: Сбор crash dump
+# ═══════════════════════════════════════════════════════════════════════════════
+- name: Verify | [3/8] Crash dump
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run crash_dump collection
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: crash_dump.yml
+
+    - name: Check dump archive was created
+      ansible.builtin.find:
+        paths: '{{ backup_dir }}/{{ cluster_name }}/crash_dumps'
+        patterns: '*.tar.gz'
+      register: dump_files
+
+    - name: Assert at least one dump archive exists
+      ansible.builtin.assert:
+        that: dump_files.matched >= 1
+        fail_msg: >-
+          No crash dump archive found in
+          {{ backup_dir }}/{{ cluster_name }}/crash_dumps
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ТЕСТ 4: Выполнение произвольной команды (Lua via picodata admin)
+# ═══════════════════════════════════════════════════════════════════════════════
+- name: Verify | [4/8] Command execution
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run command task (return box.info().id)
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: command.yml
+      vars:
+        cmdline: "return box.info().id"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ТЕСТ 5: Применение конфига плагина
+# ═══════════════════════════════════════════════════════════════════════════════
+- name: Verify | [5/8] Plugin config apply
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Re-apply plugin config (if plugins defined)
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: plugins.yml
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ТЕСТ 6: Ребутстрап инстанса (обычный — второй инстанс, peer — первый)
+# ═══════════════════════════════════════════════════════════════════════════════
+- name: Verify | [6/8] Rebootstrap (regular instance)
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Rebootstrap second instance (list_instance_names[1])
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: rebootstrap.yml
+      vars:
+        instance: '{{ list_instance_names[1] }}'
+
+    - name: Wait for rebootstrapped instance socket
+      ansible.builtin.wait_for:
+        path: '{{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[1] }}.sock'
+        state: present
+        timeout: 120
+
+    - name: Assert cluster accessible after regular rebootstrap
+      ansible.builtin.shell:
+        cmd: >
+          echo "DROP INDEX idx_t_test_val {{ wait_clause }};" |
+          {{ bin_dir }}/picodata admin
+          {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: result
+      failed_when: result.rc != 0
+      run_once: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ТЕСТ 8: Рестор из бэкапа с проверкой количества строк
+# ═══════════════════════════════════════════════════════════════════════════════
+- name: Verify | [8/8] Restore + row count assertion
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Restore cluster from backup
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: restore.yml
+      vars:
+        restore_dir: '{{ current_backup }}'
+        backup_fetch: false
+
+    - name: Wait for admin sockets after restore
+      ansible.builtin.wait_for:
+        path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
+        state: present
+        timeout: 120
+      loop: '{{ instances_on_host }}'
+
+    - name: Count memtx rows after restore
+      ansible.builtin.shell:
+        cmd: >
+          echo "SELECT count(*) FROM t_test;" |
+          {{ bin_dir }}/picodata admin
+          {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+      register: count_after
+      run_once: true
+      until: count_after.rc == 0
+      retries: 5
+      delay: 5
+
+    - name: Assert row count matches pre-backup state
+      ansible.builtin.assert:
+        that:
+          - (count_after.stdout | regex_search('\\d+')) == pre_backup_count
+        fail_msg: >-
+          Row count mismatch after restore:
+          expected {{ pre_backup_count }},
+          got {{ count_after.stdout | regex_search('\\d+') | default('N/A') }}
+        success_msg: >-
+          Restore verified: {{ pre_backup_count }} rows match
+      run_once: true
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ТЕСТ: Удаление кластера (всегда последнее)
+# ═══════════════════════════════════════════════════════════════════════════════
+- name: Verify | [+] Remove cluster
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Remove cluster
+      ansible.builtin.import_role:
+        name: picodata-ansible
+        tasks_from: remove.yml
+
+    - name: Check config directory is absent
+      ansible.builtin.stat:
+        path: '{{ conf_dir }}/{{ cluster_name }}'
+      register: conf_stat
+
+    - name: Assert cluster config dir was removed
+      ansible.builtin.assert:
+        that: not conf_stat.stat.exists
+        fail_msg: '{{ conf_dir }}/{{ cluster_name }} still exists after remove'

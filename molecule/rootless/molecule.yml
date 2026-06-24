@@ -1,0 +1,77 @@
+---
+scenario:
+  converge_sequence:
+    - destroy
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy
+dependency:
+  name: galaxy
+driver:
+  name: default
+platforms:
+  - name: molecule-lxc-rootless
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
+  playbooks:
+    create: ../shared/create.yml
+    destroy: ../shared/destroy.yml
+    converge: converge.yml
+    prepare: prepare.yml
+    verify: verify.yml
+  config_options:
+    defaults:
+      callbacks_enabled: profile_tasks
+    ssh_connection:
+      pipelining: True
+  inventory:
+    host_vars:
+      molecule-lxc-rootless:
+        ansible_python_interpreter: /usr/bin/python3
+        template: templates:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst
+        vmid: 9001
+        node: big2
+        api_host: 10.5.1.15
+        api_user: "${PROXMOX_API_USER}"
+        api_password: "${PROXMOX_API_PASSWORD}"
+    group_vars:
+      all:
+        cluster_name: 'molecule-rootless'
+        sysadm_user: "sysadm"
+        dbadm_user: "dbadm"
+        user: picodata
+        group: picodata
+        rootless: true
+        admin_password: 'Ft1hcz1HHHmv2C9qld9D4!'
+        service_password: "Ft1hcz1HHHmv2C9qld9D4"
+        auth_webui: false
+        audit: true
+        listen_address: '{{ ansible_default_ipv4.address }}'
+        fd_uniq_per_instance: true
+        debug: true
+
+        db_config:
+          raft_wal_count_max: 102400
+        extra_vars:
+          PICODATA_UNSAFE_DISABLE_PLUGIN_COMPATIBILITY_CHECK: 1
+        tiers:
+          arbiter:
+            replicaset_count: 1
+            replication_factor: 1
+            can_vote: true
+          default:
+            replicaset_count: 1
+            replication_factor: 2
+            can_vote: false
+            config:
+              memtx:
+                memory: 64M
+        plugins:
+          weather_cache:
+            path: '../plugin/{{ plugin_name }}'
+            services:
+              weather_service:
