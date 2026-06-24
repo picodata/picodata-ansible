@@ -34,8 +34,8 @@ provisioner:
         vmid: 9000
         node: big2
         api_host: 10.5.1.15
-        api_user: "${API_USER}"
-        api_password: "${API_PASSWORD}"
+        api_user: "${PROXMOX_API_USER}"
+        api_password: "${PROXMOX_API_PASSWORD}"
     group_vars:
       all:
         cluster_name: 'molecule-systemd'
