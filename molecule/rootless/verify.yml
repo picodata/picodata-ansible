@@ -295,7 +295,7 @@
   tasks:
     - name: Remove cluster
       ansible.builtin.import_role:
-        name: picoansible-copy
+        name: picodata-ansible
         tasks_from: remove.yml
 
 
@@ -308,7 +308,7 @@
   tasks:
     - name: Remove cluster
       ansible.builtin.import_role:
-        name: picoansible-copy
+        name: picodata-ansible
         tasks_from: remove_become.yml
 
     - name: Check config directory is absent
