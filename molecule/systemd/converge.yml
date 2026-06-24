@@ -3,6 +3,11 @@
   hosts: all
   gather_facts: true
   tasks:
+
+    - name: Load shared vars
+      ansible.builtin.include_vars:
+        file: ../shared/vars.yml
+
     - name: Deploy cluster
       ansible.builtin.include_role:
         name: picodata-ansible

@@ -4,19 +4,11 @@
   gather_facts: true
   tasks:
 
-    - name: Set common role vars
-      ansible.builtin.set_fact:
-        all_hosts: '{{ groups["all"] }}'
-        tag: ''
-        host_group: '{{ host_group | default("none") }}'
+    - name: Load shared vars
+      ansible.builtin.include_vars:
+        file: ../shared/vars.yml
 
-    - name: Build all_host_groups
-      ansible.builtin.set_fact:
-        all_host_groups: '{{ all_host_groups | default([]) + [hostvars[item]["host_group"] | default("none")] }}'
-      loop: '{{ groups["all"] }}'
-      run_once: true
-
-    - name: Populate instance list from report.yml
+    - name: Set role facts
       ansible.builtin.import_role:
         name: picodata-ansible
         tasks_from: setfacts.yml
@@ -26,6 +18,10 @@
         name: picodata-ansible
         tasks_from: genin.yml
 
+    - name: Set WAIT clause based on version
+      ansible.builtin.set_fact:
+        wait_clause: "{{ ' WAIT APPLIED GLOBALLY' if picodata_version is version('26.0.0', '>=') else '' }}"
+
     - name: Create memtx test table and insert 3 rows
       ansible.builtin.shell:
         cmd: |
@@ -34,7 +30,7 @@
             id  INTEGER NOT NULL,
             val TEXT    NOT NULL,
             PRIMARY KEY (id)
-          );
+          ) {{ wait_clause }};
           INSERT INTO t_test VALUES (1, 'alpha');
           INSERT INTO t_test VALUES (2, 'beta');
           INSERT INTO t_test VALUES (3, 'gamma');
@@ -54,7 +50,7 @@
             id  INTEGER NOT NULL,
             val TEXT    NOT NULL,
             PRIMARY KEY (id)
-          ) USING vinyl;
+          ) USING vinyl {{ wait_clause }};
           INSERT INTO t_vinyl VALUES (1, 'x');
           INSERT INTO t_vinyl VALUES (2, 'y');
           INSERT INTO t_vinyl VALUES (3, 'z');
@@ -119,7 +115,7 @@
     - name: Assert cluster responds after restart
       ansible.builtin.shell:
         cmd: >
-          echo "SELECT 1;" |
+          echo "CREATE INDEX idx_t_test_val ON t_test(val) {{ wait_clause }};" |
           {{ bin_dir }}/picodata admin
           {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
       register: ping_result
@@ -166,7 +162,7 @@
         cmdline: "return box.info().id"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ТЕСТ 5: Применение конфига плагина (если задан MOLECULE_PLUGIN_PATH)
+# ТЕСТ 5: Применение конфига плагина
 # ═══════════════════════════════════════════════════════════════════════════════
 - name: Verify | [5/8] Plugin config apply
   hosts: all
@@ -189,7 +185,6 @@
         name: picodata-ansible
         tasks_from: rebootstrap.yml
       vars:
-        # peer defaults to list_bin[0] (первый инстанс) — они разные ✓
         instance: '{{ list_instance_names[1] }}'
 
     - name: Wait for rebootstrapped instance socket
@@ -201,7 +196,7 @@
     - name: Assert cluster accessible after regular rebootstrap
       ansible.builtin.shell:
         cmd: >
-          echo "SELECT 1;" |
+          echo "DROP INDEX idx_t_test_val {{ wait_clause }};" |
           {{ bin_dir }}/picodata admin
           {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
       register: result
@@ -209,7 +204,7 @@
       run_once: true
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ТЕСТ 7: Рестор из бэкапа с проверкой количества строк
+# ТЕСТ 8: Рестор из бэкапа с проверкой количества строк
 # ═══════════════════════════════════════════════════════════════════════════════
 - name: Verify | [8/8] Restore + row count assertion
   hosts: all
