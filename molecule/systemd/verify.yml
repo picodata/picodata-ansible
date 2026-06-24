@@ -13,14 +13,14 @@
         name: picodata-ansible
         tasks_from: setfacts.yml
 
-    - name: Populate instance list from report.yml
+    - name: Fill instance list from report.yml
       ansible.builtin.import_role:
         name: picodata-ansible
         tasks_from: genin.yml
 
     - name: Set WAIT clause based on version
       ansible.builtin.set_fact:
-        wait_clause: "{{ ' WAIT APPLIED GLOBALLY' if picodata_version is version('26.0.0', '>=') else '' }}"
+        wait_clause: "{{ ' WAIT APPLIED GLOBALLY' if picodata_version is version('26.0', '>=') else '' }}"
 
     - name: Create memtx test table and insert 3 rows
       ansible.builtin.shell:

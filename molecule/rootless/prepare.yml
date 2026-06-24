@@ -21,7 +21,7 @@
 
     - name: Create .ssh for "{{ sysadm_user }}"
       ansible.builtin.file:
-        path: /home/"{{ sysadm_user }}"/.ssh
+        path: "/home/{{ sysadm_user }}/.ssh"
         state: directory
         owner: "{{ sysadm_user }}"
         group: "{{ sysadm_user }}"
@@ -62,7 +62,7 @@
       ansible.builtin.user:
         name: picodata
         shell: /sbin/nologin
-        groups: picodata
+        groups: picodata,systemd-journal
         append: yes
         comment: "Системный пользователь для приложения Picodata"
     
@@ -70,12 +70,6 @@
       ansible.builtin.user:
         name: "{{ dbadm_user }}"
         groups: picodata
-        append: true
-    
-    - name: Add picodata to systemd-journal group
-      ansible.builtin.user:
-        name: picodata
-        groups: systemd-journal
         append: true
     
     - name: Sudo for sysadm
@@ -90,7 +84,7 @@
     
     - name: Sudo for dbadm
       community.general.sudoers:
-        name: "{{ dbadm_user }}-picodata"
+        name: "{{ dbadm_user }}"
         user: "{{ dbadm_user }}"
         commands:
           - /bin/bash

@@ -4,7 +4,6 @@
   gather_facts: true
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:

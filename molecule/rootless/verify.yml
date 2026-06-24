@@ -4,7 +4,6 @@
   gather_facts: true
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:
@@ -18,14 +17,14 @@
         name: picodata-ansible
         tasks_from: setfacts.yml
 
-    - name: Populate instance list from report.yml
+    - name: Fill instance list from report.yml
       ansible.builtin.import_role:
         name: picodata-ansible
         tasks_from: genin.yml
 
     - name: Set WAIT clause based on version
       ansible.builtin.set_fact:
-        wait_clause: "{{ ' WAIT APPLIED GLOBALLY' if picodata_version is version('26.0.0', '>=') else '' }}"
+        wait_clause: "{{ ' WAIT APPLIED GLOBALLY' if picodata_version is version('26.0', '>=') else '' }}"
 
     - name: Create memtx test table and insert 3 rows
       ansible.builtin.shell:
@@ -84,7 +83,6 @@
   gather_facts: false
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:
@@ -109,7 +107,6 @@
   gather_facts: false
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:
@@ -145,7 +142,6 @@
   gather_facts: false
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:
@@ -175,7 +171,6 @@
   gather_facts: false
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:
@@ -194,7 +189,6 @@
   gather_facts: false
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:
@@ -211,7 +205,6 @@
   gather_facts: false
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:
@@ -247,7 +240,6 @@
   gather_facts: false
   vars:
     ansible_user: dbadm
-    debug: true
   become_user: picodata
   become: true
   tasks:
@@ -293,22 +285,31 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # ТЕСТ: Удаление кластера (всегда последнее)
 # ═══════════════════════════════════════════════════════════════════════════════
-- name: Verify | [+] Remove cluster
+- name: First step to remove cluster
   hosts: all
   gather_facts: false
   vars:
-    ansible_user: sysadm
-    debug: true
+    ansible_user: dbadm
+  become_user: picodata
   become: true
   tasks:
     - name: Remove cluster
       ansible.builtin.import_role:
-        name: picodata-ansible
-        tasks_from: remove_become.yml
+        name: picoansible-copy
+        tasks_from: remove.yml
 
-    - name: Debug with custom message
-      debug:
-        msg: "The systemd_dir is {{ systemd_dir }}"
+
+- name: Second step to remove cluster | [+] Verify
+  hosts: all
+  gather_facts: false
+  vars:
+    ansible_user: sysadm
+  become: true
+  tasks:
+    - name: Remove cluster
+      ansible.builtin.import_role:
+        name: picoansible-copy
+        tasks_from: remove_become.yml
 
     - name: Check config directory is absent
       ansible.builtin.stat:
