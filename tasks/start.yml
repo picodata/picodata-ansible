@@ -11,11 +11,13 @@
     file: genin.yml
   when: instances_on_host is undefined
 
-- name: ({{ cluster_name }}) Set filter on instances
-  ansible.builtin.set_fact:
-    instances_filtered: '{{ list_instance_names | select ("ansible.builtin.search", filter | default(".*")) | list }}'
+- name: ({{ cluster_name }}) Processing for systemd
+  block:
 
-- block:
+  - name: ({{ cluster_name }}) Set filter on instances
+    ansible.builtin.set_fact:
+      instances_filtered: '{{ list_instance_names | select ("ansible.builtin.search", filter | default(".*")) | list }}'
+
   - name: Reset failed systemd service
     ansible.builtin.command:
       cmd: 'systemctl reset-failed --{{ systemd_scope }} {{ cluster_name }}* --all'
@@ -55,11 +57,19 @@
 
   when: init_system == 'systemd'
 
-- name: ({{ cluster_name }}) Start supervisord processes
-  throttle: '{{ serial_host_restart | default(100) }}'
-  ansible.builtin.shell:
-    cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf start {{ instance }}
-  loop: '{{ instances_filtered }}'
-  loop_control:
-    loop_var: instance
+- name: ({{ cluster_name }}) Processing for supervisord
+  block:
+
+  - name: ({{ cluster_name }}) Set filter on instances
+    ansible.builtin.set_fact:
+      instances_filtered: '{{ instances_on_host | select ("ansible.builtin.search", filter | default(".*")) | list }}'
+
+  - name: ({{ cluster_name }}) Start supervisord processes
+    throttle: '{{ serial_host_restart | default(100) }}'
+    ansible.builtin.shell:
+      cmd: /usr/bin/supervisorctl -c {{ supervisord_dir }}/{{ cluster_name }}.conf start {{ instance }}
+    loop: '{{ instances_filtered }}'
+    loop_control:
+      loop_var: instance
+
   when: init_system == 'supervisord'
