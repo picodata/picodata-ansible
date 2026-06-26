@@ -1,0 +1,12 @@
+- name: Pre install playbook for Picodata supervisord
+  hosts: all
+  become: yes
+  vars: 
+    ansible_user: root
+  tasks:
+    
+    - name: Install supervisord
+      apt:
+        name: supervisor
+        state: present
+        update_cache: yes

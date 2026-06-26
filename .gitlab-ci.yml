@@ -5,17 +5,31 @@ stages:
 .molecule_base:
   stage: test
   tags:
-    - docker-picodata
+    - proxmox-docker
   image: docker-picodata.binary.picodata.io/ansible-proxmox:latest
   script:
-    - molecule converge -s "$MOLECULE_SCENARIO"
+    - molecule converge -s "$MOLECULE_SCENARIO" -- -e "package_with_version=picodata=$PICODATA_VERSION"
 
 molecule:
   extends: .molecule_base
   parallel:
     matrix:
-      - MOLECULE_SCENARIO: systemd
-      - MOLECULE_SCENARIO: rootless
+    matrix:
+      - PICODATA_VERSION: 25.2.2.0-noble
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
+      - PICODATA_VERSION: 25.5.9.0-noble
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
+      - PICODATA_VERSION: 26.1.4.0-noble
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
 
 release:
   stage: notify

@@ -3,6 +3,7 @@ scenario:
   converge_sequence:
     - destroy
     - create
+    - prepare
     - converge
     - verify
     - destroy
@@ -11,7 +12,7 @@ dependency:
 driver:
   name: default
 platforms:
-  - name: molecule-lxc-systemd
+  - name: molecule-lxc-supervisord
 provisioner:
   name: ansible
   env:
@@ -28,14 +29,15 @@ provisioner:
       pipelining: True
   inventory:
     host_vars:
-      molecule-lxc-systemd:
+      molecule-lxc-supervisord:
         ansible_python_interpreter: /usr/bin/python3
         template: templates:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst
-        vmid: 9000
+        vmid: 9002
         node: big2
         api_host: 10.5.1.15
         api_user: "${PROXMOX_API_USER}"
         api_password: "${PROXMOX_API_PASSWORD}"
     group_vars:
       all:
-        cluster_name: 'molecule-systemd'
+        cluster_name: 'molecule-supervisord'
+        init_system: supervisord
