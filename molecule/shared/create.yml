@@ -45,6 +45,10 @@
         state: present
       loop: "{{ groups['all'] }}"
 
+    - name: Wait for Proxmox configuration to settle
+      ansible.builtin.pause:
+        seconds: 5
+
     - name: Start the created LXC container
       community.proxmox.proxmox:
         api_host: "{{ hostvars[item].api_host }}"
