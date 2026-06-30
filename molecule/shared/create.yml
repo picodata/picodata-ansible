@@ -38,6 +38,7 @@
         netif: '{"net0":"name=eth0,bridge=vmbr0,ip=dhcp"}'
         pubkey: "{{ temp_ssh_key.public_key }}"
         cmode: shell
+        tags: no-netbox
         state: present
       loop: "{{ groups['all'] }}"
 

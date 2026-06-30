@@ -183,18 +183,20 @@
   hosts: all
   gather_facts: false
   tasks:
-    - name: Rebootstrap second instance (list_instance_names[1])
-      ansible.builtin.import_role:
-        name: picodata-ansible
-        tasks_from: rebootstrap.yml
-      vars:
-        instance: '{{ list_instance_names[1] }}'
-
-    - name: Wait for rebootstrapped instance socket
-      ansible.builtin.wait_for:
-        path: '{{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[1] }}.sock'
-        state: present
-        timeout: 120
+    - block:
+      - name: Rebootstrap second instance (list_instance_names[1])
+        ansible.builtin.import_role:
+          name: picodata-ansible
+          tasks_from: rebootstrap.yml
+        vars:
+          instance: '{{ list_instance_names[1] }}'
+  
+      - name: Wait for rebootstrapped instance socket
+        ansible.builtin.wait_for:
+          path: '{{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[1] }}.sock'
+          state: present
+          timeout: 120
+      when: picodata_version is version('25.3.1', '>=')
 
     - name: Assert cluster accessible after regular rebootstrap
       ansible.builtin.shell:
