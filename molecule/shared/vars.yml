@@ -1,5 +1,10 @@
 ---
-plugin_name: "weather_cache_0.2.0-ubuntu_24.04.tar.gz"
+plugin_name: >-
+  {%- if package_with_version == 'picodata=25.2.2.0-noble' -%}
+  weather_cache_0.1.0-ubuntu_24.04.tar.gz
+  {%- else -%}
+  weather_cache_0.2.0-ubuntu_24.04.tar.gz
+  {%- endif -%}
 admin_password: 'Ft1hcz1HHHmv2C9qld9D4!'
 service_password: "Ft1hcz1HHHmv2C9qld9D4"
 auth_webui: false

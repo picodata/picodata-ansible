@@ -78,18 +78,20 @@
   hosts: all
   gather_facts: false
   tasks:
-    - name: Run backup task
-      ansible.builtin.import_role:
-        name: picodata-ansible
-        tasks_from: backup.yml
+    - block:
+      - name: Run backup task
+        ansible.builtin.import_role:
+          name: picodata-ansible
+          tasks_from: backup.yml
+         # current_backup устанавливается set_fact внутри backup.yml и сохраняется
+      # в кэше фактов — доступен во всех последующих plays того же запуска
 
-    # current_backup устанавливается set_fact внутри backup.yml и сохраняется
-    # в кэше фактов — доступен во всех последующих plays того же запуска
-    - name: Assert backup name is non-empty
-      ansible.builtin.assert:
-        that: current_backup is defined and current_backup | length > 0
-        fail_msg: "Backup task did not produce a timestamp (current_backup is empty)"
-      run_once: true
+      - name: Assert backup name is non-empty
+        ansible.builtin.assert:
+          that: current_backup is defined and current_backup | length > 0
+          fail_msg: "Backup task did not produce a timestamp (current_backup is empty)"
+        run_once: true
+      when: picodata_version is version('25.3.1', '>=')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ТЕСТ 2: Рестарт кластера
@@ -121,6 +123,7 @@
       register: ping_result
       failed_when: ping_result.rc != 0
       run_once: true
+      when: picodata_version is version('25.3.1', '>=')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ТЕСТ 3: Сбор crash dump
@@ -202,6 +205,7 @@
       register: result
       failed_when: result.rc != 0
       run_once: true
+      when: picodata_version is version('25.3.1', '>=')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ТЕСТ 8: Рестор из бэкапа с проверкой количества строк
@@ -210,20 +214,22 @@
   hosts: all
   gather_facts: false
   tasks:
-    - name: Restore cluster from backup
-      ansible.builtin.import_role:
-        name: picodata-ansible
-        tasks_from: restore.yml
-      vars:
-        restore_dir: '{{ current_backup }}'
-        backup_fetch: false
-
-    - name: Wait for admin sockets after restore
-      ansible.builtin.wait_for:
-        path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
-        state: present
-        timeout: 120
-      loop: '{{ instances_on_host }}'
+    - block:
+      - name: Restore cluster from backup
+        ansible.builtin.import_role:
+          name: picodata-ansible
+          tasks_from: restore.yml
+        vars:
+          restore_dir: '{{ current_backup }}'
+          backup_fetch: false
+  
+      - name: Wait for admin sockets after restore
+        ansible.builtin.wait_for:
+          path: '{{ run_dir }}/{{ cluster_name }}/{{ item }}.sock'
+          state: present
+          timeout: 120
+        loop: '{{ instances_on_host }}'
+      when: picodata_version is version('25.3.1', '>=')
 
     - name: Count memtx rows after restore
       ansible.builtin.shell:

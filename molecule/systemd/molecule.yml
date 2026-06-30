@@ -3,6 +3,7 @@ scenario:
   converge_sequence:
     - destroy
     - create
+    - prepare
     - converge
     - verify
     - destroy
@@ -19,13 +20,14 @@ provisioner:
   playbooks:
     create: ../shared/create.yml
     destroy: ../shared/destroy.yml
+    prepare: ../shared/prepare.yml
     converge: converge.yml
     verify: ../shared/verify.yml
   config_options:
     defaults:
       callbacks_enabled: profile_tasks
     ssh_connection:
-      pipelining: True
+      pipelining: true
   inventory:
     host_vars:
       molecule-lxc-systemd:

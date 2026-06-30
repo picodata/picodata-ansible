@@ -8,10 +8,6 @@
         file: "{{ molecule_file }}"
         name: molecule_config
 
-    - name: Load shared vars
-      ansible.builtin.include_vars:
-        file: ../shared/vars.yml
-
     - name: Ensure local SSH directory exists for temporary keys
       ansible.builtin.file:
         path: "{{ lookup('env', 'HOME') }}/.ssh"
@@ -68,13 +64,3 @@
         timeout: 100
         delay: 10
       loop: "{{ groups['all'] }}"
-
-    - name: Create plugin dir
-      ansible.builtin.file:
-        path: "../plugin"
-        state: directory
-
-    - name: Download plugin
-      ansible.builtin.get_url:
-        url: "https://binary.picodata.io/repository/raw-private/training-ops/{{ plugin_name }}"
-        dest: ../plugin/
