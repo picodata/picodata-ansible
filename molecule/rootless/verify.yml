@@ -211,29 +211,29 @@
   become_user: picodata
   become: true
   tasks:
-    - name: Rebootstrap second instance (list_instance_names[1])
-      ansible.builtin.import_role:
-        name: picodata-ansible
-        tasks_from: rebootstrap.yml
-      vars:
-        # peer defaults to list_bin[0] (первый инстанс) — они разные ✓
-        instance: '{{ list_instance_names[1] }}'
-
-    - name: Wait for rebootstrapped instance socket
-      ansible.builtin.wait_for:
-        path: '{{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[1] }}.sock'
-        state: present
-        timeout: 120
-
-    - name: Assert cluster accessible after regular rebootstrap
-      ansible.builtin.shell:
-        cmd: >
-          echo "DROP INDEX idx_t_test_val {{ wait_clause }};" |
-          {{ bin_dir }}/picodata admin
-          {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-      register: result
-      failed_when: result.rc != 0
-      run_once: true
+    - block:
+      - name: Rebootstrap second instance (list_instance_names[1])
+        ansible.builtin.import_role:
+          name: picodata-ansible
+          tasks_from: rebootstrap.yml
+        vars:
+          instance: '{{ list_instance_names[1] }}'
+  
+      - name: Wait for rebootstrapped instance socket
+        ansible.builtin.wait_for:
+          path: '{{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[1] }}.sock'
+          state: present
+          timeout: 120
+  
+      - name: Assert cluster accessible after regular rebootstrap
+        ansible.builtin.shell:
+          cmd: >
+            echo "DROP INDEX idx_t_test_val {{ wait_clause }};" |
+            {{ bin_dir }}/picodata admin
+            {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+        register: result
+        failed_when: result.rc != 0
+        run_once: true
       when: picodata_version is version('25.3.1', '>=')
 
 # ═══════════════════════════════════════════════════════════════════════════════
