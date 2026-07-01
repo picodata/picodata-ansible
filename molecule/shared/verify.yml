@@ -196,17 +196,16 @@
           path: '{{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[1] }}.sock'
           state: present
           timeout: 120
-      when: picodata_version is version('25.3.1', '>=')
 
-    - name: Assert cluster accessible after regular rebootstrap
-      ansible.builtin.shell:
-        cmd: >
-          echo "DROP INDEX idx_t_test_val {{ wait_clause }};" |
-          {{ bin_dir }}/picodata admin
-          {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
-      register: result
-      failed_when: result.rc != 0
-      run_once: true
+      - name: Assert cluster accessible after regular rebootstrap
+        ansible.builtin.shell:
+          cmd: >
+            echo "DROP INDEX idx_t_test_val {{ wait_clause }};" |
+            {{ bin_dir }}/picodata admin
+            {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+        register: result
+        failed_when: result.rc != 0
+        run_once: true
       when: picodata_version is version('25.3.1', '>=')
 
 # ═══════════════════════════════════════════════════════════════════════════════
