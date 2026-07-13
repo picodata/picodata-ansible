@@ -1,0 +1,19 @@
+---
+- name: Download plugin
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Load shared vars
+      ansible.builtin.include_vars:
+        file: vars.yml
+    
+    - name: Create plugin dir
+      ansible.builtin.file:
+        path: "../plugin"
+        state: directory
+    
+    - name: Download plugin
+      ansible.builtin.get_url:
+        url: "https://binary.picodata.io/repository/raw-private/training-ops/{{ plugin_name }}"
+        dest: ../plugin/

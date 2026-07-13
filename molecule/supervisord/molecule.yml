@@ -12,7 +12,7 @@ dependency:
 driver:
   name: default
 platforms:
-  - name: molecule-lxc-systemd
+  - name: molecule-lxc-supervisord
 provisioner:
   name: ansible
   env:
@@ -20,24 +20,24 @@ provisioner:
   playbooks:
     create: ../shared/create.yml
     destroy: ../shared/destroy.yml
-    prepare: ../shared/prepare.yml
     converge: converge.yml
     verify: ../shared/verify.yml
   config_options:
     defaults:
       callbacks_enabled: profile_tasks
     ssh_connection:
-      pipelining: true
+      pipelining: True
   inventory:
     host_vars:
-      molecule-lxc-systemd:
+      molecule-lxc-supervisord:
         ansible_python_interpreter: /usr/bin/python3
         template: templates:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst
-        vmid: 9000
+        vmid: 9002
         node: big2
         api_host: 10.5.1.15
         api_user: "${PROXMOX_API_USER}"
         api_password: "${PROXMOX_API_PASSWORD}"
     group_vars:
       all:
-        cluster_name: 'molecule-systemd'
+        cluster_name: 'molecule-supervisord'
+        init_system: supervisord

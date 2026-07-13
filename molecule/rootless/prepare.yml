@@ -1,3 +1,7 @@
+---
+
+- import_playbook: ../shared/prepare.yml
+
 - name: Pre install playbook for Picodata rootless
   hosts: all
   become: yes

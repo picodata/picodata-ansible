@@ -8,10 +8,6 @@
         file: "{{ molecule_file }}"
         name: molecule_config
 
-    - name: Load shared vars
-      ansible.builtin.include_vars:
-        file: ../shared/vars.yml
-
     - name: Ensure local SSH directory exists for temporary keys
       ansible.builtin.file:
         path: "{{ lookup('env', 'HOME') }}/.ssh"
@@ -42,8 +38,13 @@
         netif: '{"net0":"name=eth0,bridge=vmbr0,ip=dhcp"}'
         pubkey: "{{ temp_ssh_key.public_key }}"
         cmode: shell
+        tags: no-netbox
         state: present
       loop: "{{ groups['all'] }}"
+
+    - name: Wait for Proxmox configuration to settle
+      ansible.builtin.pause:
+        seconds: 5
 
     - name: Start the created LXC container
       community.proxmox.proxmox:
@@ -64,13 +65,3 @@
         timeout: 100
         delay: 10
       loop: "{{ groups['all'] }}"
-
-    - name: Create plugin dir
-      ansible.builtin.file:
-        path: "../plugin"
-        state: directory
-
-    - name: Download plugin
-      ansible.builtin.get_url:
-        url: "https://binary.picodata.io/repository/raw-private/training-ops/{{ plugin_name }}"
-        dest: ../plugin/
