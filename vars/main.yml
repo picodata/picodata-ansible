@@ -25,6 +25,7 @@ dict_start_num: {}
 list_http: []
 list_pg: []
 list_bin: []
+list_voter: []
 
 # инициализация словаря со списком количества инстансов на сервере для тиров
 dict_instances_per_server: {}

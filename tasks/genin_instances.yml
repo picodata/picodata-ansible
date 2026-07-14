@@ -23,6 +23,11 @@
     list_pg: '{{ list_pg + [listen_address + ":" + "{0:d}".format(first_pg_port+cnt|int)] }}'
     list_bin: '{{ list_bin + [listen_address + ":" + "{0:d}".format(first_bin_port+cnt|int)] }}'
 
+- name: ({{ cluster_name }}) genin Add instance voter info to lists in tier {{ tier.key }}
+  ansible.builtin.set_fact:
+    list_voter: '{{ list_voter + [listen_address + ":" + "{0:d}".format(first_bin_port+cnt|int)] }}'
+  when: tier.value.can_vote | default(true) == true
+
 - name: ({{ cluster_name }}) genin Debug info about instances
   ansible.builtin.debug:
     msg: 'instance_name is {{ instance_name }}\n listen_address is {{ listen_address + ":" + "{0:d}".format(first_http_port+cnt|int)  }}'

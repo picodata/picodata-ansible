@@ -113,29 +113,6 @@
   when: check_report.stat.exists == true
 # end block if report file is exist
 
-- name: ({{ cluster_name }}) genin Set values from report file
-  ansible.builtin.set_fact:
-    autonames: '{{ props_from_report.autonames | default(false) }}'
-    ver_fd: '{{ props_from_report.ver_fd | default("2") }}'
-    peer_list: '{{ props_from_report.peer_list | default([]) }}'
-    filename_format: '{{ props_from_report.filename_format | default("inc") }}'
-  when: props_from_report is defined
-
-- name: ({{ cluster_name }}) genin Debug autoname values
-  ansible.builtin.debug:
-    var: peer_list
-  when: debug == true
-
-- name: ({{ cluster_name }}) genin Set peer_list if undefined
-  ansible.builtin.set_fact:
-    peer_list: "[{% for host in all_hosts | difference([inventory_hostname ]) | sort %}'{{ hostvars[host]['listen_address'] | default(ansible_fqdn) }}:{{ first_bin_port }}', {% endfor %}'{{ listen_address }}:{{ first_bin_port }}']"
-  when: not peer_list | default([])
-
-- name: ({{ cluster_name }}) genin Debug peer_list values
-  ansible.builtin.debug:
-    var: peer_list
-  when: debug == true
-
 - name: Processing if report file is not exist
   block:
 
@@ -239,6 +216,34 @@
     list_instance_names: "{{ instances_on_host }}"
   when: list_instance_names is not defined
 
+- name: ({{ cluster_name }}) genin Set values from report file
+  ansible.builtin.set_fact:
+    autonames: '{{ props_from_report.autonames | default(false) }}'
+    ver_fd: '{{ props_from_report.ver_fd | default("2") }}'
+    peer_list: '{{ props_from_report.peer_list | default([]) }}'
+    filename_format: '{{ props_from_report.filename_format | default("inc") }}'
+  when: props_from_report is defined
+
+- name: ({{ cluster_name }}) genin Debug peer_list values from report file
+  ansible.builtin.debug:
+    var: peer_list
+  when: debug == true and peer_list is defined
+
+- name: ({{ cluster_name }}) genin Set voters list if peer_list is undefined
+  ansible.builtin.set_fact:
+    voter_str: "[{% for host in all_hosts | difference([inventory_hostname ]) | sort %}\"{{ hostvars[host]['list_voter'][0] | default('') }}\",{% endfor %}'{{ list_voter[0] | default('') }}' ]"
+  when: not peer_list | default([])
+
+- name: ({{ cluster_name }}) genin Set peer_list if undefined
+  ansible.builtin.set_fact:
+    peer_list: "{{ voter_str | select | list }}"
+  when: not peer_list | default([])
+
+- name: ({{ cluster_name }}) genin Debug peer_list values
+  ansible.builtin.debug:
+    var: peer_list
+  when: debug == true
+
 - name: ({{ cluster_name }}) genin Print instances on hosts
   ansible.builtin.debug:
     var: instances_on_host
@@ -268,5 +273,12 @@
   ansible.builtin.fail:
     msg: 'Ошибка! Не совпадает количество инстансов в инвентарном файле и на серверах, используйте тег `expand` для расширения кластера!'
   when: real_cnt|int != instances_on_host | list | length and tag not in ('expand', 'remove') and real_cnt|int > 0
+  run_once: true
+  delegate_facts: true
+
+- name: ({{ cluster_name }}) genin Check on can vote of first tier
+  ansible.builtin.fail:
+    msg: 'Ошибка! Первый тир обязательно должен быть голосующим (can_vote: true)!'
+  when: (tiers | dict2items)[0].value.can_vote | default(true) == false
   run_once: true
   delegate_facts: true
