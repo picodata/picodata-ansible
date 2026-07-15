@@ -59,7 +59,7 @@
 
     - name: Check SSH TCP port availability
       ansible.builtin.wait_for:
-        host: "{{ item }}"
+        host: "{{ hostvars[item].ansible_host }}"
         port: 22
         state: started
         timeout: 100

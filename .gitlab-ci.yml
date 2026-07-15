@@ -7,13 +7,14 @@ stages:
   tags:
     - proxmox-docker
   image: docker-picodata.binary.picodata.io/ansible-proxmox:latest
+  variables:
+    JOB_SUFFIX: "$CI_CONCURRENT_PROJECT_ID"
   script:
     - molecule converge -s "$MOLECULE_SCENARIO" -- -e "package_with_version=picodata=$PICODATA_VERSION"
 
 molecule:
   extends: .molecule_base
   parallel:
-    matrix:
     matrix:
       - PICODATA_VERSION: 25.2.2.0-noble
         MOLECULE_SCENARIO:
