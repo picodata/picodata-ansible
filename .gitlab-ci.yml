@@ -26,7 +26,7 @@ molecule:
           - systemd
           - rootless
           - supervisord
-      - PICODATA_VERSION: 26.1.4.0-noble
+      - PICODATA_VERSION: 26.1.6.0-noble
         MOLECULE_SCENARIO:
           - systemd
           - rootless
