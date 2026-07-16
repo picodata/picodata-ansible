@@ -4,11 +4,16 @@ stages:
 
 .molecule_base:
   stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_COMMIT_TAG
+      when: never    
   tags:
     - proxmox-docker
   image: docker-picodata.binary.picodata.io/ansible-proxmox:latest
   variables:
     JOB_SUFFIX: "$CI_CONCURRENT_PROJECT_ID"
+  retry: 2
   script:
     - molecule converge -s "$MOLECULE_SCENARIO" -- -e "package_with_version=picodata=$PICODATA_VERSION"
 
