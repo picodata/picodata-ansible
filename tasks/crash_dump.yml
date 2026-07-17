@@ -18,7 +18,7 @@
 - block:
   - name: ({{ cluster_name }}) Unload log files from journald to log_dir
     ansible.builtin.shell:
-      cmd: 'journalctl -u {{ cluster_name }}@{{ instance }} --all --no-pager {% if systemd_scope == "user" %}--user{% endif %} |  gzip > {{ log_dir }}/{{ cluster_name }}/{{ instance }}.log.gz'
+      cmd: 'journalctl -u {{ cluster_name }}@{{ instance }} --all --no-pager {% if systemd_scope == "user" %}--user{% endif %} |  gzip > {{ log_dir }}/{{ cluster_name }}/journald-{{ instance }}.log.gz'
     loop: '{{ instances_on_host }}'
     loop_control:
       loop_var: instance
@@ -28,7 +28,7 @@
 
   - name: ({{ cluster_name }}) Unload log files from journald to log_dir
     ansible.builtin.shell:
-      cmd: 'journalctl -u {{ cluster_name }}-{{ instance }} --all --no-pager {% if systemd_scope == "user" %}--user{% endif %} |  gzip > {{ log_dir }}/{{ cluster_name }}/{{ instance }}.log.gz'
+      cmd: 'journalctl -u {{ cluster_name }}-{{ instance }} --all --no-pager {% if systemd_scope == "user" %}--user{% endif %} |  gzip > {{ log_dir }}/{{ cluster_name }}/journald-{{ instance }}.log.gz'
     loop: '{{ instances_on_host }}'
     loop_control:
       loop_var: instance
