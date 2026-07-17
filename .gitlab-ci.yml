@@ -1,3 +1,16 @@
+spec:
+  inputs:
+    picodata_version:
+      default: "26.1.6.0-noble"
+      description: "Версия Picodata для тестирования **(имя пакета ТОЛЬКО под Ubuntu Noble!!!)**"
+    picodata_repo:
+      default: "https://download.picodata.io"
+      description: "Репозиторий для установки пакетов"
+      type: string
+      options:
+        - "https://download.picodata.io"
+        - "https://download.binary.picodata.io"
+---
 stages:
   - test
   - notify
@@ -13,25 +26,51 @@ stages:
   image: docker-picodata.binary.picodata.io/ansible-proxmox:latest
   variables:
     JOB_SUFFIX: "$CI_CONCURRENT_PROJECT_ID"
-  retry: 2
+  retry: 1
   script:
-    - molecule converge -s "$MOLECULE_SCENARIO" -- -e "package_with_version=picodata=$PICODATA_VERSION"
+    - env | grep -i picodata
+    - |
+      if [ "$PICODATA_VERSION" != "" ]; then
+        molecule converge -s "$MOLECULE_SCENARIO" -- -e "package_with_version=picodata=$PICODATA_VERSION"
+      else
+        molecule converge -s "$MOLECULE_SCENARIO"
+      fi
 
 molecule:
   extends: .molecule_base
   parallel:
     matrix:
       - PICODATA_VERSION: 25.2.2.0-noble
+        PLUGIN_NAME: weather_cache_0.1.0-ubuntu_24.04.tar.gz
         MOLECULE_SCENARIO:
           - systemd
           - rootless
           - supervisord
       - PICODATA_VERSION: 25.5.9.0-noble
+        PLUGIN_NAME: weather_cache_0.2.0-ubuntu_24.04.tar.gz
         MOLECULE_SCENARIO:
           - systemd
           - rootless
           - supervisord
       - PICODATA_VERSION: 26.1.6.0-noble
+        PLUGIN_NAME: weather_cache_0.2.0-ubuntu_24.04.tar.gz
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
+
+manual:
+  extends: .molecule_base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: on_success
+  variables:
+    PICODATA_REPO: "$[[ inputs.picodata_repo ]]"
+  needs: []
+  parallel:
+    matrix:
+      - PICODATA_VERSION: "$[[ inputs.picodata_version ]]"
+        PLUGIN_NAME: weather_cache_0.2.0-ubuntu_24.04.tar.gz
         MOLECULE_SCENARIO:
           - systemd
           - rootless

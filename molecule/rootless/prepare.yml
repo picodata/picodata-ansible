@@ -8,7 +8,11 @@
   vars: 
     ansible_user: root
   tasks:
-    
+
+    - name: Load shared vars
+      ansible.builtin.include_vars:
+        file: ../shared/vars.yml
+
     - name: Install setfacl
       apt:
         name: acl
