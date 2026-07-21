@@ -13,7 +13,7 @@
 
     - name: ({{ cluster_name }}) Disable systemd services
       ansible.builtin.shell:
-        cmd: 'systemctl disable --{{ systemd_scope }} --now $(systemctl show --{{ systemd_scope }} -P Id "{{ cluster_name }}@*")'
+        cmd: 'systemctl disable --{{ systemd_scope }} --now $(systemctl show --{{ systemd_scope }} -p Id --value "{{ cluster_name }}@*")'
       environment:
         XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
@@ -37,7 +37,7 @@
 
     - name: ({{ cluster_name }}) Disable systemd services
       ansible.builtin.shell:
-        cmd: 'systemctl disable --{{ systemd_scope }} --now $(systemctl show --{{ systemd_scope }} -P Id "{{ cluster_name }}-*")'
+        cmd: 'systemctl disable --{{ systemd_scope }} --now $(systemctl show --{{ systemd_scope }} -p Id --value "{{ cluster_name }}-*")'
       environment:
         XDG_RUNTIME_DIR: '/run/user/{{uid.stdout}}'
 
