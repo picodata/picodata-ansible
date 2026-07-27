@@ -10,7 +10,7 @@
   tasks:
     
     - name: Install supervisord
-      apt:
+      package:
         name: supervisor
         state: present
         update_cache: yes

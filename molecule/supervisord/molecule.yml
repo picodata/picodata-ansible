@@ -30,8 +30,8 @@ provisioner:
   inventory:
     host_vars:
       "molecule-lxc-${MOLECULE_SCENARIO}-${JOB_SUFFIX}":
-        ansible_python_interpreter: /usr/bin/python3
-        template: templates:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst
+        ansible_python_interpreter: "{{ lookup('env', 'ANSIBLE_PYTHON') | default('/usr/bin/python3', true) }}"
+        template: "templates:vztmpl/${CONTAINER_TEMPLATE}"
         vmid: "{{ 9000 + (lookup('env', 'JOB_SUFFIX') | default(0, true) | int) }}"
         node: big2
         api_host: 10.5.1.15

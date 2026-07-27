@@ -14,17 +14,20 @@
         file: ../shared/vars.yml
 
     - name: Install setfacl
-      apt:
+      package:
         name: acl
         state: present
-        update_cache: yes
+
+    - name: Define admin group based on OS family
+      set_fact:
+        admin_group: "{{ 'wheel' if ansible_os_family == 'RedHat' else 'sudo' }}"
 
     - name: Create user sysadm (Administrator OS)
       ansible.builtin.user:
         name: "{{ sysadm_user }}"
         shell: /bin/bash
         create_home: yes
-        groups: sudo
+        groups: "{{ admin_group }}"
         append: yes
 
     - name: Create .ssh for "{{ sysadm_user }}"
@@ -79,29 +82,35 @@
         name: "{{ dbadm_user }}"
         groups: picodata
         append: true
-    
-    - name: Sudo for sysadm
-      community.general.sudoers:
-        name: "{{ sysadm_user }}"
-        user: "{{ sysadm_user }}"
-        commands: ALL
-        nopassword: true
-        runas: ALL
-        setenv: true
-        state: present
-    
-    - name: Sudo for dbadm
-      community.general.sudoers:
-        name: "{{ dbadm_user }}"
-        user: "{{ dbadm_user }}"
-        commands:
-          - /bin/bash
-          - /bin/sh
-        nopassword: true
-        runas: picodata
-        setenv: true
-        state: present
 
+    - name: Sudo for sysadm
+      lineinfile:
+        path: /etc/sudoers.d/{{ sysadm_user }}
+        create: yes
+        mode: '0440'
+        owner: root
+        group: root
+        state: present
+        regexp: "^"
+        line: |
+          Defaults:{{ sysadm_user }} setenv
+          {{ sysadm_user }} ALL=(ALL) NOPASSWD: ALL
+        validate: '/usr/sbin/visudo -cf %s'
+
+    - name: Sudo for dbadm
+      lineinfile:
+        path: /etc/sudoers.d/{{ dbadm_user }}
+        create: yes
+        mode: '0440'
+        owner: root
+        group: root
+        state: present
+        regexp: "^"
+        line: |
+          Defaults:{{ dbadm_user }} setenv
+          {{ dbadm_user }} ALL=(picodata) NOPASSWD: /bin/bash, /bin/sh
+        validate: '/usr/sbin/visudo -cf %s'
+    
     - name: Install picodata package
       ansible.builtin.import_role:
         name: picodata-ansible

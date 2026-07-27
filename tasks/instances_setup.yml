@@ -136,6 +136,7 @@
         enabled: true
         state: started
         scope: '{{ systemd_scope }}'
+        daemon_reload: true
         force: true
         no_block: true
       environment:
@@ -163,6 +164,7 @@
         enabled: true
         state: started
         scope: '{{ systemd_scope }}'
+        daemon_reload: true
         force: true
         no_block: true
       environment:

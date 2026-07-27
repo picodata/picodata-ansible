@@ -17,3 +17,22 @@
       ansible.builtin.get_url:
         url: "https://binary.picodata.io/repository/raw-private/training-ops/{{ plugin_name }}"
         dest: ../plugin/
+
+- name: Install packages
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Install epel-release
+      package:
+        name:
+          - epel-release
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install packages
+      package:
+        name:
+          - unzip
+          - tar
+        state: present

@@ -28,10 +28,13 @@ stages:
     JOB_SUFFIX: "$CI_CONCURRENT_PROJECT_ID"
   retry: 1
   script:
+    - |
+      if echo "$PICODATA_VERSION" | grep "25.2.2.0" ; then PLUGIN_NAME=$PLUGIN_NAME252; else PLUGIN_NAME=$PLUGIN_NAME25; fi
+      export PLUGIN_NAME
     - env | grep -i picodata
     - |
       if [ "$PICODATA_VERSION" != "" ]; then
-        molecule converge -s "$MOLECULE_SCENARIO" -- -e "package_with_version=picodata=$PICODATA_VERSION"
+        molecule converge -s "$MOLECULE_SCENARIO" -- -e "package_with_version=$PICODATA_VERSION"
       else
         molecule converge -s "$MOLECULE_SCENARIO"
       fi
@@ -40,20 +43,27 @@ molecule:
   extends: .molecule_base
   parallel:
     matrix:
-      - PICODATA_VERSION: 25.2.2.0-noble
-        PLUGIN_NAME: weather_cache_0.1.0-ubuntu_24.04.tar.gz
+      - PICODATA_VERSION:
+        - picodata=25.2.2.0-noble
+        - picodata=25.5.9.0-noble
+        - picodata=26.1.6.0-noble
+        PLUGIN_NAME252: weather_cache_0.1.0-ubuntu_24.04.tar.gz          
+        PLUGIN_NAME25: weather_cache_0.2.0-ubuntu_24.04.tar.gz
+        ANSIBLE_PYTHON: /usr/bin/python3
+        CONTAINER_TEMPLATE: ubuntu-24.04-standard_24.04-2_amd64.tar.zst
         MOLECULE_SCENARIO:
           - systemd
           - rootless
           - supervisord
-      - PICODATA_VERSION: 25.5.9.0-noble
-        PLUGIN_NAME: weather_cache_0.2.0-ubuntu_24.04.tar.gz
-        MOLECULE_SCENARIO:
-          - systemd
-          - rootless
-          - supervisord
-      - PICODATA_VERSION: 26.1.6.0-noble
-        PLUGIN_NAME: weather_cache_0.2.0-ubuntu_24.04.tar.gz
+
+      - PICODATA_VERSION: 
+        - picodata-25.2.2.0
+        - picodata-25.5.9.0
+        - picodata-26.1.6.0
+        CONTAINER_TEMPLATE: rockylinux-8-cloud_20240408_amd64.tar.xz
+        PLUGIN_NAME252: weather_cache_0.1.0-centos_8.tar.gz
+        PLUGIN_NAME25: weather_cache_0.2.1-centos_8.tar.gz
+        ANSIBLE_PYTHON: /usr/libexec/platform-python
         MOLECULE_SCENARIO:
           - systemd
           - rootless
@@ -71,6 +81,8 @@ manual:
     matrix:
       - PICODATA_VERSION: "$[[ inputs.picodata_version ]]"
         PLUGIN_NAME: weather_cache_0.2.0-ubuntu_24.04.tar.gz
+        CONTAINER_TEMPLATE: ubuntu-24.04-standard_24.04-2_amd64.tar.zst
+        ANSIBLE_PYTHON: /usr/bin/python3
         MOLECULE_SCENARIO:
           - systemd
           - rootless
