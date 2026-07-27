@@ -69,6 +69,30 @@ molecule:
           - rootless
           - supervisord
 
+      - PICODATA_VERSION: 
+        - picodata=25.2.2.0-bullseye
+        - picodata=25.5.9.0-bullseye
+        - picodata=26.1.6.0-bullseye
+        CONTAINER_TEMPLATE: debian-11-standard_11.7-1_amd64.tar.zst
+        PLUGIN_NAME252: weather_cache_0.1.0-debian_11.tar.gz
+        PLUGIN_NAME25: weather_cache_0.2.1-debian_11.tar.gz
+        ANSIBLE_PYTHON: /usr/bin/python3
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
+
+      - PICODATA_VERSION: 
+        - picodata=25.5.9.0-trixie
+        - picodata=26.1.6.0-trixie
+        CONTAINER_TEMPLATE: debian-13-standard_13.6-1_amd64.tar.zst
+        PLUGIN_NAME25: weather_cache_0.2.1-debian_13.tar.gz
+        ANSIBLE_PYTHON: /usr/bin/python3
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
+
 manual:
   extends: .molecule_base
   rules:

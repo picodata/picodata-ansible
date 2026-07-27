@@ -23,6 +23,16 @@
   gather_facts: true
   tasks:
 
+    - name: Set authorized key took from file
+      authorized_key:
+        user: root
+        state: present
+        key: |
+          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGJGajh7oYmqezHFXrPxSWZ14Ps89SivBoFKaw40ZIQ7 a.protsenko@picodata.io
+          ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCvTCR+qTRrNYdI6Hi/O16oO/yXusyWtHkEXDYH71h71kt3NoB8G8vka4J1AuFiowJ5cbMluWPPTJzLH5TL1B/rnLarO0XKDltS7dh660kj54tDd/hSuw8/huV8nYHGE3wt0JdnqDAM4vaWmdbTFjANJQn93pn8kdQbMAutVFY7/M6o2+JlQYk49UagGOx7SP1aVxWmYhlfGotwW5bgBXC52IyKyt2QD3XMYaWg1G/+OQNVDx+5qHYIV3jAveXZAhyAjwiMHV6juJxFpZXC04nE8pTRQ6WA0iSgFuJNE/MdAfGgRBjAWD9ETLbuBcvM9kQ6ww+KtZf2/HTrK3UVoAT7 kdy@picodata.io
+          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICDM4aK08OHwgpHIr+VQKerrNUQvKy3dtxHaulR/STx/ a.badulin@picodata.io
+          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFJrJHzikB2TKQn6kNZaj7PwRt6oZu+YI8SFABB9PGQM m.laletin@picodata.io
+
     - name: Install epel-release
       package:
         name:
@@ -30,9 +40,16 @@
         state: present
       when: ansible_os_family == 'RedHat'
 
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
     - name: Install packages
       package:
         name:
           - unzip
           - tar
+          - sudo
+          - curl
         state: present

@@ -27,7 +27,7 @@ provisioner:
     defaults:
       callbacks_enabled: profile_tasks
     ssh_connection:
-      pipelining: True
+      pipelining: false
   inventory:
     host_vars:
       "molecule-lxc-${MOLECULE_SCENARIO}-${JOB_SUFFIX}":

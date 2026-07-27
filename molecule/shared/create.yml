@@ -40,6 +40,7 @@
         cmode: shell
         tags: no-netbox
         state: present
+        features: "nesting=1"
       loop: "{{ groups['all'] }}"
 
     - name: Wait for Proxmox configuration to settle
