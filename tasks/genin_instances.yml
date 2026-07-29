@@ -20,7 +20,7 @@
   ansible.builtin.set_fact:
     instances_on_host: '{{ instances_on_host|default([]) + [ instance_name ] }}'
     list_http: '{{ list_http + [listen_address + ":" + "{0:d}".format(first_http_port+cnt|int)] }}'
-    list_pg: '{{ list_pg + [listen_address + ":" + "{0:d}".format(first_pg_port+cnt|int)] }}'
+    list_pg: '{{ list_pg + [pg_address + ":" + "{0:d}".format(first_pg_port+cnt|int)] }}'
     list_bin: '{{ list_bin + [listen_address + ":" + "{0:d}".format(first_bin_port+cnt|int)] }}'
 
 - name: ({{ cluster_name }}) genin Add instance voter info to lists in tier {{ tier.key }}
