@@ -39,6 +39,7 @@ provisioner:
         api_user: "${PROXMOX_API_USER}"
         api_password: "${PROXMOX_API_PASSWORD}"
         ansible_host: "{{ inventory_hostname }}"
+        os: "{{ lookup('env', 'OS') }}"
     group_vars:
       all:
         cluster_name: 'molecule-${MOLECULE_SCENARIO}-${JOB_SUFFIX}'

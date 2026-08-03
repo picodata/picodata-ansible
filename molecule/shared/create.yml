@@ -41,6 +41,7 @@
         tags: no-netbox
         state: present
         features: "nesting=1"
+        hookscript: "{{ 'templates:snippets/centos9-hook.sh' if hostvars[item].os | default('') == 'centos9' else omit }}"
       loop: "{{ groups['all'] }}"
 
     - name: Wait for Proxmox configuration to settle
