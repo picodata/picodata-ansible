@@ -20,7 +20,7 @@
 
     - name: Define admin group based on OS family
       set_fact:
-        admin_group: "{{ 'wheel' if ansible_os_family == 'RedHat' else 'sudo' }}"
+        admin_group: "{{ 'wheel' if ansible_os_family in ['RedHat', 'Altlinux'] else 'sudo' }}"
 
     - name: Create user sysadm (Administrator OS)
       ansible.builtin.user:

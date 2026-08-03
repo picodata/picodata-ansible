@@ -45,6 +45,15 @@
         update_cache: yes
       when: ansible_os_family == 'Debian'
 
+    - block:
+      - name: Enable sudo on Alt
+        shell: "control sudowheel enabled && control sudo public"
+  
+      - name: Update apt cache
+        apt_rpm:
+          update_cache: yes
+      when: ansible_os_family == 'Altlinux'
+
     - name: Install packages
       package:
         name:

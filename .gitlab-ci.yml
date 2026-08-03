@@ -107,6 +107,21 @@ molecule:
           - rootless
           - supervisord
 
+      - PICODATA_VERSION: 
+        - picodata=25.2.2.0-1.p10
+        - picodata=25.5.9.0-1.p10
+        - picodata=26.1.6.0-1.p10
+        CONTAINER_TEMPLATE: alt-p10-cloud_20240408_amd64.tar.xz
+        PLUGIN_NAME252: weather_cache_0.1.0-altlinux_p10.tar.gz
+        PLUGIN_NAME25: weather_cache_0.2.1-altlinux_p10.tar.gz
+        ANSIBLE_PYTHON: /usr/bin/python3
+        OS: "altlinux"
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
+
+
 manual:
   extends: .molecule_base
   rules:
