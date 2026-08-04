@@ -73,7 +73,7 @@
       ansible.builtin.user:
         name: picodata
         shell: /sbin/nologin
-        groups: picodata,systemd-journal
+        group: picodata
         append: yes
         comment: "Системный пользователь для приложения Picodata"
     

@@ -45,7 +45,7 @@ molecule:
     matrix:
       - PICODATA_VERSION:
         - picodata=25.2.2.0-noble
-        - picodata=25.5.9.0-noble
+        - picodata=25.5.10.0-noble
         - picodata=26.1.6.0-noble
         PLUGIN_NAME252: weather_cache_0.1.0-ubuntu_24.04.tar.gz          
         PLUGIN_NAME25: weather_cache_0.2.0-ubuntu_24.04.tar.gz
@@ -56,9 +56,20 @@ molecule:
           - rootless
           - supervisord
 
+      - PICODATA_VERSION:
+        - picodata=25.5.10.0-resolute
+        - picodata=26.1.6.0-resolute
+        PLUGIN_NAME25: weather_cache_0.2.1-ubuntu_26.04.tar.gz
+        CONTAINER_TEMPLATE: ubuntu-26.04-standard_26.04-1_amd64.tar.zst
+        ANSIBLE_PYTHON: /usr/bin/python3
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
+
       - PICODATA_VERSION: 
         - picodata-25.2.2.0
-        - picodata-25.5.9.0
+        - picodata-25.5.10.0
         - picodata-26.1.6.0
         CONTAINER_TEMPLATE: rockylinux-8-cloud_20240408_amd64.tar.xz
         PLUGIN_NAME252: weather_cache_0.1.0-centos_8.tar.gz
@@ -71,7 +82,7 @@ molecule:
 
       - PICODATA_VERSION: 
         - picodata-25.2.2.0
-        - picodata-25.5.9.0
+        - picodata-25.5.10.0
         - picodata-26.1.6.0
         CONTAINER_TEMPLATE: almalinux-9-default_20240911_amd64.tar.xz
         PLUGIN_NAME252: weather_cache_0.1.0-centos_9.tar.gz
@@ -85,7 +96,7 @@ molecule:
 
       - PICODATA_VERSION: 
         - picodata=25.2.2.0-bullseye
-        - picodata=25.5.9.0-bullseye
+        - picodata=25.5.10.0-bullseye
         - picodata=26.1.6.0-bullseye
         CONTAINER_TEMPLATE: debian-11-standard_11.7-1_amd64.tar.zst
         PLUGIN_NAME252: weather_cache_0.1.0-debian_11.tar.gz
@@ -97,7 +108,7 @@ molecule:
           - supervisord
 
       - PICODATA_VERSION: 
-        - picodata=25.5.9.0-trixie
+        - picodata=25.5.10.0-trixie
         - picodata=26.1.6.0-trixie
         CONTAINER_TEMPLATE: debian-13-standard_13.6-1_amd64.tar.zst
         PLUGIN_NAME25: weather_cache_0.2.1-debian_13.tar.gz
@@ -108,8 +119,22 @@ molecule:
           - supervisord
 
       - PICODATA_VERSION: 
+        - picodata=25.2.2.0-1.p9
+        - picodata=25.5.10.0-1.p9
+        - picodata=26.1.6.0-1.p9
+        CONTAINER_TEMPLATE: alt-p9-cloud_20240408_amd64.tar.xz
+        PLUGIN_NAME252: weather_cache_0.1.0-altlinux_p9.tar.gz
+        PLUGIN_NAME25: weather_cache_0.2.1-altlinux_p9.tar.gz
+        ANSIBLE_PYTHON: /usr/bin/python3
+        OS: "altlinux"
+        MOLECULE_SCENARIO:
+          - systemd
+          - rootless
+          - supervisord
+
+      - PICODATA_VERSION: 
         - picodata=25.2.2.0-1.p10
-        - picodata=25.5.9.0-1.p10
+        - picodata=25.5.10.0-1.p10
         - picodata=26.1.6.0-1.p10
         CONTAINER_TEMPLATE: alt-p10-cloud_20240408_amd64.tar.xz
         PLUGIN_NAME252: weather_cache_0.1.0-altlinux_p10.tar.gz
