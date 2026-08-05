@@ -1,7 +1,7 @@
 spec:
   inputs:
     picodata_version:
-      default: "26.1.6.0-noble"
+      default: "picodata=26.1.6.0-noble"
       description: "Версия Picodata для тестирования **(имя пакета ТОЛЬКО под Ubuntu Noble!!!)**"
     picodata_repo:
       default: "https://download.picodata.io"
@@ -158,7 +158,7 @@ manual:
   parallel:
     matrix:
       - PICODATA_VERSION: "$[[ inputs.picodata_version ]]"
-        PLUGIN_NAME: weather_cache_0.2.0-ubuntu_24.04.tar.gz
+        PLUGIN_NAME25: weather_cache_0.2.0-ubuntu_24.04.tar.gz
         CONTAINER_TEMPLATE: ubuntu-24.04-standard_24.04-2_amd64.tar.zst
         ANSIBLE_PYTHON: /usr/bin/python3
         MOLECULE_SCENARIO:
