@@ -38,6 +38,10 @@
     file: deploy_become.yml
   when: rootless == false
 
+- name: ({{ cluster_name }}) Generate list of instances per server
+  ansible.builtin.include_tasks:
+    file: genin.yml
+
 - name: ({{ cluster_name }}) Create dirs with cluster-name
   ansible.builtin.file:
     name: '{{ item }}'
@@ -175,16 +179,25 @@
   when: (log_to == 'file' or audit_to == 'file') and rootless == true and init_system == 'systemd'
 # end block
 
+- name: ({{ cluster_name }}) init db_config for 26.X and above
+  ansible.builtin.set_fact:
+    db_config: '{{ db_config_default | ansible.builtin.combine(db_config | default({})) }}'
+    db_config_all: ''
+    db_config_tiers: ''
+  when: picodata_version is version('26.1', '>=')
+
+- name: ({{ cluster_name }}) init db_config for 25
+  ansible.builtin.set_fact:
+    db_config: '{{ db_config | default({}) }}'
+    db_config_all: ''
+    db_config_tiers: ''
+  when: picodata_version is version('26.1', '<')
+
 - name: ({{ cluster_name }}) Debug db_config
   debug:
     var: db_config
   run_once: true
   when: debug == true
-
-- name: ({{ cluster_name }}) init db_config
-  ansible.builtin.set_fact:
-    db_config_all: ""
-    db_config_tiers: ""
 
 - name: ({{ cluster_name }}) Fill db_config_all with parameters
   ansible.builtin.set_fact:
@@ -274,10 +287,6 @@
 
   when: https == true
 # end block
-
-- name: ({{ cluster_name }}) Generate list of instances per server
-  ansible.builtin.include_tasks:
-    file: genin.yml
 
 - name: Proccessing set failure domain
   block:

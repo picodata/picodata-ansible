@@ -173,18 +173,27 @@
             --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
             {% endif %}
             --password-file {{ data_dir }}/{{ cluster_name }}/{{ peer_name }}/.picodata-cookie
-            -a chap-sha1 {%if force is defined and force == true %}--force {% endif %}
+            {% if picodata_version is version('26.1', '<=') %}-a chap-sha1 {% endif %}
+            {% if force is defined and force == true %}--force {% endif %}
             {{ instance_uuid }}
 
 # - remove snap, xlog (vylog? need check) from instance_dir of rebootstrap
   - name: ({{ cluster_name }}) Remove snap/xlog in work_dir of intsance {{ instance }}
     ansible.builtin.shell:
       cmd: >
+           {% if picodata_version is version('26.2', '>=') %}
+           rm -f {{ memtx_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.snap;
+           rm -f {{ wal_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.xlog;
+           rm -f {{ vinyl_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.vylog;
+           find {{ vinyl_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }} -name "*.index" -delete;
+           find {{ vinyl_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }} -name "*.run" -delete;
+           {% else %}
            rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.snap; 
            rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.xlog;
            rm -f {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }}/*.vylog;
            find {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }} -name "*.index" -delete;
            find {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[ instance_index|int ] }} -name "*.run" -delete;
+           {% endif %}
 
 # - start unit (systemctl or supervisord)
   - block:

@@ -40,6 +40,9 @@
       - '{{ cert_dir }}'
       - '{{ backup_dir }}'
       - '{{ backup_dir }}/{{ cluster_name }}'
+      - '{{ memtx_dir }}'
+      - '{{ vinyl_dir }}'
+      - '{{ wal_dir }}'
 
   - name: ({{ cluster_name }}) Create dirs for cluster
     ansible.builtin.file:
@@ -55,6 +58,9 @@
       - '{{ share_dir }}/{{ cluster_name }}'
       - '{{ run_dir }}/{{ cluster_name }}'
       - '{{ cert_dir }}/{{ cluster_name }}'
+      - '{{ memtx_dir }}/{{ cluster_name }}'
+      - '{{ vinyl_dir }}/{{ cluster_name }}'
+      - '{{ wal_dir }}/{{ cluster_name }}'
 
   - name: ({{ cluster_name }}) Create dirs for supervisord
     ansible.builtin.file:

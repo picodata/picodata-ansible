@@ -152,6 +152,9 @@
       - '{{ run_dir }}/{{ cluster_name }}'
       - '{{ log_dir }}/{{ cluster_name }}'
       - '{{ cert_dir }}/{{ cluster_name }}'
+      - '{{ memtx_dir }}/{{ cluster_name }}'
+      - '{{ vinyl_dir }}/{{ cluster_name }}'
+      - '{{ wal_dir }}/{{ cluster_name }}'
     async: 100
     poll: 0
     when: rootless == false
@@ -160,10 +163,16 @@
     ansible.builtin.shell:
       cmd: >
         rm -rf {{ conf_dir }}/{{ cluster_name }}/* &
-        rm -rf {{ data_dir }}/{{ cluster_name }}/* &
         rm -rf {{ run_dir }}/{{ cluster_name }}/* &
         rm -rf {{ log_dir }}/{{ cluster_name }}/* &
         rm -rf {{ cert_dir }}/{{ cluster_name }}/* &
+        {% if picodata_version is version('26.2', '>=') %}
+        rm -rf {{ memtx_dir }}/{{ cluster_name }}/* &
+        rm -rf {{ vinyl_dir }}/{{ cluster_name }}/* &
+        rm -rf {{ wal_dir }}/{{ cluster_name }}/* &
+        {% else %}
+        rm -rf {{ data_dir }}/{{ cluster_name }}/* &
+        {% endif %}
     when: rootless == true
 
   - name: ({{ cluster_name }}) Remove share_dir if set purge variable when rootless is unset

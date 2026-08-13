@@ -49,6 +49,18 @@ conf_dir: '/etc/picodata'
 # размещение данных
 data_dir: '/var/lib/picodata'
 
+# размещение данных для memtx
+# доступно с версии picodata 26.2
+memtx_dir: '/var/lib/picodata'
+
+# размещение данных для vinyl
+# доступно с версии picodata 26.2
+vinyl_dir: '/var/lib/picodata'
+
+# размещение файлов WAL
+# доступно с версии picodata 26.2
+wal_dir: '/var/lib/picodata'
+
 # размещение служебных данных (плагинов)
 share_dir: '/usr/share/picodata'
 
@@ -101,6 +113,9 @@ listen_address: '{{ ansible_fqdn }}'
 
 # Jinja шаблон для определения адреса сервера для подключения по postgress-протоколу между инстансами
 pg_address: '{{ ansible_fqdn }}'
+
+# при выставлении этой переменной в `false` PG-протокол будет выключен (требуется, если кто-то использует плагины и не хочет postgress)
+pg_enable: true
 
 # система управления сервисами и процессами
 init_system: 'systemd'
@@ -177,3 +192,8 @@ filename_format: 'binport'
 
 # авторизация в Web-UI
 auth_webui: false
+
+# параметры конфигурации кластера https://docs.picodata.io/picodata/stable/reference/db_config/
+db_config_default:
+  governor_common_rpc_timeout: 30
+  sql_ddl_timeout: 3600

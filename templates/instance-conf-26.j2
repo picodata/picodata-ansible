@@ -3,17 +3,28 @@
 cluster:
   name: '{{ cluster_name }}'
   default_bucket_count: {{ default_bucket_count | default(30000) }}
-  shredding: {% if shredding | bool == true  %}true{% else %}false{% endif %}
+  shredding: {{ shredding | to_json }}
 
   tier:
 {% for name, params in tiers.items() %}
     {{ name }}:
       replication_factor: {{ params.replication_factor | default(1) }}
-      can_vote: {% if params.can_vote | default(true) == true %}true{% else %}false{% endif %}
-
+      can_vote: {{ params.can_vote | default(true) | to_json }}
 {% if params.bucket_count is defined %}
       bucket_count: {{ params.bucket_count }}
 {% endif %}
+{% if picodata_version is version('26.2', '>=') %}
+{% if params.wal_mode is defined %}
+      wal_mode: {{ params.wal_mode }}
+{% endif %}
+{% if params.experimental_sharding_implementation is defined %}
+      experimental_sharding_implementation: {{ params.experimental_sharding_implementation | to_json }}
+{% endif %}
+{% if params.replication_mode is defined %}
+      replication_mode: {{ params.replication_mode }}
+{% endif %}
+{% endif %}
+
 {% endfor %}
 
 instance:
@@ -21,7 +32,9 @@ instance:
   instance_dir: '{{ data_dir }}/{{ cluster_name }}/{{ instance_name }}'
   backup_dir: '{{ backup_dir }}/{{ cluster_name }}/{{ instance_name }}'
   share_dir: '{{ share_dir }}/{{ cluster_name }}'
-
+{% if picodata_version is version('26.2', '>=') %}
+  wal_dir: '{{ tier.value.wal_dir | default(wal_dir) }}/{{ cluster_name }}/{{ instance_name }}'
+{% endif %}
 {% if autonames |bool == false %}
   name: '{{ instance_name }}'
 {% endif %}
@@ -45,7 +58,7 @@ instance:
 {% endif %}
 
   pgproto:
-    enabled: true
+    enabled: {{ pg_enable | to_json }}
     listen: '0.0.0.0:{{ list_pg[instance_index | int] | regex_search('.*:([0-9]+)', '\\1') | list | last }}'
     advertise: '{{ list_pg[instance_index | int] }}'
     tls:
@@ -83,7 +96,6 @@ instance:
     destination: 'pipe:{{ log_pipe_command }}'
 {% endif %}
     format: '{{ log_format }}'
-
 {% if audit | bool == true %}
 {% if audit_to == "file" %}
   audit: '{{ log_dir }}/{{ cluster_name }}/audit-{{ instance_name }}.log'
@@ -93,11 +105,13 @@ instance:
   audit: '{{ audit_to }}:'
 {% endif %}
 {% endif %}
-
-{% if tier.value.config is defined %}
-  {{ tier.value.config | to_nice_yaml(indent=2) | indent(width=2) }}
+{% if config_tier != {} %}
+  {{ config_tier | to_nice_yaml(indent=2) | indent(width=2) }}
 {% endif %}
-
+{% if ldap is defined and picodata_version is version('26.2', '>=') %}
+  ldap:
+    {{ ldap | to_nice_yaml(indent=2) | indent(width=4) }}
+{% endif %}
 {% if picodata_version is version('26.1', '>=') %}
 {% set ns = namespace() %}
 {% if plugins is mapping %}

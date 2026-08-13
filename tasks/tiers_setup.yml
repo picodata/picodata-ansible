@@ -12,6 +12,9 @@
       init_replication_factor: '{{ tier.value.replication_factor | default(1) }}'
       instances_per_server: '{{ dict_instances_per_server[tier.key] }}'
       start_num: 1
+      config_tier: {}
+      vinyldir_tier: {}
+      memtxdir_tier: {}
 
   - name: ({{ cluster_name }}) Set start number if expanded for tier {{ tier.key }}
     ansible.builtin.set_fact:

@@ -7,7 +7,19 @@
 
 - name: ({{ cluster_name }}) Set list of directories to backup
   ansible.builtin.set_fact:
-    listdir: '{% if not skipdata %}{{ data_dir }}/{{ cluster_name }} {% endif %}{{ conf_dir }}/{{ cluster_name }} {{ log_dir }}/{{ cluster_name }} {% if init_system == "supervisord" %}{{ supervisord_dir }}/{{ cluster_name }}{% else %}{{ systemd_dir }}/{{ cluster_name }}*  {{ systemd_dir }}/**/{{ cluster_name }}*{% endif %}'
+    listdir: >
+      /usr/bin/picodata
+      {% if not skipdata %}
+      {{ data_dir }}/{{ cluster_name }}
+      {% if picodata_version is version('26.2', '>=') %}{{ memtx_dir }}/{{ cluster_name }} {{ vinyl_dir }}/{{ cluster_name }} {{ wal_dir }}/{{ cluster_name }}{% endif %}
+      {% endif %}
+      {{ conf_dir }}/{{ cluster_name }}
+      {{ log_dir }}/{{ cluster_name }}
+      {% if init_system == "supervisord" %}
+      {{ supervisord_dir }}/{{ cluster_name }}
+      {% else %}
+      {{ systemd_dir }}/{{ cluster_name }}*  {{ systemd_dir }}/**/{{ cluster_name }}*
+      {% endif %}
   run_once: true
 
 - name: ({{ cluster_name }}) Set datetime for filename
@@ -38,14 +50,14 @@
 
   when: init_system == 'systemd'
 
-- name: ({{ cluster_name }}) List of directories to backup
+- name: ({{ cluster_name }}) List of directories to save
   ansible.builtin.debug:
-    msg: 'DIRS TO BACKUP: {{ listdir }}'
+    msg: 'DIRS TO SAVE: {{ listdir }}'
   run_once: true
 
 - name: ({{ cluster_name }}) Get info about cluster if possible
   ansible.builtin.shell:
-    cmd: >
+    cmd: |
          echo "
          SELECT * FROM _pico_instance;
          SELECT * FROM _pico_peer_address;
@@ -73,12 +85,11 @@
 - name: ({{ cluster_name }}) Pack crashed dump for fetch
   ansible.builtin.shell:
     chdir: '{{ backup_dir }}'
-    cmd: |
-         tar --ignore-failed-read \
-         --exclude={{ backup_dir }} \
-         -czf {{ backup_dir }}/{{ cluster_name }}/crash_dumps/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz \
-         {{ listdir }} \
-         /usr/bin/picodata
+    cmd: >
+         tar --ignore-failed-read
+         --exclude={{ backup_dir }}
+         -czf {{ backup_dir }}/{{ cluster_name }}/crash_dumps/{{ inventory_hostname }}_crash_dump_{{ dt }}.tar.gz
+         {{ listdir }}
   register: result
   failed_when: result.rc != 0 and result.rc != 1
 

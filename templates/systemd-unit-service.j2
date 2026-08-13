@@ -31,14 +31,36 @@ Environment={{ param }}={{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instan
 {% endfor %}
 {% endif %}
 
+ExecStartPre=/bin/sh -c 'mkdir -p {{ share_dir }}/{{ cluster_name }}'
 {% if autonames == true %}
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/{{ instance_name }}'
+{% if picodata_version is version('26.2', '>=') %}
+{% if memtx_dir != data_dir %}
+ExecStartPre=/bin/sh -c 'mkdir -p {{ memtx_dir }}/{{ cluster_name }}/{{ instance_name }}'
+{% endif %}
+{% if vinyl_dir != data_dir %}
+ExecStartPre=/bin/sh -c 'mkdir -p {{ vinyl_dir }}/{{ cluster_name }}/{{ instance_name }}'
+{% endif %}
+{% if wal_dir != data_dir %}
+ExecStartPre=/bin/sh -c 'mkdir -p {{ wal_dir }}/{{ cluster_name }}/{{ instance_name }}'
+{% endif %}
+{% endif %}
 ExecStart={{ bin_dir }}/picodata run --config {{ conf_dir }}/{{ cluster_name }}/{{ instance_name }}.conf
 {% else %}
 ExecStartPre=/bin/sh -c 'mkdir -p {{ data_dir }}/{{ cluster_name }}/%i'
+{% if picodata_version is version('26.2', '>=') %}
+{% if memtx_dir != data_dir %}
+ExecStartPre=/bin/sh -c 'mkdir -p {{ memtx_dir }}/{{ cluster_name }}/%i'
+{% endif %}
+{% if vinyl_dir != data_dir %}
+ExecStartPre=/bin/sh -c 'mkdir -p {{ vinyl_dir }}/{{ cluster_name }}/%i'
+{% endif %}
+{% if wal_dir != data_dir %}
+ExecStartPre=/bin/sh -c 'mkdir -p {{ wal_dir }}/{{ cluster_name }}/%i'
+{% endif %}
+{% endif %}
 ExecStart={{ bin_dir }}/picodata run --config {{ conf_dir }}/{{ cluster_name }}/%i.conf
 {% endif %}
-ExecStartPre=/bin/sh -c 'mkdir -p {{ share_dir }}/{{ cluster_name }}'
 
 {% for param, val in systemd_params_tier| default({}) |dictsort %}
 {% if param == 'CPUAffinity' %}
