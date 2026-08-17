@@ -9,7 +9,7 @@
 - name: ({{ cluster_name }}) Deploy Picodata cluster
   ansible.builtin.import_tasks:
     file: deploy.yml
-  tags: [ deploy, restore_full ]
+  tags: [ deploy, restore_full, reconfigure ]
 
 - name: ({{ cluster_name }}) Install Picodata packages for Picodata cluster
   ansible.builtin.import_tasks:

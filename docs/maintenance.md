@@ -237,10 +237,10 @@ ansible-playbook -i hosts.yml picodata.yml -t rebootstrap -e instance=default_1_
 #### Увеличение ресурсов у инстанса
 
 ##### С перезапуском инстансов кластера
-- установить в инвентарном файле нужно количество ресурсов, например `memtx_memory` и выполните роль без тега
+- установить в инвентарном файле нужно количество ресурсов, например `memtx_memory` и выполните роль с тегом `reconfigure`
 
 ```bash
-ansible-playbook -i hosts.yml picodata.yml
+ansible-playbook -i hosts.yml picodata.yml -t reconfigure
 ```
 
 при этом обновится конфигурационный файл и **все** инстансы кластера перезапустятся
@@ -254,9 +254,9 @@ ansible-playbook -i hosts.yml picodata.yml
 ansible-playbook -i hosts.yml picodata.yml -t command -e "filter='default'" -e "cmdline='box.cfg{memtx_memory=154217728}'"
 ```
 
-- для персистентности установить в инвентарном файле параметр `memtx_memory: 154217728` для тира `default` и выполнить роль без тега с переменной, запрещающей перезапуск инстансов кластера:
+- для персистентности установить в инвентарном файле параметр `memtx_memory: 154217728` для тира `default` и выполнить роль с тегом `reconfigure` с переменной, запрещающей перезапуск инстансов кластера:
 ```bash
-ansible-playbook -i hosts.yml picodata.yml -e need_restart=false
+ansible-playbook -i hosts.yml picodata.yml -t reconfigure -e need_restart=false
 ```
 
 ### Горизонтальное расширение
@@ -275,9 +275,9 @@ ansible-playbook -i hosts.yml picodata.yml -t expand
 
 Шаги:
 - добавить новые серверы в инвентарный файл
-- выполнить роль без тега
+- выполнить роль с тегом `reconfigure`
 ```bash
-ansible-playbook -i hosts.yml picodata.yml
+ansible-playbook -i hosts.yml picodata.yml -t reconfigure
 ```
 
 Возможности и ограничения:

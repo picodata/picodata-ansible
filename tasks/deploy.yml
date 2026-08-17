@@ -1,6 +1,23 @@
 ---
 # tasks for deploy cluster
 
+- name: Processing check cluster exists
+  block:
+  - name: ({{ cluster_name }}) Check cluster exists
+    ansible.builtin.stat:
+      path: '{{ conf_dir }}/{{ cluster_name }}/report.yml'
+    register: result_cluster
+
+  - name: ({{ cluster_name }}) Stop if cluster is exists
+    ansible.builtin.fail:
+      msg: 'Ошибка! На серверах обнаружен установленный кластер picodata! Используйте тег `reconfigure`, если хотите его изменить или расширить!'
+    when: result_cluster.stat.exists
+    # delegate_to: localhost
+
+  run_once: true
+  when: '"reconfigure" not in ansible_run_tags'
+# end block
+
 - name: ({{ cluster_name }}) Set tag variable
   ansible.builtin.set_fact:
     tag: 'deploy'
