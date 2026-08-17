@@ -173,7 +173,7 @@
             --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
             {% endif %}
             --password-file {{ data_dir }}/{{ cluster_name }}/{{ peer_name }}/.picodata-cookie
-           {% if picodata_version is version('26.2', '<') %}-a chap-sha1 {% endif %}
+            {% if picodata_version is version('26.2', '<') %}-a chap-sha1 {% endif %}
             {% if force is defined and force == true %}--force {% endif %}
             {{ instance_uuid }}
 

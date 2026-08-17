@@ -36,13 +36,23 @@
   changed_when: false
   when: tag != 'restore'
 
-- name: Apply sql_file
+- name: Apply sql_file before plugins
   ansible.builtin.shell:
     cmd: >
          cat {{ conf_dir }}/{{ cluster_name }}/after_deploy.sql |
            {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
   run_once: true
-  listen: apply_sql_file
+  listen: apply_sql_file_pre
+  changed_when: false
+  when: tag != 'restore'
+
+- name: Apply sql_file after plugins
+  ansible.builtin.shell:
+    cmd: >
+         cat {{ conf_dir }}/{{ cluster_name }}/after_plugins.sql |
+           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
+  run_once: true
+  listen: apply_sql_file_post
   changed_when: false
   when: tag != 'restore'
 

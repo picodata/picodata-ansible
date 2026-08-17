@@ -196,3 +196,9 @@ auth_webui: false
 # параметры конфигурации кластера https://docs.picodata.io/picodata/stable/reference/db_config/
 db_config_default:
   governor_common_rpc_timeout: 10
+
+# Файл с набором SQL-команд для выполнения после развертывания кластера, но до установки плагинов
+sql_file_pre_plugins: ''
+
+# Файл с набором SQL-команд для выполнения после установки плагинов (и развертывания кластера)
+sql_file_post_plugins: ''

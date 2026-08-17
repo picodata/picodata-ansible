@@ -353,14 +353,19 @@
   notify:
     - apply_db_config
 
-- name: ({{ cluster_name }}) Copy sql-file on server
+- name: ({{ cluster_name }}) Set sql_file_pre_plugins if sql_file is set (for compability)
+  ansible.builtin.set_fact:
+    sql_file_pre_plugins: sql_file
+  when: sql_file_pre_plugins == '' and sql_file is defined
+
+- name: ({{ cluster_name }}) Copy sql-file pre-plugins on server
   ansible.builtin.copy:
-    src: '{{ sql_file }}'
+    src: '{{ sql_file_pre_plugins }}'
     dest: '{{ conf_dir }}/{{ cluster_name }}/after_deploy.sql'
   run_once: true
-  when: sql_file is defined
+  when: sql_file_pre_plugins != ''
   notify:
-    - apply_sql_file
+    - apply_sql_file_pre
 
 # не рестартуем кластер, если это его первый деплой
 - name: ({{ cluster_name }}) Check restart if needed for first deploy
@@ -382,6 +387,15 @@
   ansible.builtin.include_tasks:
     file: plugins.yml
   when: plugins is defined and plugins
+
+- name: ({{ cluster_name }}) Copy sql-file post-plugins on server
+  ansible.builtin.copy:
+    src: '{{ sql_file_post_plugins }}'
+    dest: '{{ conf_dir }}/{{ cluster_name }}/after_plugins.sql'
+  run_once: true
+  when: sql_file_post_plugins != ''
+  notify:
+    - apply_sql_file_post
 
 - name: ({{ cluster_name }}) Print instances on hosts
   ansible.builtin.debug:
