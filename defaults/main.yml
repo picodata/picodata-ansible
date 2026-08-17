@@ -179,7 +179,7 @@ remove_sharedir: true
 serial_host_restart: 100
 
 # количество бакетов в каждом тире по умолчанию
-default_bucket_count: 30000
+default_bucket_count: 3000
 
 # удаление пакета picodata с сервера вместе с кластером
 remove_pkg: false
@@ -195,5 +195,4 @@ auth_webui: false
 
 # параметры конфигурации кластера https://docs.picodata.io/picodata/stable/reference/db_config/
 db_config_default:
-  governor_common_rpc_timeout: 30
-  sql_ddl_timeout: 3600
+  governor_common_rpc_timeout: 10
