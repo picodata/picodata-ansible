@@ -8,6 +8,14 @@
 #   - start cluster
 #   - make links for autonames
 
+# Check parameters
+- name: ({{ cluster_name }}) Check parameters
+  ansible.builtin.fail:
+    msg: 'Ошибка! Не указан каталог для восстановления из бэкапа (переменная restore_dir)!'
+  when: restore_dir is undefined and backup_fetch == false
+  run_once: true
+  delegate_to: localhost
+
 # tasks for restore cluster
 - name: ({{ cluster_name }}) Set tag variable
   ansible.builtin.set_fact:
@@ -19,7 +27,9 @@
     file: genin.yml
   when: instances_on_host is not defined
 
-- block:
+- name: Processing if restore from local backup
+  block:
+
   - name: ({{ cluster_name }}) Get list of local backups
     become: false
     ansible.builtin.find:
@@ -48,7 +58,9 @@
       path: '{{ backup_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/{{ restore_dir }}'
     register: result
 
-  - block:
+  - name: Processing transfer backup to remote server
+    block:
+
     - name: ({{ cluster_name }}) Copy backup archive to remote host
       ansible.builtin.copy:
         src: '{{ backup_fetch_dir }}/{{ cluster_name }}/{{ restore_dir }}/{{ inventory_hostname }}.tar'
@@ -70,8 +82,26 @@
         state: absent
 
     when: not result.stat.exists or force_copy_backup == true
+  # end block
 
   when: backup_fetch == True
+# end block
+
+- name: Processing ask of user
+  block:
+
+  - name: ({{ cluster_name }}) Ask user confirmation for continue
+    ansible.builtin.pause:
+      prompt: "Внимание! Все данные будут уничтожены! Введите имя кластера ({{ cluster_name }}) для подтверждения"
+    register: confirm_input
+    run_once: true
+
+  - name: ({{ cluster_name }}) Abort if the user declines
+    ansible.builtin.meta: end_play
+    when: confirm_input.user_input | default('no') != cluster_name
+
+  when: force_restore == false
+# end block
 
 # Stop cluster
 - name: ({{ cluster_name }}) Stop cluster
@@ -147,6 +177,7 @@
         - "{{ pd_restore_ip_replacements }}"
 
   when: ip_replacements_file is defined
+# end block
 
 # picodata restore запускается под become-юзером, поэтому принудительно меняем владельца на файлы
 - name: ({{ cluster_name }}) Cange files ownership in instance_dir

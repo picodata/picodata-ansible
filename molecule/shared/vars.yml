@@ -10,6 +10,7 @@ fd_uniq_per_instance: true
 debug: true
 db_config:
   raft_wal_count_max: 102400
+force_restore: true
 extra_vars:
   PICODATA_UNSAFE_DISABLE_PLUGIN_COMPATIBILITY_CHECK: 1
 tiers:
