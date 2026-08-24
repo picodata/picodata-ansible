@@ -11,17 +11,23 @@ spec:
         - "https://download.picodata.io"
         - "https://download.binary.picodata.io"
 ---
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - when: always
+
 stages:
   - test
-  - notify
+  - deploy
   - release
 
 .molecule_base:
   stage: test
   rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
     - if: $CI_COMMIT_TAG
       when: never    
+    - if: $CI_PIPELINE_SOURCE == "push"
   tags:
     - proxmox-docker
   image: docker-picodata.binary.picodata.io/ansible-proxmox:latest
@@ -167,8 +173,8 @@ manual:
           - rootless
           - supervisord
 
-release:
-  stage: notify
+deploy:
+  stage: deploy
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/
   variables:
