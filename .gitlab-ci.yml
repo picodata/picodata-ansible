@@ -91,11 +91,10 @@ molecule:
         - picodata-25.2.2.0
         - picodata-25.5.10.0
         - picodata-26.1.6.0
-        CONTAINER_TEMPLATE: almalinux-9-default_20240911_amd64.tar.xz
+        CONTAINER_TEMPLATE: almalinux-9-default_20260825_amd64.tar.zst
         PLUGIN_NAME252: weather_cache_0.1.0-centos_9.tar.gz
         PLUGIN_NAME25: weather_cache_0.2.1-centos_9.tar.gz
         ANSIBLE_PYTHON: /usr/bin/python3
-        OS: "centos9"
         MOLECULE_SCENARIO:
           - systemd
           - rootless
