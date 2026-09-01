@@ -18,10 +18,13 @@ tiers:
     replicaset_count: 1
     replication_factor: 1
     can_vote: true
+    bucket_count: "{{ 0 if picodata_version is version('26.2.1', '>=') else 3000 }}"
+    wal_mode: "{{ 'fsync' if picodata_version is version('26.2.1', '>=') else omit }}"
   default:
     replicaset_count: 1
-    replication_factor: 2
+    replication_factor: 3
     can_vote: false
+    replication_mode: "{{ 'sync' if picodata_version is version('26.2.1', '>=') else omit }}"
     config:
       memtx:
         memory: 64M
