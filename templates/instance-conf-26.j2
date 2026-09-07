@@ -113,39 +113,44 @@ instance:
     {{ ldap | to_nice_yaml(indent=2) | indent(width=4) }}
 {% endif %}
 {% if picodata_version is version('26.1', '>=') %}
-{% set ns = namespace() %}
 {% if plugins is mapping %}
-{% for plugin in plugins | dict2items %}
-{% set ns.plugin_name = plugin.key %}
-{% if plugin.value.services is mapping %}
-{% for plugin_service in plugin.value.services | dict2items %}
-{% set ns.plugin_service_name = plugin_service.key %}
-{% if plugin_service.value.tiers is defined %}
-{% for plugin_service_tier in plugin_service.value.tiers %}
-{% if plugin_service_tier is mapping %}
-{% set ns.plugin_tier_name = (plugin_service_tier| dict2items)[0].key %}
+{% set plugin_config = {} %}
+{% for plugin_name, plugin in plugins.items() %}
+{% if plugin.services is mapping %}
+{% for service_name, service in plugin.services.items() %}
+{% if service.tiers is defined %}
+{% for service_tier in service.tiers %}
+{% if service_tier is mapping %}
+{% set service_tier_name = (service_tier | dict2items)[0].key %}
+{% set service_tier_config = (service_tier | dict2items)[0].value %}
 {% else %}
-{% set ns.plugin_tier_name = plugin_service_tier %}
+{% set service_tier_name = service_tier %}
+{% set service_tier_config = none %}
 {% endif %}
-{% if tier.key == ns.plugin_tier_name %}
-{% if plugin_service_tier is mapping and (plugin_service_tier | dict2items)[0].value %}
+{% if tier.key == service_tier_name and service_tier_config %}
+{% if plugin_name not in plugin_config %}
+{% set _ = plugin_config.update({plugin_name: {}}) %}
+{% endif %}
+{% set _ = plugin_config[plugin_name].update({service_name: service_tier_config}) %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% if plugin_config %}
   plugin:
-    {{ ns.plugin_name }}:
+{% for plugin_name, services in plugin_config.items() %}
+    {{ plugin_name }}:
       service:
-        {{ ns.plugin_service_name }}:
-          {{ (plugin_service_tier | dict2items)[0].value
-            | to_nice_yaml(indent=2)
-            | indent(width=10)
-            | replace ("<INSTANCE_NUM>", "%02d"|format(instance_index|int ))
-            | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_index|int))
-            | replace ("<INSTANCE_ADDR>", "%s"|format(listen_address))
-          }}
-{% endif %}
-{% endif %}
+        {{ services
+          | to_nice_yaml(indent=2)
+          | indent(width=8)
+          | replace ("<INSTANCE_NUM>", "%02d"|format(instance_index|int ))
+          | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_index|int))
+          | replace ("<INSTANCE_ADDR>", "%s"|format(listen_address))
+        }}
 {% endfor %}
 {% endif %}
-{% endfor %}
-{% endif %}
-{% endfor %}
 {% endif %}
 {% endif %}
