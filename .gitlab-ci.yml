@@ -95,18 +95,6 @@ molecule:
           - supervisord
 
       - PICODATA_VERSION: 
-        - picodata=25.5.10.0-bullseye
-        - picodata=26.1.4.0-bullseye
-        - picodata=26.2.1.0-bullseye
-        CONTAINER_TEMPLATE: debian-11-standard_11.7-1_amd64.tar.zst
-        PLUGIN_NAME: weather_cache_0.2.1-debian_11.tar.gz
-        ANSIBLE_PYTHON: /usr/bin/python3
-        MOLECULE_SCENARIO:
-          - systemd
-          - rootless
-          - supervisord
-
-      - PICODATA_VERSION: 
         - picodata=25.5.10.0-trixie
         - picodata=26.1.4.0-trixie
         - picodata=26.2.1.0-trixie
