@@ -229,14 +229,15 @@
     var: peer_list
   when: debug == true and peer_list is defined
 
-- name: ({{ cluster_name }}) genin Set voters list if peer_list is undefined
-  ansible.builtin.set_fact:
-    voter_str: "[{% for host in all_hosts | difference([inventory_hostname ]) | sort %}\"{{ hostvars[host]['list_voter'][0] | default('') }}\",{% endfor %}'{{ list_voter[0] | default('') }}' ]"
-  when: not peer_list | default([])
-
 - name: ({{ cluster_name }}) genin Set peer_list if undefined
   ansible.builtin.set_fact:
-    peer_list: "{{ voter_str | select | list }}"
+    peer_list: >-
+      {{ (all_hosts | difference([inventory_hostname]) | sort
+          | map('extract', hostvars)
+          | map(attribute='list_voter')
+          | map('first')
+          | list) + [list_voter[0] | default('')]
+          | select | list }}
   when: not peer_list | default([])
 
 - name: ({{ cluster_name }}) genin Debug peer_list values

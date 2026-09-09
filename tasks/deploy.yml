@@ -300,7 +300,7 @@
       mode: '0600'
       owner: '{{ user }}'
       group: '{{ group }}'
-    when: https_password_file is defined and https_password_file != ''
+    when: https_password_file | default('') != ''
 
   when: https == true
 # end block
@@ -311,12 +311,12 @@
   - name: ({{ cluster_name }}) Set actual failure domain
     ansible.builtin.set_fact:
       fd: '"G":"{{ group_names }}","H":"{{ inventory_hostname }}"'
-    when: ver_fd == '2'
+    when: ver_fd | int == 2
 
   - name: ({{ cluster_name }}) Set failure domain for previous version
     ansible.builtin.set_fact:
       fd: '"DC":"{{ group_names }}","HOST":"{{ inventory_hostname }}"'
-    when: ver_fd == '1'
+    when: ver_fd | int  == 1
 
   - name: ({{ cluster_name }}) Debug failure domain
     ansible.builtin.debug:
@@ -403,7 +403,7 @@
 - name: ({{ cluster_name }}) Install plugins
   ansible.builtin.include_tasks:
     file: plugins.yml
-  when: plugins is defined and plugins
+  when: plugins | default({}) != {}
 
 - name: ({{ cluster_name }}) Copy sql-file post-plugins on server
   ansible.builtin.copy:

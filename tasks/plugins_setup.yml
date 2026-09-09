@@ -154,7 +154,7 @@
              {% endif %}
              {{ manifest.name }} {{ manifest.version }}
              {{ plugins_dir }}/{{ manifest.name }}/{{ manifest.version }}/config.yaml
-      when: res.changed is defined and res.changed == true
+      when: res.changed | default(false) == true
 
     when: plugin.value.config is defined and plugin.value.config != '' and plugin_install_sql | bool == true
   # end block
