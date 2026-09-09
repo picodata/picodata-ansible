@@ -73,9 +73,10 @@
       ansible.builtin.user:
         name: picodata
         shell: /sbin/nologin
-        group: picodata
-        append: yes
         comment: "Системный пользователь для приложения Picodata"
+        group: "{{ (ansible_os_family == 'Altlinux') | ternary('picodata', omit) }}"
+        groups: "{{ (ansible_os_family != 'Altlinux') | ternary('picodata', omit) }}"
+        append: yes
     
     - name: Add dbadm to picodata group
       ansible.builtin.user:
