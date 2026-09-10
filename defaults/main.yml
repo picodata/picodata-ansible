@@ -205,3 +205,6 @@ sql_file_post_plugins: ''
 
 # Восстановление из бэкапа без запроса пользователя
 force_restore: false
+
+# Для ребустрапа единственного инстанса репликасета
+force_rebootstrap: false

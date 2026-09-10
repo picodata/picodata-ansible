@@ -6,17 +6,12 @@
 
 # Steps:
 # - read report.yml (if exist)
-# - find working admin socket (get work_instance)
+# - set peer address from peer_list
 # - get uuid of instance_name for rebootstrap
 # - stop unit (systemctl or supervisord)
-# - picodata expel over peer of work_instance
+# - picodata expel
 # - remove snap, xlog (vylog? need check) from instance_dir of rebootstrap
 # - start unit (systemctl or supervisord)
-
-# Set variables for work
-- name: ({{ cluster_name }}) Generate list of instances per server
-  ansible.builtin.include_tasks:
-    file: genin.yml
 
 # Check parameters
 - name: ({{ cluster_name }}) Check parameters
@@ -26,45 +21,19 @@
   run_once: true
   delegate_to: localhost
 
-# Find working admin socket (get work_instance)
-- name: ({{ cluster_name }}) Debug list_bin
-  ansible.builtin.debug:
-    var: list_bin
-  when: debug == true
+# Set variables for work
+- name: ({{ cluster_name }}) Generate list of instances per server
+  ansible.builtin.include_tasks:
+    file: genin.yml
 
 - name: ({{ cluster_name }}) Set peer for commands
   ansible.builtin.set_fact:
-    peer_address: '{{ peer | default(list_bin[0]) }}'
+    peer_address: '{{ peer | default(peer_list[0]) }}'
 
-- name: ({{ cluster_name }}) Find index for peer in list on host
-  ansible.builtin.set_fact:
-    local_peer_index: '{{ list_bin.index(peer_address) | default(0) }}'
-  delegate_to: localhost
-  delegate_facts: true
-  register: find_result
-  when: peer_address in list_bin
-
-- name: ({{ cluster_name }}) Debug res
+- name: ({{ cluster_name }}) Debug peer
   ansible.builtin.debug:
-    var: find_result
+    msg: 'peer_address: {{ peer_address }}'
   when: debug == true
-
-- name: ({{ cluster_name }}) Check peer
-  ansible.builtin.fail:
-    msg: 'Ошибка! Не могу найти инстанс для peer_address ({{ peer_address }})!'
-  when: hostvars['localhost']['local_peer_index'] is undefined
-  delegate_to: localhost
-  run_once: true
-
-- name: ({{ cluster_name }}) Set index for peer for all hosts
-  ansible.builtin.set_fact:
-    peer_index: "{{ hostvars['localhost']['local_peer_index'] }}"
-
-- name: ({{ cluster_name }}) Debug peer_index
-  ansible.builtin.debug:
-    var: peer_index
-  when: debug == true
-  run_once: true
 
 - name: ({{ cluster_name }}) Collect all instance names from all nodes
   ansible.builtin.set_fact:
@@ -88,24 +57,7 @@
   - name: ({{ cluster_name }}) Check instance and peer are not the same
     ansible.builtin.fail:
       msg: 'Ошибка! Инстанс для ребутсрапа {{ instance }} не может совпадать с peer-инстансом ({{ peer_address }})!'
-    when: list_bin.index(peer_address) | int == instance_index | int
-    run_once: true
-
-  - name: ({{ cluster_name }}) Set name of peer
-    ansible.builtin.set_fact:
-      peer_name: '{{ instances_on_host[ peer_index|int ] }}'
-
-  - name: ({{ cluster_name }}) Debug peer
-    ansible.builtin.debug:
-      msg: 'peer_name: {{ peer_name }}     peer_address: {{ peer_address }}'
-    run_once: true
-    when: debug == true
-
-  - name: ({{ cluster_name }}) Check peer_name
-    ansible.builtin.fail:
-      msg: 'Ошибка! Не могу найти имя инстанса для peer_address ({{ peer_address }})!'
-    when: peer_name is undefined
-    delegate_to: localhost
+    when: peer_address == list_bin[instance_index | int]
     run_once: true
 
 # - get uuid of instance_name for rebootstrap
@@ -120,7 +72,7 @@
             --tls-key {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_key_file | basename }}
             --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
             {% endif %}
-            --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ peer_name }}/.picodata-cookie
+            --service-password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie
             | grep '^{{ instance }} '
     register: result_status
 
@@ -172,9 +124,9 @@
             --tls-key {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_key_file | basename }}
             --tls-ca {{ cert_dir }}/{{ cluster_name }}/tls/{{ iproto_ca_file | basename }}
             {% endif %}
-            --password-file {{ data_dir }}/{{ cluster_name }}/{{ peer_name }}/.picodata-cookie
+            --password-file {{ data_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}/.picodata-cookie
             {% if picodata_version is version('26.2', '<') %}-a chap-sha1 {% endif %}
-            {% if force is defined and force == true %}--force {% endif %}
+            {% if force_rebootstrap | default(false) | bool == true %}--force {% endif %}
             {{ instance_uuid }}
 
 # - remove snap, xlog (vylog? need check) from instance_dir of rebootstrap
