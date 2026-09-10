@@ -7,7 +7,14 @@
 ansible-playbook -i hosts.yml picodata.yml
 ```
 
+или:
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t deploy
+```
+
 > При успешном окончании выполнения плейбука будет создан yaml-файл `report.yml` с перечислением всех инстансов и портов кластера
+
+Роль не даст возможности запустить установку кластера повторно! Если необходимо изменить настройки кластера, то используйте тег `reconfigure`
 
 ---
 
@@ -16,6 +23,17 @@ ansible-playbook -i hosts.yml picodata.yml
 Пример команды:
 ```bash
 ansible-playbook -i hosts.yml picodata.yml -t remove
+```
+
+---
+
+## Изменение настроек кластера
+
+В случае, если нужно изменить настройки кластера, применив их из инвентарного файла, необходимо использовать тег `reconfigure`
+
+Пример команды:
+```bash
+ansible-playbook -i hosts.yml picodata.yml -t reconfigure
 ```
 
 ---
