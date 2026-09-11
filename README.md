@@ -48,6 +48,10 @@ tiers:
 
 Вы можете инсталлировать роль через ansible-galaxy:
 
+```bash
+ansible-galaxy role install picodata.picodata_ansible
+```
+или
 
 ```bash
 ansible-galaxy install git+https://git.picodata.io/core/picodata-ansible.git

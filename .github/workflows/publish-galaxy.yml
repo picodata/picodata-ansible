@@ -1,0 +1,23 @@
+name: Publish to Ansible Galaxy
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+jobs:
+  publish-to-galaxy:
+    runs-on: ubuntu-latest
+    
+    container:
+      image: docker-picodata.binary.picodata.io/ansible-proxmox:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Ansible Galaxy Import
+        run: ansible-galaxy role import --token=$GALAXY_API_TOKEN picodata picodata-ansible
+        env:
+          GALAXY_API_TOKEN: ${{ secrets.GALAXY_API_TOKEN }}
