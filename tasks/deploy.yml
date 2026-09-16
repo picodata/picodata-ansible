@@ -255,8 +255,6 @@
     - { filename: '{{ pg_cert_file }}', mode: '0644' }
     - { filename: '{{ pg_key_file }}', mode: '0640' }
     - { filename: '{{ pg_ca_file }}', mode: '0644' }
-  async: 60
-  poll: 0
   when: pg_ssl == true
 
 - name: ({{ cluster_name }}) Copy certs for iproto
@@ -271,8 +269,6 @@
     - { filename: '{{ iproto_cert_file }}', mode: '0644' }
     - { filename: '{{ iproto_key_file }}', mode: '0640' }
     - { filename: '{{ iproto_ca_file }}', mode: '0644' }
-  async: 60
-  poll: 0
   when: iproto_tls == true
 
 - name: Proccessing for https
@@ -289,8 +285,6 @@
     loop:
       - { filename: '{{ https_cert_file }}', mode: '0644' }
       - { filename: '{{ https_key_file }}', mode: '0640' }
-    async: 60
-    poll: 0
 
   - name: ({{ cluster_name }}) Copy password file for https key
     become: true
