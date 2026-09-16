@@ -165,8 +165,6 @@
           echo 'ALTER PLUGIN "{{ manifest.name }}" {{ manifest.version }} ENABLE OPTION (TIMEOUT = {{ plugin.value.plugin_timeout | default(300) }});' |
           {{ bin_dir }}/picodata admin {{ run_dir }}/{{ cluster_name }}/{{ instances_on_host[0] }}.sock
     when: plugin_enable | bool == true and plugin_install_sql | bool == true and plugin_status.stdout == "0" and plugin_current_version is version(manifest.version, '<')
-    notify:
-      - apply_sql_file_post
 
   - name: ({{ cluster_name }}) Check on downgrade version {{ plugin.key }}
     ansible.builtin.debug:
