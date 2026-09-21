@@ -15,7 +15,7 @@
     
     - name: Download plugin
       ansible.builtin.get_url:
-        url: "https://binary.picodata.io/repository/raw-private/training-ops/{{ plugin_name }}"
+        url: "https://binary.picodata.io/repository/raw-private/molecule/{{ plugin_name }}"
         dest: ../plugin/
 
 - name: Install packages

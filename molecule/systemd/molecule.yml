@@ -12,7 +12,7 @@ dependency:
 driver:
   name: default
 platforms:
-  - name: "molecule-lxc-${MOLECULE_SCENARIO}-${JOB_SUFFIX}"
+  - name: "molecule-lxc-${MOLECULE_SCENARIO}-${JOB_SUFFIX}.lab.picodata.int"
 provisioner:
   name: ansible
   env:
@@ -30,7 +30,7 @@ provisioner:
       pipelining: true
   inventory:
     host_vars:
-      "molecule-lxc-${MOLECULE_SCENARIO}-${JOB_SUFFIX}":
+      "molecule-lxc-${MOLECULE_SCENARIO}-${JOB_SUFFIX}.lab.picodata.int":
         ansible_python_interpreter: "{{ lookup('env', 'ANSIBLE_PYTHON') | default('/usr/bin/python3', true) }}"
         template: "templates:vztmpl/${CONTAINER_TEMPLATE}"
         vmid: "{{ 9000 + (lookup('env', 'JOB_SUFFIX') | default(0, true) | int) }}"

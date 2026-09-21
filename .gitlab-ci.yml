@@ -54,7 +54,7 @@ molecule:
         ANSIBLE_IMAGE:
           - docker-picodata.binary.picodata.io/ansible-proxmox:latest
           - docker-picodata.binary.picodata.io/ansible-proxmox:2.20
-        PLUGIN_NAME: weather_cache_0.2.0-ubuntu_24.04.tar.gz
+        PLUGIN_NAME: weather_cache_0.2.2-ubuntu_24.04.tar.gz
         ANSIBLE_PYTHON: /usr/bin/python3
         CONTAINER_TEMPLATE: ubuntu-24.04-standard_24.04-2_amd64.tar.zst
         MOLECULE_SCENARIO: &molecule_scenarios
@@ -66,7 +66,7 @@ molecule:
           - picodata=25.5.10.0-resolute
           - picodata=26.2.1.0-resolute
         ANSIBLE_IMAGE: docker-picodata.binary.picodata.io/ansible-proxmox:latest
-        PLUGIN_NAME: weather_cache_0.2.1-ubuntu_26.04.tar.gz
+        PLUGIN_NAME: weather_cache_0.2.2-ubuntu_26.04.tar.gz
         CONTAINER_TEMPLATE: ubuntu-26.04-standard_26.04-1_amd64.tar.zst
         ANSIBLE_PYTHON: /usr/bin/python3
         MOLECULE_SCENARIO: *molecule_scenarios
@@ -77,7 +77,7 @@ molecule:
           - picodata-26.2.1.0
         ANSIBLE_IMAGE: docker-picodata.binary.picodata.io/ansible-proxmox:latest
         CONTAINER_TEMPLATE: rockylinux-8-cloud_20240408_amd64.tar.xz
-        PLUGIN_NAME: weather_cache_0.2.1-centos_8.tar.gz
+        PLUGIN_NAME: weather_cache_0.2.2-centos_8.tar.gz
         ANSIBLE_PYTHON: /usr/libexec/platform-python
         MOLECULE_SCENARIO: *molecule_scenarios
 
@@ -89,7 +89,7 @@ molecule:
           - docker-picodata.binary.picodata.io/ansible-proxmox:latest
           - docker-picodata.binary.picodata.io/ansible-proxmox:2.20
         CONTAINER_TEMPLATE: almalinux-9-default_20260825_amd64.tar.zst
-        PLUGIN_NAME: weather_cache_0.2.1-centos_9.tar.gz
+        PLUGIN_NAME: weather_cache_0.2.2-centos_9.tar.gz
         ANSIBLE_PYTHON: /usr/bin/python3
         MOLECULE_SCENARIO: *molecule_scenarios
 
@@ -99,7 +99,7 @@ molecule:
           - picodata=26.2.1.0-trixie
         ANSIBLE_IMAGE: docker-picodata.binary.picodata.io/ansible-proxmox:latest
         CONTAINER_TEMPLATE: debian-13-standard_13.6-1_amd64.tar.zst
-        PLUGIN_NAME: weather_cache_0.2.1-debian_13.tar.gz
+        PLUGIN_NAME: weather_cache_0.2.2-debian_13.tar.gz
         ANSIBLE_PYTHON: /usr/bin/python3
         MOLECULE_SCENARIO: *molecule_scenarios
 
@@ -109,7 +109,7 @@ molecule:
           - picodata=26.2.1.0-1.p9
         ANSIBLE_IMAGE: docker-picodata.binary.picodata.io/ansible-proxmox:latest
         CONTAINER_TEMPLATE: alt-p9-cloud_20240408_amd64.tar.xz
-        PLUGIN_NAME: weather_cache_0.2.1-altlinux_p9.tar.gz
+        PLUGIN_NAME: weather_cache_0.2.2-altlinux_p9.tar.gz
         ANSIBLE_PYTHON: /usr/bin/python3
         OS: "altlinux"
         MOLECULE_SCENARIO: *molecule_scenarios
@@ -120,7 +120,7 @@ molecule:
           - picodata=26.2.1.0-1.p10
         ANSIBLE_IMAGE: docker-picodata.binary.picodata.io/ansible-proxmox:latest
         CONTAINER_TEMPLATE: alt-p10-cloud_20240408_amd64.tar.xz
-        PLUGIN_NAME: weather_cache_0.2.1-altlinux_p10.tar.gz
+        PLUGIN_NAME: weather_cache_0.2.2-altlinux_p10.tar.gz
         ANSIBLE_PYTHON: /usr/bin/python3
         OS: "altlinux"
         MOLECULE_SCENARIO: *molecule_scenarios

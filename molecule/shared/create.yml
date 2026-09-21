@@ -31,6 +31,8 @@
         node: "{{ hostvars[item].node }}"
         ostemplate: "{{ hostvars[item].template }}"
         hostname: "{{ item }}"
+        searchdomain: lab.picodata.int
+        nameserver: 10.60.0.1
         password: "TemporarySecurePassword123"
         cores: 1
         memory: 1024
@@ -41,7 +43,7 @@
         features: "nesting=1"
         description: "{{ temp_ssh_key.public_key if hostvars[item].os | default('') == 'altlinux' else omit }}"
         ostype: "{{ 'unmanaged' if hostvars[item].os | default('') == 'altlinux' else omit }}"
-        netif: "{{ '{\"net0\":\"name=eth0,bridge=vmbr0\"}' if hostvars[item].os | default('') == 'altlinux' else '{\"net0\":\"name=eth0,bridge=vmbr0,ip=dhcp\"}' }}"
+        netif: "{{ '{\"net0\":\"name=eth0,bridge=lab0\"}' if hostvars[item].os | default('') == 'altlinux' else '{\"net0\":\"name=eth0,bridge=lab0,ip=dhcp\"}' }}"
         password: "{{ omit if hostvars[item].os | default('') == 'altlinux' else 'TemporarySecurePassword123' }}"
         pubkey: "{{ omit if hostvars[item].os | default('') == 'altlinux' else temp_ssh_key.public_key }}"
         hookscript: "{{ 'templates:snippets/altlinux-hook.sh' if hostvars[item].os | default('') == 'altlinux' else omit }}"
@@ -61,6 +63,10 @@
         node: "{{ hostvars[item].node }}"
         state: started
       loop: "{{ groups['all'] }}"
+      register: start_result
+      until: start_result is succeeded
+      retries: 3
+      delay: 10
 
     - name: Check SSH TCP port availability
       ansible.builtin.wait_for:
