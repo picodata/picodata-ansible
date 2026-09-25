@@ -128,6 +128,10 @@
             {% if picodata_version is version('26.2', '<') %}-a chap-sha1 {% endif %}
             {% if force_rebootstrap | default(false) | bool == true %}--force {% endif %}
             {{ instance_uuid }}
+    register: expel_result
+    until: expel_result.rc == 0
+    retries: '{{ expel_retries }}'
+    delay: '{{ expel_delay }}'
 
 # - remove snap, xlog (vylog? need check) from instance_dir of rebootstrap
   - name: ({{ cluster_name }}) Remove snap/xlog in work_dir of intsance {{ instance }}
