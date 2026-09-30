@@ -22,12 +22,16 @@ Group={{ group }}
 
 {% if extra_vars is defined %}
 {% for param, val in extra_vars.items() %}
-Environment={{ param }}={{ val }}
+Environment={{ param }}='{{ val }}'
 {% endfor %}
 {% endif %}
 {% if autonames == true and tier.value.extra_vars is defined %}
 {% for param, val in tier.value.extra_vars.items() %}
-Environment={{ param }}={{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instance_index|int) ) | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_index|int) ) | replace ("<INSTANCE_ADDR>", "%s"|format(listen_address)) }}
+{% if val | type_debug == 'list' %}
+Environment={{ param }}='{{ val[instance_id|int - 1] }}'
+{% else %}
+Environment={{ param }}='{{ val | replace ("<INSTANCE_NUM>", "%02d"|format(instance_index|int) ) | replace ("<INSTANCE_NUM3>", "%03d"|format(instance_index|int) ) | replace ("<INSTANCE_ADDR>", "%s"|format(listen_address)) }}'
+{% endif %}
 {% endfor %}
 {% endif %}
 

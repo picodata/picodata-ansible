@@ -16,6 +16,24 @@
       vinyldir_tier: {}
       memtxdir_tier: {}
 
+  - name: ({{ cluster_name }}) Check extra_vars lists length for tier {{ tier.key }}
+    ansible.builtin.fail:
+      msg: 'Ошибка! Количество значений в списке extra_vars.{{ extra_var.key }} ({{ extra_var.value | length }}) не совпадает с instances_per_server ({{ instances_per_server | int }}) для тира {{ tier.key }}!'
+    loop: "{{ tier.value.extra_vars | default({}) | dict2items }}"
+    loop_control:
+      loop_var: extra_var
+      label: '{{ extra_var.key }}'
+    when: extra_var.value | type_debug == 'list' and extra_var.value | length != instances_per_server | int
+
+  - name: ({{ cluster_name }}) Check extra_vars lists are not used with supervisord for tier {{ tier.key }}
+    ansible.builtin.fail:
+      msg: 'Ошибка! Списки в extra_vars.{{ extra_var.key }} для тира {{ tier.key }} поддерживаются только при использовании systemd!'
+    loop: "{{ tier.value.extra_vars | default({}) | dict2items }}"
+    loop_control:
+      loop_var: extra_var
+      label: '{{ extra_var.key }}'
+    when: init_system == 'supervisord' and extra_var.value | type_debug == 'list'
+
   - name: ({{ cluster_name }}) Set start number if expanded for tier {{ tier.key }}
     ansible.builtin.set_fact:
       start_num: '{{ dict_start_num[tier.key] }}'

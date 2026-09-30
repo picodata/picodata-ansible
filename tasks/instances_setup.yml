@@ -46,7 +46,7 @@
 
 - name: ({{ cluster_name }}) Print instance_id and cnt in tier {{ tier.key }}
   ansible.builtin.debug:
-    msg: 'instance_id = {{ instance_id }}   cnt = {{ cnt }}   instance_name = {{ instance_name }}   instance_index = {{ instance_index }}'
+    msg: 'instance_id={{ instance_id }}  cnt={{ cnt }}  instance_name={{ instance_name }}  instance_index={{ instance_index }}'
   run_once: true
   when: debug == true
 
