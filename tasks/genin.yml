@@ -229,12 +229,24 @@
     var: peer_list
   when: debug == true and peer_list is defined
 
+- name: ({{ cluster_name }}) genin Set peer_list from existing servers on reconfigure
+  ansible.builtin.set_fact:
+    peer_list: >-
+      {{ all_hosts
+          | map('extract', hostvars)
+          | map(attribute='peer_list', default=[])
+          | select
+          | first
+          | default([]) }}
+  when: "'reconfigure' in ansible_run_tags and not peer_list | default([])"
+
 - name: ({{ cluster_name }}) genin Set peer_list if undefined
   ansible.builtin.set_fact:
     peer_list: >-
       {{ (all_hosts | difference([inventory_hostname]) | sort
           | map('extract', hostvars)
-          | map(attribute='list_voter')
+          | map(attribute='list_voter', default=[])
+          | select
           | map('first')
           | list) + [list_voter[0] | default('')]
           | select | list }}
