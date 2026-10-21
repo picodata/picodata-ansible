@@ -35,8 +35,13 @@ instance:
 {% if picodata_version is version('26.2', '>=') %}
   wal_dir: '{{ tier.value.wal_dir | default(wal_dir) }}/{{ cluster_name }}/{{ instance_name }}'
 {% endif %}
-{% if autonames |bool == false %}
+{% if instance_override.name is defined %}
+  name: '{{ instance_override.name }}'
+{% elif autonames |bool == false %}
   name: '{{ instance_name }}'
+{% endif %}
+{% if instance_override.replicaset is defined %}
+  replicaset_name: '{{ instance_override.replicaset }}'
 {% endif %}
 
   tier: '{{ tier.key }}'

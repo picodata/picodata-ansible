@@ -196,6 +196,20 @@ G3:                                 # имя датацентра 3
       host_group: 'STORAGES'        # группа хостов
 ```
 
+### Явные имена инстансов и репликасетов (instances)
+
+Если для хоста задан список `instances`, количество инстансов каждого тира на этом хосте берется из списка (параметры тира `instances_per_server` и `replicaset_count` для хоста игнорируются), а в конфиг инстанса прописываются `instance.name` и `instance.replicaset_name`. Хосты без `instances` разворачиваются как обычно, с автогенерацией. Поле `replicaset` необязательное: если его нет, репликасет выберет picodata.
+
+```
+G1:
+  hosts:
+    server-1-1:
+      instances:
+        - { tier: arbiter, replicaset: arbiter_1, name: arbiter_1_1 }
+        - { tier: default, replicaset: default_1, name: default_1_1 }
+        - { tier: default, replicaset: default_2, name: default_2_1 }
+```
+
 ## Переменные для плагинов (plugins)
 
 | Имя | Значение по умолчанию | Описание |

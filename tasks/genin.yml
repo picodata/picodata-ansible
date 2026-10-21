@@ -202,6 +202,24 @@
     instances_on_host: []
   when: instances_on_host is not defined
 
+- name: ({{ cluster_name }}) genin Check instances from host_vars
+  ansible.builtin.fail:
+    msg: 'Ошибка! Некорректная запись в instances: {{ item }}. Обязательны поля tier и name, тир должен быть описан в tiers и доступен для host_group сервера!'
+  loop: '{{ instances | default([]) }}'
+  when: >-
+    item.tier is undefined or item.name is undefined or item.tier not in tiers
+    or (tiers[item.tier].host_groups is defined and host_group not in tiers[item.tier].host_groups)
+
+- name: ({{ cluster_name }}) genin Check uniqueness of instance names from host_vars
+  vars:
+    all_names: >-
+      {{ all_hosts | map('extract', hostvars) | map(attribute='instances', default=[])
+         | flatten | map(attribute='name', default='') | list }}
+  ansible.builtin.fail:
+    msg: 'Ошибка! Имена инстансов в instances повторяются: {{ all_names | sort }}'
+  when: all_names | length != all_names | unique | length
+  run_once: true
+
 - name: ({{ cluster_name }}) genin Tiers loop
   ansible.builtin.include_tasks:
     file: genin_tiers.yml

@@ -46,13 +46,18 @@
     delegate_to: localhost
     when: debug == true
 
-  when: tier.value.instances_per_server is undefined
+  when: tier.value.instances_per_server is undefined and instances is undefined
 # end block
 
 - name: ({{ cluster_name }}) genin Set instances_per_server if defined for tier {{ tier.key }}
   ansible.builtin.set_fact:
     instances_per_server: '{{ tier.value.instances_per_server }}'
-  when: tier.value.instances_per_server is defined
+  when: tier.value.instances_per_server is defined and instances is undefined
+
+- name: ({{ cluster_name }}) genin Set instances_per_server from host_vars instances for tier {{ tier.key }}
+  ansible.builtin.set_fact:
+    instances_per_server: "{{ instances | selectattr('tier', 'equalto', tier.key) | list | length }}"
+  when: instances is defined
 
 - name: ({{ cluster_name }}) genin Calculate instances_per_server for tier {{ tier.key }}
   ansible.builtin.set_fact:
