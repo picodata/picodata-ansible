@@ -11,9 +11,9 @@ RUN apt update && apt install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements-ansible-2.20.txt .
+COPY requirements.ansible-2.20.yml .
 
-RUN pip install -r requirements-ansible-2.20.txt --break-system-packages --no-cache-dir && \
+RUN pip install -r requirements.ansible-2.20.yml --break-system-packages --no-cache-dir && \
     rm -rf /root/.cache/pip
 
 RUN ansible-galaxy collection install community.proxmox community.crypto community.general ansible.posix && \
