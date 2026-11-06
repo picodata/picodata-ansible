@@ -366,7 +366,7 @@
 
 - name: ({{ cluster_name }}) Set sql_file_pre_plugins if sql_file is set (for compability)
   ansible.builtin.set_fact:
-    sql_file_pre_plugins: sql_file
+    sql_file_pre_plugins: '{{ sql_file }}'
   when: sql_file_pre_plugins == '' and sql_file is defined
 
 - name: ({{ cluster_name }}) Copy sql-file pre-plugins on server
