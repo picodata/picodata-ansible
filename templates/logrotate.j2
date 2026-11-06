@@ -1,4 +1,11 @@
-{{ log_dir }}/{{ cluster_name }}/???.log {{ log_dir }}/{{ cluster_name }}/audit-???.log {
+{% if autonames == true %}
+{{ log_dir }}/{{ cluster_name }}/[0-9]*.log {{ log_dir }}/{{ cluster_name }}/audit-[0-9]*.log
+{% else %}
+{% for tier in tiers %}
+{{ log_dir }}/{{ cluster_name }}/{{ tier }}-[0-9]*.log {{ log_dir }}/{{ cluster_name }}/audit-{{ tier }}-[0-9]*.log
+{% endfor %}
+{% endif %}
+{
 {% if rootless == false %}
     su {{ user }} {{ group }}
 {% endif %}
