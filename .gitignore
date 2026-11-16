@@ -1,1 +1,37 @@
+# Ansible and development tool caches
+.ansible/
+.cache/
+*.retry
+/ansible.log
+
+# Local Python environments and bytecode
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Personal agent instructions
+AGENTS.local.md
+CLAUDE.local.md
+
+# Claude Code personal settings, memory, and worktrees
+**/.claude/settings.local.json
+**/.claude/agent-memory-local/
+**/.claude/worktrees/
+
+# IDE settings (VS Code, Zed/Zen, JetBrains)
 .vscode/
+.zed/
+.zen/
+.idea/
+*.iml
+
+# Vim swap, backup, undo, and session files
+*.swp
+*.swo
+*.swn
+*~
+*.un~
+.netrwhist
+Session.vim
+Sessionx.vim
